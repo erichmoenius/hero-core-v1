@@ -1,9 +1,13 @@
 import { Renderer } from "../graphics/Renderer.js";
 import { Loop } from "./Loop.js";
+import { ScrollController } from "../engine/ScrollController.js";
+import { StateManager } from "../engine/StateManager.js";
 
 export class App {
   constructor() {
     this.renderer = new Renderer();
+    this.scroll = new ScrollController();
+    this.stateManager = new StateManager();
 
     this.loop = new Loop(
       () => this.update(),
@@ -14,6 +18,10 @@ export class App {
   }
 
   update() {
-    // später: state logic
+    const progress = this.scroll.getProgress();
+    this.stateManager.update(progress);
+
+    const state = this.stateManager.getStateData();
+
   }
 }
