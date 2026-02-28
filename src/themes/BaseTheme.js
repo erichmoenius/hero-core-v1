@@ -14,6 +14,8 @@ export class BaseTheme {
   }
 
   dispose() {
-    // Cleanup scene
-  }
+  // default cleanup
+  this.scene.background = null;
+}
+
 }

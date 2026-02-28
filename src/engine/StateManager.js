@@ -9,25 +9,26 @@ export class StateManager {
   }
 
   update(progress) {
-    for (let i = 0; i < STATES.length; i++) {
-      const state = STATES[i];
+    // harte mathematische State-Berechnung
+    const index = Math.min(
+      Math.floor(progress * STATES.length),
+      STATES.length - 1
+    );
 
-      if (progress >= state.start && progress <= state.end) {
-        this.currentState = state;
-        this.nextState = STATES[i + 1] || state;
+    this.currentState = STATES[index];
+    this.nextState = STATES[index + 1] || STATES[index];
 
-        const range = state.end - state.start;
+    const stateStart = this.currentState.start;
+    const stateEnd = this.currentState.end;
+    const range = stateEnd - stateStart;
 
-        this.blend = range > 0
-          ? (progress - state.start) / range
-          : 0;
+    let rawBlend = range > 0
+      ? (progress - stateStart) / range
+      : 0;
 
-        break;
-      }
-    }
+    this.blend = Math.min(Math.max(rawBlend, 0), 1);
 
-    // State Change Detection
-    if (this.currentState && this.currentState.id !== this.lastStateId) {
+    if (this.currentState.id !== this.lastStateId) {
       console.log("STATE CHANGE:", this.currentState.id);
       this.lastStateId = this.currentState.id;
     }

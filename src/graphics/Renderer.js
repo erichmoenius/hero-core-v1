@@ -3,8 +3,7 @@ import * as THREE from "three";
 export class Renderer {
   constructor() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xffffff);
-
+    
     this.camera = new THREE.OrthographicCamera(
       -1, 1,
       1, -1,

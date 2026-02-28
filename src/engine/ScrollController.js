@@ -11,7 +11,7 @@ export class ScrollController {
   }
 
   createScrollSpace() {
-    const scrollHeight = 4000; // später dynamisch
+    const scrollHeight = 12000; // später dynamisch
     const spacer = document.createElement("div");
     spacer.style.height = `${scrollHeight}px`;
     document.body.appendChild(spacer);
