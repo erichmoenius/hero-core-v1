@@ -11,11 +11,14 @@ export class ScrollController {
   }
 
   createScrollSpace() {
-    const scrollHeight = 12000; // später dynamisch
-    const spacer = document.createElement("div");
-    spacer.style.height = `${scrollHeight}px`;
-    document.body.appendChild(spacer);
-  }
+  if (document.getElementById("scroll-spacer")) return;
+
+  const spacer = document.createElement("div");
+  spacer.id = "scroll-spacer";
+  spacer.style.height = "6000px";
+  spacer.style.width = "1px";
+  document.body.appendChild(spacer);
+}
 
   updateScroll() {
     const scrollTop = window.scrollY;

@@ -12,13 +12,15 @@ export class Loop {
   }
 
   tick() {
-    if (!this.isRunning) return;
+  if (!this.isRunning) return;
 
-    this.update();
-    this.render();
+  console.log("TICK");
 
-    requestAnimationFrame(() => this.tick());
-  }
+  this.update();
+  this.render();
+
+  requestAnimationFrame(() => this.tick());
+}
 
   stop() {
     this.isRunning = false;

@@ -3,7 +3,7 @@ import * as THREE from "three";
 export class Renderer {
   constructor() {
     this.scene = new THREE.Scene();
-    
+
     this.camera = new THREE.OrthographicCamera(
       -1, 1,
       1, -1,
@@ -16,13 +16,20 @@ export class Renderer {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    document.body.appendChild(this.renderer.domElement);
+    document.body.style.margin = "0";
+    const root = document.getElementById("app");
+    root.appendChild(this.renderer.domElement);
 
-    this.handleResize();
-    window.addEventListener("resize", () => this.handleResize());
+    root.style.position = "fixed";
+    root.style.top = "0";
+    root.style.left = "0";
+    root.style.width = "100%";
+    root.style.height = "100%";
+
+    window.addEventListener("resize", () => this.onResize());
   }
 
-  handleResize() {
+  onResize() {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
