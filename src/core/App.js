@@ -5,6 +5,7 @@ import { StateManager } from "../engine/StateManager.js";
 import { ThemeManager } from "../engine/ThemeManager.js";
 import { ColorTheme } from "../themes/ColorTheme.js";
 import { SeasonsTheme } from "../themes/SeasonsTheme.js";
+import { ImageTheme } from "../themes/ImageTheme.js";
 
 export class App {
   constructor() {
@@ -13,12 +14,15 @@ export class App {
     this.stateManager = new StateManager();
 
     this.themeManager = new ThemeManager(this.renderer);
+
+    // ✅ ALLE THEMES HIER registrieren
     this.themeManager.register("color", ColorTheme);
     this.themeManager.register("seasons", SeasonsTheme);
+    this.themeManager.register("image", ImageTheme);
 
     this.themeManager.activate("color");
 
-    // 👇 HIER rein
+    // ✅ Key switching sauber
     window.addEventListener("keydown", (e) => {
       if (e.code === "Digit1") {
         this.themeManager.activate("color");
@@ -26,6 +30,10 @@ export class App {
 
       if (e.code === "Digit2") {
         this.themeManager.activate("seasons");
+      }
+
+      if (e.code === "Digit3") {
+        this.themeManager.activate("image");
       }
     });
 
