@@ -4,15 +4,24 @@ export class StateManager {
   constructor() {
     this.current = null;
     this.next = null;
+    this.previous = null;
     this.blend = 0;
+
+    this.changeListeners = [];
+  }
+
+  onChange(callback) {
+    this.changeListeners.push(callback);
   }
 
   update(progress) {
+    let detectedState = null;
+
     for (let i = 0; i < STATES.length; i++) {
       const state = STATES[i];
 
       if (progress >= state.start && progress <= state.end) {
-        this.current = state.id;
+        detectedState = state.id;
         this.next = STATES[i + 1]?.id || state.id;
 
         const range = state.end - state.start;
@@ -22,6 +31,18 @@ export class StateManager {
 
         break;
       }
+    }
+
+    if (detectedState && detectedState !== this.current) {
+      this.previous = this.current;
+      this.current = detectedState;
+
+      this.changeListeners.forEach(callback => {
+        callback({
+          previous: this.previous,
+          current: this.current
+        });
+      });
     }
   }
 

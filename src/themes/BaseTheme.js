@@ -5,17 +5,9 @@ export class BaseTheme {
     this.camera = renderer.camera;
   }
 
-  init() {
-    // Setup scene objects
-  }
+  init() {}
 
-  update(stateData) {
-    // React to state changes
-  }
+  update(stateData) {}
 
-  dispose() {
-  // default cleanup
-  this.scene.background = null;
-}
-
+  dispose() {}
 }

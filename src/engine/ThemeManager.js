@@ -10,12 +10,9 @@ export class ThemeManager {
   }
 
   activate(name) {
-    if (!this.themes[name]) {
-      console.warn(`Theme "${name}" not registered.`);
-      return;
-    }
+    if (!this.themes[name]) return;
 
-    if (this.activeTheme) {
+    if (this.activeTheme && this.activeTheme.dispose) {
       this.activeTheme.dispose();
     }
 
@@ -25,12 +22,7 @@ export class ThemeManager {
   }
 
   update(stateData) {
-  console.log("ThemeManager update:", stateData);
-
-  if (this.activeTheme) {
+    if (!this.activeTheme) return;
     this.activeTheme.update(stateData);
-  } else {
-    console.log("NO ACTIVE THEME");
   }
-}
 }
