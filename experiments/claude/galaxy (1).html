@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>GPU Galaxy</title>
+<style>
+* { margin: 0; padding: 0; }
+body { background: #000; overflow: hidden; font-family: monospace; }
+#label {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.4); font-size: 13px; letter-spacing: 3px;
+  text-transform: uppercase; pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div id="label">GALAXY</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 200);
+camera.position.z = 8;
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const N = 6000;
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+const R = 2.8;
+
+// ── Shape generators ──────────────────────────────────────────────
+function makeGalaxy(i) {
+  const r = (i / N) * 3.5;
+  const angle = r * 5 + (Math.random() - 0.5) * 0.4;
+  return [Math.cos(angle) * r, (Math.random() - 0.5) * 0.4, Math.sin(angle) * r];
+}
+function makeSphere(i) {
+  const t = i / (N - 1);
+  const phi = Math.acos(1 - 2 * t), theta = GOLDEN_ANGLE * i;
+  return [R * Math.sin(phi) * Math.cos(theta), R * Math.sin(phi) * Math.sin(theta), R * Math.cos(phi)];
+}
+function makeTorus(i) {
+  const t = i / N;
+  const u = t * Math.PI * 2 * 18, v = GOLDEN_ANGLE * i * 6;
+  const r1 = 2.2, r2 = 0.9;
+  return [(r1 + r2 * Math.cos(v)) * Math.cos(u), (r1 + r2 * Math.cos(v)) * Math.sin(u), r2 * Math.sin(v)];
+}
+function makeCube(i) {
+  const t = i / (N - 1);
+  const phi = Math.acos(1 - 2 * t), theta = GOLDEN_ANGLE * i;
+  let x = Math.sin(phi) * Math.cos(theta);
+  let y = Math.sin(phi) * Math.sin(theta);
+  let z = Math.cos(phi);
+  const m = Math.max(Math.abs(x), Math.abs(y), Math.abs(z));
+  return [x * R / m, y * R / m, z * R / m];
+}
+function makeHelix(i) {
+  const t = i / N;
+  const angle = t * Math.PI * 20, r = 1.8;
+  return [r * Math.cos(angle), (t - 0.5) * 6, r * Math.sin(angle)];
+}
+
+const SHAPES = [
+  { fn: makeGalaxy, name: 'GALAXY' },
+  { fn: makeSphere, name: 'SPHERE' },
+  { fn: makeTorus,  name: 'TORUS'  },
+  { fn: makeCube,   name: 'CUBE'   },
+  { fn: makeHelix,  name: 'HELIX'  },
+];
+
+// Precompute all shape targets
+const allTargets = SHAPES.map(s => {
+  const buf = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    const [x, y, z] = s.fn(i);
+    buf[i*3] = x; buf[i*3+1] = y; buf[i*3+2] = z;
+  }
+  return buf;
+});
+
+// Live position buffer (updated CPU-side each frame during morph)
+const positions = new Float32Array(N * 3);
+positions.set(allTargets[0]);
+
+// from/to for lerp
+const fromBuf = new Float32Array(N * 3);
+const toBuf   = new Float32Array(N * 3);
+fromBuf.set(allTargets[0]);
+toBuf.set(allTargets[0]);
+
+// Per-particle hue
+const hues = new Float32Array(N);
+for (let i = 0; i < N; i++) hues[i] = (i * 0.618033) % 1.0;
+
+// ── Geometry ──────────────────────────────────────────────────────
+const geometry = new THREE.BufferGeometry();
+const posAttr = new THREE.BufferAttribute(positions, 3);
+posAttr.setUsage(THREE.DynamicDrawUsage);
+geometry.setAttribute('position', posAttr);
+geometry.setAttribute('aHue', new THREE.BufferAttribute(hues, 1));
+
+// ── Shaders ───────────────────────────────────────────────────────
+const vertexShader = `
+  attribute float aHue;
+  uniform float uTime;
+  uniform float uScale;
+  uniform float uMouseX;
+  uniform float uMouseY;
+  varying float vHue;
+
+  void main() {
+    vec3 pos = position;
+
+    // Mouse parallax tilt
+    pos.x += uMouseX * pos.z * 0.12;
+    pos.y += uMouseY * pos.z * 0.08;
+
+    vHue = aHue;
+    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+    float dist = length(pos);
+    gl_PointSize = max(1.5, (3.0 + dist * 3.0) * uScale * (5.0 / -mv.z));
+    gl_Position  = projectionMatrix * mv;
+  }
+`;
+
+const fragmentShader = `
+  uniform float uTime;
+  varying float vHue;
+
+  vec3 hsl2rgb(float h, float s, float l) {
+    float c = (1.0 - abs(2.0*l - 1.0)) * s;
+    float x = c * (1.0 - abs(mod(h * 6.0, 2.0) - 1.0));
+    float m = l - c * 0.5;
+    vec3 rgb;
+    if      (h < 1.0/6.0) rgb = vec3(c, x, 0.0);
+    else if (h < 2.0/6.0) rgb = vec3(x, c, 0.0);
+    else if (h < 3.0/6.0) rgb = vec3(0.0, c, x);
+    else if (h < 4.0/6.0) rgb = vec3(0.0, x, c);
+    else if (h < 5.0/6.0) rgb = vec3(x, 0.0, c);
+    else                   rgb = vec3(c, 0.0, x);
+    return rgb + m;
+  }
+
+  void main() {
+    float d = length(gl_PointCoord - 0.5);
+    if (d > 0.5) discard;
+    float glow = smoothstep(0.5, 0.0, d);
+    float hue = mod(vHue + uTime * 0.06, 1.0);
+    vec3 col = hsl2rgb(hue, 1.0, 0.6);
+    gl_FragColor = vec4(col * glow, glow);
+  }
+`;
+
+const material = new THREE.ShaderMaterial({
+  uniforms: {
+    uTime:   { value: 0 },
+    uScale:  { value: 1.0 },
+    uMouseX: { value: 0.0 },
+    uMouseY: { value: 0.0 },
+  },
+  vertexShader, fragmentShader,
+  transparent: true,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+});
+
+const points = new THREE.Points(geometry, material);
+scene.add(points);
+
+// ── Wormhole tunnel ───────────────────────────────────────────────
+const tunnelMat = new THREE.MeshBasicMaterial({
+  color: 0x6600cc, side: THREE.BackSide, wireframe: true,
+  transparent: true, opacity: 0,
+});
+const tunnel = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.5, 1.5, 80, 32, 40, true),
+  tunnelMat
+);
+tunnel.rotation.x = Math.PI / 2;
+scene.add(tunnel);
+
+// ── State ─────────────────────────────────────────────────────────
+let shapeIdx = 0, morphProgress = 1;
+let wormholeProgress = 0, isWormholing = false;
+let holdTimer = 0;
+const MORPH_SPEED = 0.012, SHAPE_HOLD = 5;
+const label = document.getElementById('label');
+
+function easeInOut(x) {
+  return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2;
+}
+
+function startMorph() {
+  const nextIdx = (shapeIdx + 1) % SHAPES.length;
+  isWormholing = (nextIdx === 4 || shapeIdx === 4); // helix transitions
+  shapeIdx = nextIdx;
+  morphProgress = 0;
+  wormholeProgress = 0;
+  // snapshot current positions as new "from"
+  fromBuf.set(positions);
+  toBuf.set(allTargets[shapeIdx]);
+  label.textContent = SHAPES[shapeIdx].name;
+}
+
+window.addEventListener('click', () => { holdTimer = SHAPE_HOLD; });
+
+// ── Input ─────────────────────────────────────────────────────────
+const mouse = { x: 0, y: 0 }, smoothMouse = { x: 0, y: 0 };
+window.addEventListener('mousemove', e => {
+  mouse.x =  (e.clientX / innerWidth  - 0.5) * 2;
+  mouse.y = -(e.clientY / innerHeight - 0.5) * 2;
+});
+
+let targetScale = 1.0, smoothScale = 1.0;
+window.addEventListener('wheel', e => {
+  targetScale = Math.max(0.2, Math.min(4.0, targetScale - e.deltaY * 0.001));
+}, { passive: true });
+
+// ── Animate ───────────────────────────────────────────────────────
+const tmp = new THREE.Vector3();
+function animate() {
+  requestAnimationFrame(animate);
+
+  material.uniforms.uTime.value += 0.01;
+
+  // Mouse
+  smoothMouse.x += (mouse.x - smoothMouse.x) * 0.06;
+  smoothMouse.y += (mouse.y - smoothMouse.y) * 0.06;
+  material.uniforms.uMouseX.value = smoothMouse.x;
+  material.uniforms.uMouseY.value = smoothMouse.y;
+
+  // Camera parallax
+  camera.position.x += (smoothMouse.x * 1.2 - camera.position.x) * 0.04;
+  camera.position.y += (smoothMouse.y * 0.8 - camera.position.y) * 0.04;
+  camera.lookAt(scene.position);
+
+  // Scale
+  smoothScale += (targetScale - smoothScale) * 0.08;
+  material.uniforms.uScale.value = smoothScale;
+
+  // Hold + trigger morph
+  if (morphProgress >= 1) {
+    holdTimer += 0.01;
+    if (holdTimer >= SHAPE_HOLD) { holdTimer = 0; startMorph(); }
+  }
+
+  // CPU lerp → write to position buffer
+  if (morphProgress < 1) {
+    morphProgress = Math.min(1, morphProgress + MORPH_SPEED);
+    const e = easeInOut(morphProgress);
+    for (let i = 0; i < N * 3; i++) {
+      positions[i] = fromBuf[i] + (toBuf[i] - fromBuf[i]) * e;
+    }
+    posAttr.needsUpdate = true;
+  }
+
+  // Galaxy spiral rotation on first shape
+  if (shapeIdx === 0 && morphProgress >= 1) {
+    const t = material.uniforms.uTime.value;
+    for (let i = 0; i < N; i++) {
+      const ox = allTargets[0][i*3], oz = allTargets[0][i*3+2];
+      const dist = Math.sqrt(ox*ox + oz*oz);
+      const angle = Math.atan2(ox, oz) + t * 0.15 * dist;
+      positions[i*3]   = Math.cos(angle) * dist;
+      positions[i*3+2] = Math.sin(angle) * dist;
+    }
+    posAttr.needsUpdate = true;
+  }
+
+  // Wormhole
+  if (isWormholing) {
+    wormholeProgress = Math.min(1, wormholeProgress + 0.02);
+    const peak = Math.sin(wormholeProgress * Math.PI);
+    tunnelMat.opacity = peak * 0.7;
+    camera.position.z = 8 - peak * 5;
+    camera.fov = 60 + peak * 50;
+    camera.updateProjectionMatrix();
+    tunnel.rotation.z += 0.06;
+    if (wormholeProgress >= 1) {
+      isWormholing = false;
+      camera.position.z = 8; camera.fov = 60;
+      camera.updateProjectionMatrix();
+      tunnelMat.opacity = 0;
+    }
+  }
+
+  points.rotation.y += 0.001;
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
