@@ -92,19 +92,33 @@ void main(){
 vec2 uv = vUv;
 
 // mouse parallax
-uv += uMouse * 0.08;
+uv += uMouse * 0.12;
 
 // slow nebula drift
 uv.x += uTime * 0.006;
 
-float n = fbm(uv * 3.0);
+float large = fbm(uv * 2.2);
+float detail = fbm(uv * 5.0);
 
-vec3 colorA = vec3(0.07,0.05,0.18);
-vec3 colorB = vec3(0.2,0.12,0.45);
-vec3 colorC = vec3(0.6,0.3,0.9);
+float n = large * 0.8 + detail * 0.2;
+n = pow(n, 1.2);
 
-vec3 col = mix(colorA,colorB,n);
-col = mix(col,colorC,n*n*0.5);
+// glow mask
+float glow = smoothstep(0.25, 0.85, n);
+
+// Deep space base
+vec3 colorA = vec3(0.02, 0.03, 0.10);
+
+// Nebula mid tone
+vec3 colorB = vec3(0.08, 0.12, 0.35);
+
+// Nebula glow
+vec3 colorC = vec3(0.35, 0.55, 1.0);
+
+vec3 col = mix(colorA, colorB, n);
+
+// add glow
+col += colorC * glow * 0.35;
 
 gl_FragColor = vec4(col,1.0);
 
