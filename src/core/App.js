@@ -23,7 +23,7 @@ export class App {
   // Renderer
   this.renderer = new Renderer();
 
-  // ShaderWorld (Background)
+   // ShaderWorld (Background)
   this.world = new ShaderWorld(this.renderer.scene);
 
   // Theme Stage (Center Square)
@@ -32,7 +32,10 @@ export class App {
   // Core Systems
   this.scroll = new ScrollController();
   this.stateManager = new StateManager();
-  this.themeManager = new ThemeManager(this.renderer);
+
+  this.themeManager = new ThemeManager(
+    this.stage.getContent()
+  );
 
   // Themes
   this.themeManager.register("color", ColorTheme);
@@ -111,6 +114,9 @@ export class App {
   }
 
   update(delta) {
+
+  // Scroll immer aktualisieren
+  this.scroll.updateScroll();
 
   const progress = this.scroll.getProgress();
 

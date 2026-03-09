@@ -2,22 +2,38 @@ import * as THREE from "three";
 
 export class ThemeStage {
 
-constructor(scene){
+  constructor(scene){
 
-const geo = new THREE.PlaneGeometry(2.5,2.5);
+    this.scene = scene;
 
-const mat = new THREE.MeshBasicMaterial({
-color:0x111111,
-transparent:true,
-opacity:0.9
-});
+    // Container für Themes
+    this.content = new THREE.Group();
+    scene.add(this.content);
 
-this.mesh = new THREE.Mesh(geo,mat);
+    const size = 5.5;
 
-this.mesh.position.z = 0;
+    // Glass Portal
+    const glass = new THREE.Mesh(
+      new THREE.PlaneGeometry(size, size),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        transmission: 1,
+        opacity: 0.15,
+        transparent: true,
+        roughness: 0.2,
+        metalness: 0,
+        depthWrite:false
+      })
+    );
 
-scene.add(this.mesh);
+    glass.position.z = 0.01;
 
-}
+    scene.add(glass);
+
+  }
+
+  getContent(){
+    return this.content;
+  }
 
 }

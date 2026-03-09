@@ -1,56 +1,45 @@
 import { STATES } from "../config/states.config.js";
 
 export class StateManager {
-  constructor() {
-    this.current = null;
-    this.next = null;
-    this.previous = null;
+
+  constructor(){
+    this.current = "state1";
+    this.next = "state2";
     this.blend = 0;
-
-    this.changeListeners = [];
   }
 
-  onChange(callback) {
-    this.changeListeners.push(callback);
-  }
+  update(progress){
 
-  update(progress) {
-    let detectedState = null;
+    for(let i=0;i<STATES.length;i++){
 
-    for (let i = 0; i < STATES.length; i++) {
-      const state = STATES[i];
+      const s = STATES[i];
 
-      if (progress >= state.start && progress <= state.end) {
-        detectedState = state.id;
-        this.next = STATES[i + 1]?.id || state.id;
+      if(progress >= s.start && progress < s.end){
 
-        const range = state.end - state.start;
-        this.blend = range > 0
-          ? (progress - state.start) / range
-          : 0;
+        this.current = s.id;
+
+        const nextState = STATES[i+1];
+        this.next = nextState ? nextState.id : s.id;
+
+        const range = s.end - s.start;
+        this.blend = (progress - s.start) / range;
 
         break;
+
       }
+
     }
 
-    if (detectedState && detectedState !== this.current) {
-      this.previous = this.current;
-      this.current = detectedState;
-
-      this.changeListeners.forEach(callback => {
-        callback({
-          previous: this.previous,
-          current: this.current
-        });
-      });
-    }
   }
 
-  get() {
+  get(){
+
     return {
       current: this.current,
       next: this.next,
       blend: this.blend
     };
+
   }
+
 }

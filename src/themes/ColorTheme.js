@@ -3,7 +3,12 @@ import { BaseTheme } from "./BaseTheme.js";
 
 export class ColorTheme extends BaseTheme {
 
-  init() {
+  constructor(container){
+    super(container);
+  }
+
+  init(){
+
     this.colors = {
       state1: 0xff0000,
       state2: 0xffff00,
@@ -12,25 +17,36 @@ export class ColorTheme extends BaseTheme {
     };
 
     this.plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(1,1),
-      new THREE.MeshBasicMaterial({ color: 0x000000 })
+      new THREE.PlaneGeometry(5.5,5.5),
+      new THREE.MeshBasicMaterial({ color: 0xff0000 })
     );
 
-    this.plane.scale.set(2,2,1);
-    this.scene.add(this.plane);
+    // WICHTIG: container, nicht scene
+    this.container.add(this.plane);
+
   }
 
-  update({ current, next, blend }) {
-    if (!current || !next) return;
+  update({ current, next, blend }){
+
+    if(!current || !next) return;
 
     const c1 = new THREE.Color(this.colors[current]);
     const c2 = new THREE.Color(this.colors[next]);
 
-    const blended = c1.lerp(c2, blend);
+    const blended = c1.clone().lerp(c2, blend);
+
     this.plane.material.color.copy(blended);
+
   }
 
-  dispose() {
-    this.scene.remove(this.plane);
+  dispose(){
+
+    if(!this.plane) return;
+
+    this.container.remove(this.plane);
+    this.plane.geometry.dispose();
+    this.plane.material.dispose();
+
   }
+
 }

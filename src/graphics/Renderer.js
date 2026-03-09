@@ -16,7 +16,16 @@ export class Renderer {
     this.camera.position.z = 5;
 
     this.renderer = new THREE.WebGLRenderer({ antialias:true });
+
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    this.renderer.domElement.style.position = "fixed";
+    this.renderer.domElement.style.top = "0";
+    this.renderer.domElement.style.left = "0";
+    this.renderer.domElement.style.width = "100%";
+    this.renderer.domElement.style.height = "100%";
+    this.renderer.domElement.style.pointerEvents = "none";
+    this.renderer.domElement.style.zIndex = "-1";
 
     document.body.appendChild(this.renderer.domElement);
 
