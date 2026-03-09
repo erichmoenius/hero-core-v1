@@ -28,8 +28,11 @@ this._createLayers();
 
 _createLayers(){
 
-this.farNebula = this._createNebulaLayer(-12,0.004,0.06,2.4);
-this.nearNebula = this._createNebulaLayer(-9,0.009,0.12,3.2);
+// FAR nebula (deep space)
+this.farNebula = this._createNebulaLayer(-12,0.003,0.04,2.2);
+
+// NEAR nebula (closer movement)
+this.nearNebula = this._createNebulaLayer(-9,0.007,0.10,3.0);
 
 }
 
@@ -121,16 +124,12 @@ vec2 uv = vUv - 0.5;
 
 // ───── Spiral Distortion ─────
 
-// radius from center
 float r = length(uv);
 
-// polar angle
 float angle = atan(uv.y, uv.x);
 
-// spiral rotation
-angle += r * 2.5 + uTime * uSpeed * 4.0;
+angle += r * 2.0 + uTime * uSpeed * 3.5;
 
-// back to cartesian
 uv = vec2(cos(angle), sin(angle)) * r;
 
 uv += 0.5;
@@ -141,15 +140,32 @@ uv += 0.5;
 uv += uMouse * uMouseStrength;
 
 
-// ───── Nebula Noise ─────
+// ───── Volumetric Nebula ─────
 
-float large = fbm(uv * uNoiseScale);
-float detail = fbm(uv * (uNoiseScale*2.2));
+float n = 0.0;
+float weight = 0.6;
 
-float n = large * 0.8 + detail * 0.2;
-n = pow(n, 1.4);
+vec2 p = uv;
+
+for(int i=0;i<4;i++){
+
+float layer = fbm(p * uNoiseScale);
+
+n += layer * weight;
+
+p += vec2(0.03,0.02);
+
+weight *= 0.55;
+
+}
+
+n = pow(n,1.25);
+
+// fine dust
+n += fbm(uv * (uNoiseScale*3.5)) * 0.08;
 
 float glow = smoothstep(0.25,0.85,n);
+
 
 // ───── Colors ─────
 
@@ -163,16 +179,24 @@ vec3 colorB = vec3(0.08,0.12,0.35);
 vec3 colorC = vec3(0.35,0.55,1.0);
 
 
+// base nebula color
 vec3 col = mix(colorA,colorB,n);
 
+// nebula glow
 col += colorC * glow * 0.35;
+
+// volumetric light scattering
+col += vec3(0.3,0.5,1.0) * pow(n,2.5) * 0.2;
+
+
+// gamma correction
+col = pow(col, vec3(0.9));
 
 gl_FragColor = vec4(col,1.0);
 
 }
 
 `,
-
 
 depthWrite:false,
 transparent:false
