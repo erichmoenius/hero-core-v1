@@ -136,7 +136,7 @@ export class App {
   this.world.update();
 
   // Partikel leicht drehen
-  this.points.rotation.y += 0.0004;
+  this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
   // Particle Shader Zeit
   this.material.uniforms.uTime.value += 0.01;
