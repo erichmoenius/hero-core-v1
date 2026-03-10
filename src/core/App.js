@@ -2,6 +2,9 @@ import * as THREE from "three";
 
 import { Renderer } from "../graphics/Renderer.js";
 import { ShaderWorld } from "../graphics/ShaderWorld.js";
+import { Starfield } from "../graphics/Starfield.js";
+import { GlassPortal } from "../graphics/GlassPortal.js";
+import { ThemeStage } from "../graphics/ThemeStage.js";
 
 import { Loop } from "./Loop.js";
 import { ScrollController } from "../engine/ScrollController.js";
@@ -14,139 +17,213 @@ import { ImageTheme } from "../themes/ImageTheme.js";
 
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
-import { ThemeStage } from "../graphics/ThemeStage.js";
+
 
 export class App {
 
-  constructor() {
+constructor(){
 
-  // Renderer
-  this.renderer = new Renderer();
+// ------------------------------------------------
+// RENDERER
+// ------------------------------------------------
 
-   // ShaderWorld (Background)
-  this.world = new ShaderWorld(this.renderer.scene);
+this.renderer = new Renderer();
 
-  // Theme Stage (Center Square)
-  this.stage = new ThemeStage(this.renderer.scene);
+const scene = this.renderer.scene;
+const camera = this.renderer.camera;
+const renderer = this.renderer.renderer;
 
-  // Core Systems
-  this.scroll = new ScrollController();
-  this.stateManager = new StateManager();
 
-  this.themeManager = new ThemeManager(
-    this.stage.getContent()
-  );
+// ------------------------------------------------
+// BACKGROUND
+// ------------------------------------------------
 
-  // Themes
-  this.themeManager.register("color", ColorTheme);
-  this.themeManager.register("seasons", SeasonsTheme);
-  this.themeManager.register("image", ImageTheme);
+this.world = new ShaderWorld(scene);
+this.stars = new Starfield(scene);
 
-  this.themeManager.activate("color");
 
-  // Particles
-  this.setupParticles();
+// ------------------------------------------------
+// PORTAL + THEME STAGE
+// ------------------------------------------------
 
-  // Interaction
-  this.isBoosting = false;
-  this.intensity = 0;
+this.stage = new ThemeStage(scene);
 
-  this.setupInput();
-  this.setupThemeSwitching();
+this.portal = new GlassPortal(
+scene,
+renderer,
+camera
+);
 
-  // Loop
-  this.loop = new Loop(
-    this.update.bind(this),
-    this.renderer.render.bind(this.renderer)
-  );
 
-  this.loop.start();
+// ------------------------------------------------
+// CORE SYSTEMS
+// ------------------------------------------------
+
+this.scroll = new ScrollController();
+this.stateManager = new StateManager();
+
+this.themeManager = new ThemeManager(
+this.stage.getContent()
+);
+
+
+// ------------------------------------------------
+// THEMES
+// ------------------------------------------------
+
+this.themeManager.register("color", ColorTheme);
+this.themeManager.register("seasons", SeasonsTheme);
+this.themeManager.register("image", ImageTheme);
+
+this.themeManager.activate("color");
+
+
+// ------------------------------------------------
+// PARTICLES
+// ------------------------------------------------
+
+this.setupParticles();
+
+
+// ------------------------------------------------
+// INPUT
+// ------------------------------------------------
+
+this.isBoosting = false;
+this.intensity = 0;
+
+this.setupInput();
+this.setupThemeSwitching();
+
+
+// ------------------------------------------------
+// LOOP
+// ------------------------------------------------
+
+this.loop = new Loop(
+this.update.bind(this),
+this.renderer.render.bind(this.renderer)
+);
+
+this.loop.start();
 
 }
 
-  setupParticles(){
 
-    const scene = this.renderer.scene;
-    const N = 6000;
 
-    this.field = createParticleField(N);
-    this.material = createParticleMaterial();
+// ------------------------------------------------
+// PARTICLES
+// ------------------------------------------------
 
-    this.points = new THREE.Points(
-      this.field.geometry,
-      this.material
-    );
+setupParticles(){
 
-    scene.add(this.points);
+const scene = this.renderer.scene;
 
-  }
+const N = 6000;
 
-  setupInput() {
+this.field = createParticleField(N);
+this.material = createParticleMaterial();
 
-    window.addEventListener("mousedown", () => {
-      this.isBoosting = true;
-    });
+this.points = new THREE.Points(
+this.field.geometry,
+this.material
+);
 
-    window.addEventListener("mouseup", () => {
-      this.isBoosting = false;
-    });
+scene.add(this.points);
 
-  }
+}
 
-  setupThemeSwitching() {
 
-    window.addEventListener("keydown", (e) => {
 
-      if (e.code === "Digit1") {
-        this.themeManager.activate("color");
-      }
+// ------------------------------------------------
+// INPUT
+// ------------------------------------------------
 
-      if (e.code === "Digit2") {
-        this.themeManager.activate("seasons");
-      }
+setupInput(){
 
-      if (e.code === "Digit3") {
-        this.themeManager.activate("image");
-      }
+window.addEventListener("mousedown",()=>{
+this.isBoosting = true;
+});
 
-    });
+window.addEventListener("mouseup",()=>{
+this.isBoosting = false;
+});
 
-  }
+}
 
-  update(delta) {
 
-  // Scroll immer aktualisieren
-  this.scroll.updateScroll();
 
-  const progress = this.scroll.getProgress();
+// ------------------------------------------------
+// THEME SWITCHING
+// ------------------------------------------------
 
-  this.stateManager.update(progress);
+setupThemeSwitching(){
 
-  const state = this.stateManager.get();
+window.addEventListener("keydown",(e)=>{
 
-  // Smooth intensity
-  if (this.isBoosting) {
-    this.intensity += 0.04;
-  } else {
-    this.intensity -= 0.04;
-  }
+if(e.code === "Digit1"){
+this.themeManager.activate("color");
+}
 
-  if (this.intensity < 0) this.intensity = 0;
-  if (this.intensity > 1) this.intensity = 1;
+if(e.code === "Digit2"){
+this.themeManager.activate("seasons");
+}
 
-  state.intensity = this.intensity;
+if(e.code === "Digit3"){
+this.themeManager.activate("image");
+}
 
-  this.themeManager.update(state);
+});
 
-  // ShaderWorld bewegen
-  this.world.update();
+}
 
-  // Partikel leicht drehen
-  this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
-  // Particle Shader Zeit
-  this.material.uniforms.uTime.value += 0.01;
 
-  }
+// ------------------------------------------------
+// UPDATE LOOP
+// ------------------------------------------------
+
+update(delta){
+
+// Scroll
+this.scroll.updateScroll();
+
+const progress = this.scroll.getProgress();
+
+this.stateManager.update(progress);
+
+const state = this.stateManager.get();
+
+
+// Smooth intensity
+if(this.isBoosting){
+this.intensity += 0.04;
+}else{
+this.intensity -= 0.04;
+}
+
+this.intensity = Math.max(0,Math.min(1,this.intensity));
+
+state.intensity = this.intensity;
+
+
+// Theme
+this.themeManager.update(state);
+
+
+// Background
+this.stars.update();
+this.world.update();
+
+
+// Portal
+this.portal.update();
+
+
+// Particles
+this.points.rotation.y += 0.0003 + this.intensity * 0.001;
+this.material.uniforms.uTime.value += 0.01;
+
+}
 
 }
