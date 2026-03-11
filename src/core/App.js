@@ -30,8 +30,6 @@ constructor(){
 this.renderer = new Renderer();
 
 const scene = this.renderer.scene;
-const camera = this.renderer.camera;
-const renderer = this.renderer.renderer;
 
 
 // ------------------------------------------------
@@ -50,9 +48,10 @@ this.stage = new ThemeStage(scene);
 
 this.portal = new GlassPortal(
 scene,
-renderer,
-camera
+this.renderer.renderTarget.texture
 );
+
+this.renderer.portal = this.portal;
 
 
 // ------------------------------------------------
