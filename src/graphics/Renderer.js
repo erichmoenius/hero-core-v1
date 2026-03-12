@@ -60,23 +60,20 @@ window.innerHeight
 
 render(){
 
-// Portal ausblenden
+// PASS 1 → Scene in Texture (ohne Portal)
 if(this.portal) this.portal.mesh.visible = false;
 
-
-// PASS 1 → Scene ohne Portal
 this.renderer.setRenderTarget(this.renderTarget);
 this.renderer.clear();
 this.renderer.render(this.scene,this.camera);
 
 
-// Portal wieder sichtbar
+// PASS 2 → normale Szene
 if(this.portal) this.portal.mesh.visible = true;
 
-
-// PASS 2 → Scene normal rendern
 this.renderer.setRenderTarget(null);
 this.renderer.render(this.scene,this.camera);
 
 }
+
 }

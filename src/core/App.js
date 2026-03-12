@@ -11,7 +11,6 @@ import { ScrollController } from "../engine/ScrollController.js";
 import { StateManager } from "../engine/StateManager.js";
 import { ThemeManager } from "../engine/ThemeManager.js";
 
-import { ColorTheme } from "../themes/ColorTheme.js";
 import { SeasonsTheme } from "../themes/SeasonsTheme.js";
 import { ImageTheme } from "../themes/ImageTheme.js";
 
@@ -52,6 +51,7 @@ this.renderer.renderTarget.texture
 );
 
 this.renderer.portal = this.portal;
+this.renderer.stage = this.stage;
 
 
 // ------------------------------------------------
@@ -70,11 +70,13 @@ this.stage.getContent()
 // THEMES
 // ------------------------------------------------
 
-this.themeManager.register("color", ColorTheme);
 this.themeManager.register("seasons", SeasonsTheme);
-this.themeManager.register("image", ImageTheme);
+this.themeManager.register("images", ImageTheme);
 
-this.themeManager.activate("color");
+// später
+// this.themeManager.register("movies", MoviesTheme);
+
+this.themeManager.activate("seasons");
 
 
 // ------------------------------------------------
@@ -161,15 +163,16 @@ setupThemeSwitching(){
 window.addEventListener("keydown",(e)=>{
 
 if(e.code === "Digit1"){
-this.themeManager.activate("color");
-}
-
-if(e.code === "Digit2"){
 this.themeManager.activate("seasons");
 }
 
+if(e.code === "Digit2"){
+this.themeManager.activate("images");
+}
+
 if(e.code === "Digit3"){
-this.themeManager.activate("image");
+// placeholder für später
+console.log("Movies theme not implemented yet");
 }
 
 });
@@ -216,7 +219,7 @@ this.world.update();
 
 
 // Portal
-this.portal.update();
+this.portal.update(delta);
 
 
 // Particles

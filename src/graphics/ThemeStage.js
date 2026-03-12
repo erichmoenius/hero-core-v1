@@ -2,38 +2,46 @@ import * as THREE from "three";
 
 export class ThemeStage {
 
-  constructor(scene){
+constructor(scene){
 
-    this.scene = scene;
+this.scene = scene;
 
-    // Container für Themes
-    this.content = new THREE.Group();
-    scene.add(this.content);
+const size = 5.5;
 
-    const size = 5.5;
 
-    // Glass Portal
-    const glass = new THREE.Mesh(
-      new THREE.PlaneGeometry(size, size),
-      new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,
-        transmission: 1,
-        opacity: 0.15,
-        transparent: true,
-        roughness: 0.2,
-        metalness: 0,
-        depthWrite:false
-      })
-    );
+// Theme Container
+this.content = new THREE.Group();
 
-    glass.position.z = 0.01;
+// wichtig: leicht hinter dem Glas
+this.content.position.z = -0.01;
 
-    scene.add(glass);
+scene.add(this.content);
 
-  }
 
-  getContent(){
-    return this.content;
-  }
+// Glass Portal
+this.glass = new THREE.Mesh(
+new THREE.PlaneGeometry(size, size),
+new THREE.MeshPhysicalMaterial({
+color: 0xffffff,
+transmission: 1,
+opacity: 0.15,
+transparent: true,
+roughness: 0.2,
+metalness: 0,
+depthWrite:false
+})
+);
+
+// Glas leicht davor
+this.glass.position.z = 0.02;
+
+scene.add(this.glass);
+
+}
+
+
+getContent(){
+return this.content;
+}
 
 }

@@ -109,10 +109,9 @@ scene.add(this.mesh);
 
 }
 
+update(delta){
 
-update(){
-
-this.uniforms.uTime.value += 0.01;
+this.uniforms.uTime.value += delta;
 
 }
 
