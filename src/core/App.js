@@ -1,96 +1,231 @@
+import * as THREE from "three";
+
 import { Renderer } from "../graphics/Renderer.js";
+import { ShaderWorld } from "../graphics/ShaderWorld.js";
+import { Starfield } from "../graphics/Starfield.js";
+import { GlassPortal } from "../graphics/GlassPortal.js";
+import { ThemeStage } from "../graphics/ThemeStage.js";
+
 import { Loop } from "./Loop.js";
 import { ScrollController } from "../engine/ScrollController.js";
 import { StateManager } from "../engine/StateManager.js";
 import { ThemeManager } from "../engine/ThemeManager.js";
 
-import { ColorTheme } from "../themes/ColorTheme.js";
 import { SeasonsTheme } from "../themes/SeasonsTheme.js";
 import { ImageTheme } from "../themes/ImageTheme.js";
 
+import { createParticleField } from "../particles/ParticleField.js";
+import { createParticleMaterial } from "../particles/ParticleShader.js";
+
+
 export class App {
 
-  constructor() {
+constructor(){
 
-    // Core Systems
-    this.renderer = new Renderer();
-    this.scroll = new ScrollController();
-    this.stateManager = new StateManager();
-    this.themeManager = new ThemeManager(this.renderer);
+// ------------------------------------------------
+// RENDERER
+// ------------------------------------------------
 
-    // Register Themes
-    this.themeManager.register("color", ColorTheme);
-    this.themeManager.register("seasons", SeasonsTheme);
-    this.themeManager.register("image", ImageTheme);
+this.renderer = new Renderer();
 
-    this.themeManager.activate("color");
+const scene = this.renderer.scene;
 
-    // Intensity
-    this.isBoosting = false;
-    this.intensity = 0;
 
-    this.setupInput();
-    this.setupThemeSwitching();
+// ------------------------------------------------
+// BACKGROUND
+// ------------------------------------------------
 
-    // Main Loop
-    this.loop = new Loop(
-      this.update.bind(this),
-      this.renderer.render.bind(this.renderer)
-    );
+this.world = new ShaderWorld(scene);
+this.stars = new Starfield(scene);
 
-    this.loop.start();
-  }
 
-  setupInput() {
-    window.addEventListener("mousedown", () => {
-      this.isBoosting = true;
-    });
+// ------------------------------------------------
+// PORTAL + THEME STAGE
+// ------------------------------------------------
 
-    window.addEventListener("mouseup", () => {
-      this.isBoosting = false;
-    });
-  }
+this.stage = new ThemeStage(scene);
 
-  setupThemeSwitching() {
-    window.addEventListener("keydown", (e) => {
+this.portal = new GlassPortal(
+scene,
+this.renderer.renderTarget.texture
+);
 
-      if (e.code === "Digit1") {
-        this.themeManager.activate("color");
-      }
+this.renderer.portal = this.portal;
+this.renderer.stage = this.stage;
 
-      if (e.code === "Digit2") {
-        this.themeManager.activate("seasons");
-      }
 
-      if (e.code === "Digit3") {
-        this.themeManager.activate("image");
-      }
+// ------------------------------------------------
+// CORE SYSTEMS
+// ------------------------------------------------
 
-    });
-  }
+this.scroll = new ScrollController();
+this.stateManager = new StateManager();
 
-  update() {
+this.themeManager = new ThemeManager(
+this.stage.getContent()
+);
 
-    const progress = this.scroll.getProgress();
 
-    this.stateManager.update(progress);
+// ------------------------------------------------
+// THEMES
+// ------------------------------------------------
 
-    const state = this.stateManager.get();
+this.themeManager.register("seasons", SeasonsTheme);
+this.themeManager.register("images", ImageTheme);
 
-    // Smooth intensity
-    if (this.isBoosting) {
-      this.intensity += 0.04;
-    } else {
-      this.intensity -= 0.04;
-    }
+// später
+// this.themeManager.register("movies", MoviesTheme);
 
-    if (this.intensity < 0) this.intensity = 0;
-    if (this.intensity > 1) this.intensity = 1;
+this.themeManager.activate("seasons");
 
-    // Direktes Objekt ohne Spread
-    state.intensity = this.intensity;
 
-    this.themeManager.update(state);
-  }
+// ------------------------------------------------
+// PARTICLES
+// ------------------------------------------------
+
+this.setupParticles();
+
+
+// ------------------------------------------------
+// INPUT
+// ------------------------------------------------
+
+this.isBoosting = false;
+this.intensity = 0;
+
+this.setupInput();
+this.setupThemeSwitching();
+
+
+// ------------------------------------------------
+// LOOP
+// ------------------------------------------------
+
+this.loop = new Loop(
+this.update.bind(this),
+this.renderer.render.bind(this.renderer)
+);
+
+this.loop.start();
+
+}
+
+
+
+// ------------------------------------------------
+// PARTICLES
+// ------------------------------------------------
+
+setupParticles(){
+
+const scene = this.renderer.scene;
+
+const N = 6000;
+
+this.field = createParticleField(N);
+this.material = createParticleMaterial();
+
+this.points = new THREE.Points(
+this.field.geometry,
+this.material
+);
+
+scene.add(this.points);
+
+}
+
+
+
+// ------------------------------------------------
+// INPUT
+// ------------------------------------------------
+
+setupInput(){
+
+window.addEventListener("mousedown",()=>{
+this.isBoosting = true;
+});
+
+window.addEventListener("mouseup",()=>{
+this.isBoosting = false;
+});
+
+}
+
+
+
+// ------------------------------------------------
+// THEME SWITCHING
+// ------------------------------------------------
+
+setupThemeSwitching(){
+
+window.addEventListener("keydown",(e)=>{
+
+if(e.code === "Digit1"){
+this.themeManager.activate("seasons");
+}
+
+if(e.code === "Digit2"){
+this.themeManager.activate("images");
+}
+
+if(e.code === "Digit3"){
+// placeholder für später
+console.log("Movies theme not implemented yet");
+}
+
+});
+
+}
+
+
+
+// ------------------------------------------------
+// UPDATE LOOP
+// ------------------------------------------------
+
+update(delta){
+
+// Scroll
+this.scroll.updateScroll();
+
+const progress = this.scroll.getProgress();
+
+this.stateManager.update(progress);
+
+const state = this.stateManager.get();
+
+
+// Smooth intensity
+if(this.isBoosting){
+this.intensity += 0.04;
+}else{
+this.intensity -= 0.04;
+}
+
+this.intensity = Math.max(0,Math.min(1,this.intensity));
+
+state.intensity = this.intensity;
+
+
+// Theme
+this.themeManager.update(state);
+
+
+// Background
+this.stars.update();
+this.world.update();
+
+
+// Portal
+this.portal.update(delta);
+
+
+// Particles
+this.points.rotation.y += 0.0003 + this.intensity * 0.001;
+this.material.uniforms.uTime.value += 0.01;
+
+}
 
 }

@@ -3,34 +3,88 @@ import { BaseTheme } from "./BaseTheme.js";
 
 export class SeasonsTheme extends BaseTheme {
 
-  init() {
-    this.colors = {
-      state1: 0x88c057, // Spring (Grün frisch)
-      state2: 0xffc857, // Summer (Gelb warm)
-      state3: 0xd1495b, // Autumn (Rot/Orange)
-      state4: 0x5f6caf  // Winter (Blau kühl)
-    };
+constructor(container){
+super(container);
+}
 
-    this.plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({ color: 0x000000 })
-    );
+init(){
 
-    this.plane.scale.set(2, 2, 1);
-    this.scene.add(this.plane);
-  }
+this.colors = {
 
-  update({ current, next, blend }) {
-    if (!current || !next) return;
+state1: 0x8df5a6, // spring → light green
 
-    const c1 = new THREE.Color(this.colors[current]);
-    const c2 = new THREE.Color(this.colors[next]);
+state2: 0xff7a00, // summer → strong warm orange
 
-    const blended = c1.lerp(c2, blend);
-    this.plane.material.color.copy(blended);
-  }
+state3: 0xa06b3b, // autumn → brown dust
 
-  dispose() {
-    this.scene.remove(this.plane);
-  }
+state4: 0x9fdfff  // winter → icy blue
+
+};
+
+this.geometry = new THREE.PlaneGeometry(5.5,5.5);
+
+this.material = new THREE.MeshBasicMaterial({
+color: this.colors.state1,
+transparent: true,
+opacity: 0.35,
+depthWrite: false,
+depthTest: false,
+blending: THREE.AdditiveBlending
+});
+
+this.plane = new THREE.Mesh(
+this.geometry,
+this.material
+);
+
+// wichtig
+this.plane.renderOrder = 2;
+
+// leicht hinter das Glas
+this.plane.position.z = -0.02;
+
+this.container.add(this.plane);
+
+}
+
+update({ current, next, blend, intensity }){
+
+if(!current || !next) return;
+
+const c1 = new THREE.Color(this.colors[current]);
+const c2 = new THREE.Color(this.colors[next]);
+
+const blended = c1.clone().lerp(c2, blend);
+
+this.plane.material.color.copy(blended);
+
+
+// Portal breathing
+if(intensity !== undefined){
+
+const boost = 1 + intensity * 0.08;
+
+this.plane.scale.set(
+5.5 * boost,
+5.5 * boost,
+1
+);
+
+}
+
+}
+
+dispose(){
+
+if(!this.plane) return;
+
+this.container.remove(this.plane);
+
+this.geometry.dispose();
+this.material.dispose();
+
+this.plane = null;
+
+}
+
 }
