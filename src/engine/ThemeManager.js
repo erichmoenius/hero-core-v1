@@ -1,28 +1,38 @@
 export class ThemeManager {
-  constructor(renderer) {
-    this.renderer = renderer;
-    this.themes = {};
-    this.activeTheme = null;
-  }
 
-  register(name, ThemeClass) {
-    this.themes[name] = ThemeClass;
-  }
+constructor(container){
+this.container = container;
+this.themes = {};
+this.activeTheme = null;
+}
 
-  activate(name) {
-    if (!this.themes[name]) return;
+register(name, ThemeClass){
+this.themes[name] = ThemeClass;
+}
 
-    if (this.activeTheme && this.activeTheme.dispose) {
-      this.activeTheme.dispose();
-    }
+activate(name){
 
-    const ThemeClass = this.themes[name];
-    this.activeTheme = new ThemeClass(this.renderer);
-    this.activeTheme.init();
-  }
+if(!this.themes[name]) return;
 
-  update(stateData) {
-    if (!this.activeTheme) return;
-    this.activeTheme.update(stateData);
-  }
+// altes Theme entfernen
+if(this.activeTheme && this.activeTheme.dispose){
+this.activeTheme.dispose();
+}
+
+const ThemeClass = this.themes[name];
+
+this.activeTheme = new ThemeClass(this.container);
+
+this.activeTheme.init();
+
+}
+
+update(state){
+
+if(!this.activeTheme) return;
+
+this.activeTheme.update(state);
+
+}
+
 }

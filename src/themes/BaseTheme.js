@@ -1,13 +1,13 @@
 export class BaseTheme {
-  constructor(renderer) {
-    this.renderer = renderer;
-    this.scene = renderer.scene;
-    this.camera = renderer.camera;
+
+  constructor(container){
+    this.container = container;
   }
 
-  init() {}
+  init(){}
 
-  update(stateData) {}
+  update(){}
 
-  dispose() {}
+  dispose(){}
+
 }
