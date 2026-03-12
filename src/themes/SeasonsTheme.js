@@ -10,10 +10,15 @@ super(container);
 init(){
 
 this.colors = {
-state1: 0xaad6ff, // winter
-state2: 0x88cc88, // spring
-state3: 0xffcc66, // summer
-state4: 0xcc8844  // autumn
+
+state1: 0x8df5a6, // spring → light green
+
+state2: 0xff7a00, // summer → strong warm orange
+
+state3: 0xa06b3b, // autumn → brown dust
+
+state4: 0x9fdfff  // winter → icy blue
+
 };
 
 this.geometry = new THREE.PlaneGeometry(5.5,5.5);
@@ -21,8 +26,10 @@ this.geometry = new THREE.PlaneGeometry(5.5,5.5);
 this.material = new THREE.MeshBasicMaterial({
 color: this.colors.state1,
 transparent: true,
+opacity: 0.35,
 depthWrite: false,
-depthTest: false
+depthTest: false,
+blending: THREE.AdditiveBlending
 });
 
 this.plane = new THREE.Mesh(
@@ -30,12 +37,15 @@ this.geometry,
 this.material
 );
 
-// wichtig: container
+// wichtig
+this.plane.renderOrder = 2;
+
+// leicht hinter das Glas
+this.plane.position.z = -0.02;
+
 this.container.add(this.plane);
 
 }
-
-
 
 update({ current, next, blend, intensity }){
 
@@ -49,11 +59,10 @@ const blended = c1.clone().lerp(c2, blend);
 this.plane.material.color.copy(blended);
 
 
-// ⭐ Portal Breathing (gleich wie andere Themes)
-
+// Portal breathing
 if(intensity !== undefined){
 
-const boost = 1 + intensity * 0.15;
+const boost = 1 + intensity * 0.08;
 
 this.plane.scale.set(
 5.5 * boost,
@@ -64,8 +73,6 @@ this.plane.scale.set(
 }
 
 }
-
-
 
 dispose(){
 
