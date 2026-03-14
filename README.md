@@ -1,87 +1,162 @@
-# Hero Core – Concept
+# Hero Core v1 – Cinematic WebGL Hero Engine
 
-## Project Structure
+A cinematic WebGL hero section built with **Three.js**.
+The system renders a **procedural space environment** with nebula shaders, layered starfields, a glass portal, and scroll-driven themes.
 
-The project is intentionally split into two repositories:
-
-hero-prototype-1 → experimental playground
-hero-core-v1 → stable engine
-
-The prototype repository is used for rapid visual experimentation:
-
-* galaxy generators
-* nebula shaders
-* audio reactions
-* interaction tests
-
-Once an experiment proves stable and visually convincing, it is migrated into the core engine.
-
-This separation keeps the engine clean and prevents experimental code from polluting the core architecture.
+This project explores how interactive graphics, audio, and visual storytelling can transform a website hero section into a **digital dream journey**.
 
 ---
 
-# Narrative Fibonacci
+# ✨ Features
 
-The Hero system follows a simple generative rule:
+### 🌌 Procedural Space Background
 
-Theme → 4 States
+* Dual-layer **nebula shader**
+* **Curl noise gas flow**
+* **Depth parallax**
+* **Chromatic scattering**
+* **Volumetric light rays**
 
-Each **Theme** represents a conceptual universe
-(e.g. Matter, Images, Movies, Seasons).
+### ⭐ Cinematic Starfield
 
-Each Theme unfolds through **four transformation states**.
+* 3 parallax star layers
+* **Milky Way band**
+* **Micro-star deep space dust**
+* Variable star sizes
+* Twinkling animation
+* Blue / white / orange star colors
 
-Example:
+### 🪟 Glass Portal
 
-Theme: Matter (prototype)
+* Transparent **refraction portal**
+* Cinematic light sweep
+* Scroll-controlled visual states
+* Theme container for dynamic content
 
-1. Gas
-2. Liquid
-3. Solid / Plasma
-4. Fire
+### 🎨 Theme System
 
-This structure behaves like a narrative spiral.
+Current themes:
 
-Simple rules generate increasingly complex visual experiences —
-similar to how Fibonacci patterns produce complex structures in nature.
+1. **Seasons Theme**
+   Color transitions representing seasonal moods.
 
-We call this concept:
+2. **Image Theme**
+   Cross-fading image transitions inside the portal.
 
-**Narrative Fibonacci**
+Planned:
 
-A minimal structural rule that generates a scalable narrative system.
+3. **Video Theme**
+   Looping WebM / MOV visual experiences.
 
----
+### ✨ Particle System
 
-# Theme Architecture
+Interactive particle field reacting to user input.
 
-Every theme follows the same structure:
+### 🖱 Interaction
 
-Theme
-├─ State 1
-├─ State 2
-├─ State 3
-└─ State 4
-
-This keeps the engine predictable while allowing unlimited creative variation.
-
-Example future themes:
-
-Matter
-Images
-Movies
-3D Worlds
-Seasons
-Space
-
-Each theme becomes a small experiential journey inside the Hero.
+* Scroll-driven state transitions
+* Mouse parallax
+* Click intensity boost
 
 ---
 
-# Vision
+# 🧠 Architecture
 
-The Hero is not just an animation.
+```text
+Renderer
+│
+├── ShaderWorld
+│   └── Procedural Nebula
+│
+├── Starfield
+│   ├── Micro stars
+│   ├── Far layer
+│   ├── Mid layer
+│   └── Near layer
+│
+├── GlassPortal
+│
+├── ThemeStage
+│   └── ThemeManager
+│       ├── SeasonsTheme
+│       └── ImageTheme
+│
+├── ParticleField
+│
+└── Engine
+    ├── ScrollController
+    ├── StateManager
+    └── Loop
+```
 
-It is designed as a **generative narrative engine** that allows users to travel through different visual universes.
+---
 
-A simple structural rule enables infinite variations while keeping the system maintainable and modular.
+# 🛠 Tech Stack
+
+* **Three.js**
+* **WebGL / GLSL**
+* **Vite**
+* **JavaScript ES Modules**
+
+---
+
+# 🚀 Development
+
+Install dependencies:
+
+```
+npm install
+```
+
+Run development server:
+
+```
+npm run dev
+```
+
+Build production version:
+
+```
+npm run build
+```
+
+---
+
+# 🌐 Deployment
+
+The project is automatically deployed via **Vercel**.
+
+Every push to the `main` branch triggers a new deployment.
+
+---
+
+# 🔮 Roadmap
+
+Planned improvements:
+
+* Video portal theme (WebM / VideoTexture)
+* Mobile optimization
+* Audio-reactive visual states
+* Cinematic UI overlay
+* Shader performance tuning
+* Reusable hero template engine
+
+---
+
+# 🎭 Concept
+
+This hero section is part of a larger idea:
+
+> A **digital dream journey** through multiple visual states.
+
+Instead of static visuals, the hero becomes an **interactive environment**.
+
+---
+
+# 👤 Author
+
+Erich Moenius
+
+Project related to:
+
+**thefridolin.com – Interactive Web Experiments**
