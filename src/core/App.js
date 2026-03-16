@@ -17,10 +17,16 @@ import { ImageTheme } from "../themes/ImageTheme.js";
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
 
+import { getRandomMovie } from "../main.js";
 
 export class App {
 
 constructor(){
+
+const test = document.createElement("video");
+test.src = "/assets/mov/test.webm";
+test.controls = true;
+document.body.appendChild(test);  
 
 // ------------------------------------------------
 // RENDERER
@@ -28,6 +34,54 @@ constructor(){
 
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
+
+
+// ------------------------------------------------
+// THEME3 TEST (clean minimal version)
+// ------------------------------------------------
+
+const movie = getRandomMovie();
+console.log("Theme3 movie:", movie);
+
+// create video
+this.movieVideo = document.createElement("video");
+
+this.movieVideo.src = movie;
+this.movieVideo.loop = true;
+this.movieVideo.muted = true;
+this.movieVideo.playsInline = true;
+this.movieVideo.crossOrigin = "anonymous";
+this.movieVideo.preload = "auto";
+
+// create texture
+const texture = new THREE.VideoTexture(this.movieVideo);
+
+texture.minFilter = THREE.LinearFilter;
+texture.magFilter = THREE.LinearFilter;
+texture.format = THREE.RGBAFormat;
+
+// create plane
+const geometry = new THREE.PlaneGeometry(4, 2.25);
+
+const material = new THREE.MeshBasicMaterial({
+  map: texture,
+  toneMapped: false
+});
+
+const plane = new THREE.Mesh(geometry, material);
+
+plane.position.set(0,0,-2);
+
+this.scene.add(plane);
+
+console.log("movie plane added");
+
+// start video after click (browser safe)
+window.addEventListener("click", () => {
+  this.movieVideo.currentTime = 0;
+  this.movieVideo.play();
+  console.log("video started");
+});
 
 
 // ------------------------------------------------
@@ -49,7 +103,6 @@ this.scene,
 this.renderer.renderTarget.texture
 );
 
-// Renderer benötigt Zugriff für Portal Rendering
 this.renderer.portal = this.portal;
 this.renderer.stage = this.stage;
 
@@ -72,9 +125,6 @@ this.stage.getContent()
 
 this.themeManager.register("seasons", SeasonsTheme);
 this.themeManager.register("images", ImageTheme);
-
-// zukünftiges Theme
-// this.themeManager.register("movies", MoviesTheme);
 
 this.themeManager.activate("seasons");
 
@@ -184,7 +234,6 @@ console.log("Movies theme not implemented yet");
 
 update(delta){
 
-// Scroll
 this.scroll.updateScroll();
 
 const progress = this.scroll.getProgress();
@@ -193,8 +242,6 @@ this.stateManager.update(progress);
 
 const state = this.stateManager.get();
 
-
-// Intensity smoothing
 if(this.isBoosting){
 this.intensity += 0.04;
 }else{
@@ -205,25 +252,15 @@ this.intensity = Math.max(0,Math.min(1,this.intensity));
 
 state.intensity = this.intensity;
 
-
-// Theme update
 this.themeManager.update(state);
 
-
-// Background systems
 this.stars.update();
 this.world.update();
 
-
-// Portal update
 this.portal.update(delta);
 
-
-// Particle motion
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
-
-// Particle shader time
 if(this.material?.uniforms?.uTime){
 this.material.uniforms.uTime.value += 0.01;
 }
