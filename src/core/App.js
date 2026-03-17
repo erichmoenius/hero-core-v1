@@ -17,7 +17,7 @@ import { ImageTheme } from "../themes/ImageTheme.js";
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
 
-import { getRandomMovie } from "../main.js";
+import { loadMovieTexture } from "../movieLoader.js";
 
 export class App {
 
@@ -37,40 +37,23 @@ this.scene = this.renderer.scene;
 
 
 // ------------------------------------------------
-// THEME3 TEST (clean minimal version)
+// THEME3 TEST (using loader)
 // ------------------------------------------------
 
-const movie = getRandomMovie();
-console.log("Theme3 movie:", movie);
+const texture = loadMovieTexture("/mov/test_fixed.mp4");
 
-// create video
-this.movieVideo = document.createElement("video");
-
-this.movieVideo.src = movie;
-this.movieVideo.loop = true;
-this.movieVideo.muted = true;
-this.movieVideo.playsInline = true;
-this.movieVideo.crossOrigin = "anonymous";
-this.movieVideo.preload = "auto";
-
-// create texture
-const texture = new THREE.VideoTexture(this.movieVideo);
-
-texture.minFilter = THREE.LinearFilter;
-texture.magFilter = THREE.LinearFilter;
-texture.format = THREE.RGBAFormat;
-
-// create plane
-const geometry = new THREE.PlaneGeometry(4, 2.25);
+const geometry = new THREE.PlaneGeometry(10, 6);
 
 const material = new THREE.MeshBasicMaterial({
   map: texture,
+  transparent: true,
+  opacity: 0.6,
   toneMapped: false
 });
 
 const plane = new THREE.Mesh(geometry, material);
 
-plane.position.set(0,0,-2);
+plane.position.set(0, 0, -2);
 
 this.scene.add(plane);
 
