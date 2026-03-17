@@ -47,13 +47,21 @@ const geometry = new THREE.PlaneGeometry(10, 6);
 const material = new THREE.MeshBasicMaterial({
   map: texture,
   transparent: true,
-  opacity: 0.6,
+  opacity: 0.5,
   toneMapped: false
 });
 
+//var 1
+//material.blending = THREE.NormalBlending;
+//material.opacity = 0.4;
+
+//var2
+//material.blending = THREE.AdditiveBlending;
+//material.opacity = 0.25;
+
 const plane = new THREE.Mesh(geometry, material);
 
-plane.position.set(0, 0, -2);
+plane.position.set(0, 0, -4);
 
 this.scene.add(plane);
 
