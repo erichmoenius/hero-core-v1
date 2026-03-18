@@ -39,7 +39,7 @@ export class MoviesTheme {
     const i = state.intensity ?? 0;
 
     // 🎬 subtle breathing
-    this.mesh.scale.setScalar(1.05 + Math.sin(performance.now()*0.0002)*0.02);
+    this.mesh.scale.setScalar(1.03 + Math.sin(performance.now()*0.00025)*0.03);
 
     // ------------------------------------------------
     // STATE DRAMATURGY
