@@ -13,20 +13,14 @@ import { ThemeManager } from "../engine/ThemeManager.js";
 
 import { SeasonsTheme } from "../themes/SeasonsTheme.js";
 import { ImageTheme } from "../themes/ImageTheme.js";
+import { MoviesTheme } from "../themes/MoviesTheme.js";
 
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
 
-import { loadMovieTexture } from "../movieLoader.js";
-
 export class App {
 
 constructor(){
-
-const test = document.createElement("video");
-test.src = "/assets/mov/test.webm";
-test.controls = true;
-document.body.appendChild(test);  
 
 // ------------------------------------------------
 // RENDERER
@@ -34,45 +28,6 @@ document.body.appendChild(test);
 
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
-
-
-// ------------------------------------------------
-// THEME3 TEST (using loader)
-// ------------------------------------------------
-
-const texture = loadMovieTexture("/mov/test_fixed.mp4");
-
-const geometry = new THREE.PlaneGeometry(10, 6);
-
-const material = new THREE.MeshBasicMaterial({
-  map: texture,
-  transparent: true,
-  opacity: 0.5,
-  toneMapped: false
-});
-
-//var 1
-//material.blending = THREE.NormalBlending;
-//material.opacity = 0.4;
-
-//var2
-//material.blending = THREE.AdditiveBlending;
-//material.opacity = 0.25;
-
-const plane = new THREE.Mesh(geometry, material);
-
-plane.position.set(0, 0, -4);
-
-this.scene.add(plane);
-
-console.log("movie plane added");
-
-// start video after click (browser safe)
-window.addEventListener("click", () => {
-  this.movieVideo.currentTime = 0;
-  this.movieVideo.play();
-  console.log("video started");
-});
 
 
 // ------------------------------------------------
@@ -90,8 +45,8 @@ this.stars = new Starfield(this.scene);
 this.stage = new ThemeStage(this.scene);
 
 this.portal = new GlassPortal(
-this.scene,
-this.renderer.renderTarget.texture
+  this.scene,
+  this.renderer.renderTarget.texture
 );
 
 this.renderer.portal = this.portal;
@@ -106,7 +61,7 @@ this.scroll = new ScrollController();
 this.stateManager = new StateManager();
 
 this.themeManager = new ThemeManager(
-this.stage.getContent()
+  this.stage.getContent()
 );
 
 
@@ -116,7 +71,9 @@ this.stage.getContent()
 
 this.themeManager.register("seasons", SeasonsTheme);
 this.themeManager.register("images", ImageTheme);
+this.themeManager.register("movies", MoviesTheme);
 
+// default
 this.themeManager.activate("seasons");
 
 
@@ -143,8 +100,8 @@ this.setupThemeSwitching();
 // ------------------------------------------------
 
 this.loop = new Loop(
-this.update.bind(this),
-this.renderer.render.bind(this.renderer)
+  this.update.bind(this),
+  this.renderer.render.bind(this.renderer)
 );
 
 this.loop.start();
@@ -165,8 +122,8 @@ this.field = createParticleField(N);
 this.material = createParticleMaterial();
 
 this.points = new THREE.Points(
-this.field.geometry,
-this.material
+  this.field.geometry,
+  this.material
 );
 
 this.scene.add(this.points);
@@ -182,11 +139,11 @@ this.scene.add(this.points);
 setupInput(){
 
 window.addEventListener("mousedown",()=>{
-this.isBoosting = true;
+  this.isBoosting = true;
 });
 
 window.addEventListener("mouseup",()=>{
-this.isBoosting = false;
+  this.isBoosting = false;
 });
 
 }
@@ -201,17 +158,18 @@ setupThemeSwitching(){
 
 window.addEventListener("keydown",(e)=>{
 
-if(e.code === "Digit1"){
-this.themeManager.activate("seasons");
-}
+  if(e.code === "Digit1"){
+    this.themeManager.activate("seasons");
+  }
 
-if(e.code === "Digit2"){
-this.themeManager.activate("images");
-}
+  if(e.code === "Digit2"){
+    this.themeManager.activate("images");
+  }
 
-if(e.code === "Digit3"){
-console.log("Movies theme not implemented yet");
-}
+  if(e.code === "Digit3"){
+    this.themeManager.activate("movies");
+    console.log("Movies theme activated");
+  }
 
 });
 
@@ -234,9 +192,9 @@ this.stateManager.update(progress);
 const state = this.stateManager.get();
 
 if(this.isBoosting){
-this.intensity += 0.04;
+  this.intensity += 0.04;
 }else{
-this.intensity -= 0.04;
+  this.intensity -= 0.04;
 }
 
 this.intensity = Math.max(0,Math.min(1,this.intensity));
@@ -253,7 +211,7 @@ this.portal.update(delta);
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
 if(this.material?.uniforms?.uTime){
-this.material.uniforms.uTime.value += 0.01;
+  this.material.uniforms.uTime.value += 0.01;
 }
 
 }
