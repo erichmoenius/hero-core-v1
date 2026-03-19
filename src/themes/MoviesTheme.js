@@ -6,19 +6,18 @@ export class MoviesTheme {
   constructor(container){
 
     this.container = container;
-
     this.time = 0;
 
     // ------------------------------------------------
     // 🎬 VIDEO LAYER 1 (BASE)
     // ------------------------------------------------
 
-    const tex1 = loadMovieTexture("/mov/test_fixed.mp4");
+    const tex1 = loadMovieTexture("/mov/blue.mp4");
 
     this.mat1 = new THREE.MeshBasicMaterial({
       map: tex1,
       transparent: true,
-      opacity: 0.35,
+      opacity: 1.1,
       toneMapped: false
     });
 
@@ -30,12 +29,11 @@ export class MoviesTheme {
     );
 
     this.mesh1.position.set(0,0,-4);
-
-    container.add(this.mesh1);
+    this.container.add(this.mesh1);
 
 
     // ------------------------------------------------
-    // 🎬 VIDEO LAYER 2 (DETAIL)
+    // 🎬 VIDEO LAYER 2 (DETAIL / ENERGY)
     // ------------------------------------------------
 
     const tex2 = loadMovieTexture("/mov/red_spirale.mp4");
@@ -43,7 +41,7 @@ export class MoviesTheme {
     this.mat2 = new THREE.MeshBasicMaterial({
       map: tex2,
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.2,
       toneMapped: false
     });
 
@@ -55,13 +53,12 @@ export class MoviesTheme {
     );
 
     this.mesh2.position.set(0,0,-3.5);
-
-    container.add(this.mesh2);
+    this.container.add(this.mesh2);
   }
 
 
   // ------------------------------------------------
-  // UPDATE
+  // 🎬 UPDATE (CINEMATIC + STATE)
   // ------------------------------------------------
 
   update(state){
@@ -71,56 +68,105 @@ export class MoviesTheme {
     const i = state.intensity ?? 0;
 
     // ------------------------------------------------
-    // 🎬 PARALLAX (depth feeling)
+    // 🎥 MOTION (Parallax + Breathing)
     // ------------------------------------------------
 
-    this.mesh1.position.x = Math.sin(this.time * 0.2) * 0.3;
-    this.mesh1.position.y = Math.cos(this.time * 0.15) * 0.2;
+    this.mesh1.position.x = Math.sin(this.time * 0.1) * 0.2;
+    this.mesh1.position.y = Math.cos(this.time * 0.08) * 0.15;
 
-    this.mesh2.position.x = Math.sin(this.time * 0.4) * 0.5;
-    this.mesh2.position.y = Math.cos(this.time * 0.3) * 0.3;
-
-    // ------------------------------------------------
-    // 🎬 SCALE BREATHING
-    // ------------------------------------------------
+    this.mesh2.position.x = Math.sin(this.time * 0.37) * 0.6;
+    this.mesh2.position.y = Math.cos(this.time * 0.23) * 0.4; 
 
     this.mesh1.scale.setScalar(1.02 + Math.sin(this.time * 0.3) * 0.04);
     this.mesh2.scale.setScalar(1.05 + Math.sin(this.time * 0.5) * 0.06);
 
+
     // ------------------------------------------------
-    // 🎬 STATE REACTION
+    // 🎬 BASE VALUES
     // ------------------------------------------------
 
-    let baseOpacity = 0.25;
-    let detailOpacity = 0.1;
+    let baseOpacity = 0.2;
+    let detailOpacity = 0.15;
+
+    let baseColor = new THREE.Color(1,1,1);
+    let detailColor = new THREE.Color(1,1,1);
+
+    let blendMode = THREE.NormalBlending;
+
+
+    // ------------------------------------------------
+    // 🎭 STATE DRAMATURGY
+    // ------------------------------------------------
 
     if(state.fire > 0){
       baseOpacity = 0.2 + state.fire * 0.4;
-      detailOpacity = 0.15 + state.fire * 0.5;
+      detailOpacity = 0.2 + state.fire * 0.5;
 
-      this.mat2.blending = THREE.AdditiveBlending;
+      baseColor.setRGB(1.2, 0.5, 0.2);
+      detailColor.setRGB(1.5, 0.6, 0.3);
+
+      blendMode = THREE.AdditiveBlending;
     }
+
     else if(state.water > 0){
       baseOpacity = 0.3 + state.water * 0.25;
-      detailOpacity = 0.1 + state.water * 0.2;
+      detailOpacity = 0.15 + state.water * 0.25;
 
-      this.mat2.blending = THREE.NormalBlending;
+      baseColor.setRGB(0.3, 0.5, 1.2);
+      detailColor.setRGB(0.5, 0.7, 1.5);
     }
+
     else if(state.gas > 0){
       baseOpacity = 0.2 + state.gas * 0.2;
-      detailOpacity = 0.05 + state.gas * 0.1;
+      detailOpacity = 0.1 + state.gas * 0.1;
+
+      baseColor.setRGB(1.1, 1.1, 1.1);
+      detailColor.setRGB(1.3, 1.3, 1.3);
     }
+
     else if(state.solid > 0){
       baseOpacity = 0.15 + state.solid * 0.2;
       detailOpacity = 0.05;
+
+      baseColor.setRGB(0.6, 0.6, 0.6);
+      detailColor.setRGB(0.8, 0.8, 0.8);
     }
 
-    baseOpacity += i * 0.2;
-    detailOpacity += i * 0.2;
 
-    // smooth fade
+    // ------------------------------------------------
+    // ⚡ INTENSITY BOOST
+    // ------------------------------------------------
+
+    baseOpacity += i * 0.25;
+    detailOpacity += i * 0.35;
+
+
+    // ------------------------------------------------
+    // 🎬 CONTRAST BOOST (Drama!)
+    // ------------------------------------------------
+
+    baseOpacity *= 0.9;
+    detailOpacity *= 1.2;
+
+
+    // ------------------------------------------------
+    // 🎬 SMOOTH TRANSITIONS
+    // ------------------------------------------------
+
     this.mat1.opacity += (baseOpacity - this.mat1.opacity) * 0.05;
     this.mat2.opacity += (detailOpacity - this.mat2.opacity) * 0.05;
+
+    this.mat1.color.lerp(baseColor, 0.05);
+    this.mat2.color.lerp(detailColor, 0.05);
+
+    this.mat2.blending = blendMode;
+
+
+    // ------------------------------------------------
+    // 💓 SUBTLE ENERGY PULSE
+    // ------------------------------------------------
+
+    this.mat2.opacity += Math.sin(this.time * 2) * 0.03;
   }
 
 

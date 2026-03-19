@@ -1,5 +1,5 @@
 // mp4>mp4
-ffmpeg -i camera_tunnelring_2025.mp4 -vf "scale=1024:-1" -vcodec libx264 -pix_fmt yuv420p -crf 20 -an -movflags +faststart red_spirale.mp4
+ffmpeg -i blue.mp4 -vf "scale=1024:-1" -vcodec libx264 -pix_fmt yuv420p -crf 20 -an -movflags +faststart blue_r.mp4
 //mehr quality -crf 18
 //kleiner-schneller -crf 23
 

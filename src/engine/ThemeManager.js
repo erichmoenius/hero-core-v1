@@ -1,38 +1,63 @@
 export class ThemeManager {
 
-constructor(container){
-this.container = container;
-this.themes = {};
-this.activeTheme = null;
-}
+  constructor(container){
+    this.container = container;
+    this.themes = {};
+    this.activeTheme = null;
+    this.activeName = null;
+  }
 
-register(name, ThemeClass){
-this.themes[name] = ThemeClass;
-}
+  register(name, ThemeClass){
+    this.themes[name] = ThemeClass;
+  }
 
-activate(name){
+  activate(name){
 
-if(!this.themes[name]) return;
+    // ❌ gleiches Theme blocken
+    if(this.activeName === name) return;
 
-// altes Theme entfernen
-if(this.activeTheme && this.activeTheme.dispose){
-this.activeTheme.dispose();
-}
+    if(!this.themes[name]) return;
 
-const ThemeClass = this.themes[name];
+    // ------------------------------------------------
+    // 🔥 HARD RESET CONTAINER (WICHTIG!)
+    // ------------------------------------------------
 
-this.activeTheme = new ThemeClass(this.container);
+    while(this.container.children.length > 0){
+      const obj = this.container.children[0];
+      this.container.remove(obj);
+    }
 
-this.activeTheme.init();
+    // ------------------------------------------------
+    // 🔥 CLEANUP (optional zusätzlich)
+    // ------------------------------------------------
 
-}
+    if(this.activeTheme && this.activeTheme.destroy){
+      this.activeTheme.destroy();
+    }
 
-update(state){
+    // ------------------------------------------------
+    // NEW THEME
+    // ------------------------------------------------
 
-if(!this.activeTheme) return;
+    const ThemeClass = this.themes[name];
+    this.activeTheme = new ThemeClass(this.container);
+    this.activeName = name;
 
-this.activeTheme.update(state);
+    if(this.activeTheme.init){
+      this.activeTheme.init();
+    }
 
-}
+    console.log("Theme activated:", name);
+  }
+
+  update(state){
+
+    if(!this.activeTheme) return;
+
+    if(this.activeTheme.update){
+      this.activeTheme.update(state);
+    }
+
+  }
 
 }
