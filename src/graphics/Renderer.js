@@ -2,78 +2,104 @@ import * as THREE from "three";
 
 export class Renderer {
 
-constructor(){
+  constructor(){
 
-this.scene = new THREE.Scene();
+    // ------------------------------------------------
+    // SCENE + CAMERA
+    // ------------------------------------------------
 
-this.camera = new THREE.PerspectiveCamera(
-60,
-window.innerWidth / window.innerHeight,
-0.1,
-100
-);
+    this.scene = new THREE.Scene();
 
-this.camera.position.z = 5;
+    this.camera = new THREE.PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
 
-
-// WebGL renderer
-this.renderer = new THREE.WebGLRenderer({ antialias:true });
-
-
-// RenderTarget für Refraction
-this.renderTarget = new THREE.WebGLRenderTarget(
-window.innerWidth,
-window.innerHeight
-);
+    this.camera.position.set(0, 0, 5);
 
 
-// Canvas setup
-this.renderer.setSize(window.innerWidth, window.innerHeight);
+    // ------------------------------------------------
+    // WEBGL RENDERER
+    // ------------------------------------------------
 
-this.renderer.domElement.style.position = "fixed";
-this.renderer.domElement.style.top = "0";
-this.renderer.domElement.style.left = "0";
-this.renderer.domElement.style.width = "100%";
-this.renderer.domElement.style.height = "100%";
-this.renderer.domElement.style.pointerEvents = "none";
-this.renderer.domElement.style.zIndex = "-1";
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
 
-document.body.appendChild(this.renderer.domElement);
-
-
-// Resize
-window.addEventListener("resize",()=>{
-
-this.camera.aspect = window.innerWidth / window.innerHeight;
-this.camera.updateProjectionMatrix();
-
-this.renderer.setSize(window.innerWidth,window.innerHeight);
-
-this.renderTarget.setSize(
-window.innerWidth,
-window.innerHeight
-);
-
-});
-
-}
-
-render(){
-
-// PASS 1 → Scene in Texture (ohne Portal)
-if(this.portal) this.portal.mesh.visible = false;
-
-this.renderer.setRenderTarget(this.renderTarget);
-this.renderer.clear();
-this.renderer.render(this.scene,this.camera);
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 
-// PASS 2 → normale Szene
-if(this.portal) this.portal.mesh.visible = true;
+    // ------------------------------------------------
+    // RENDER TARGET (für Portal)
+    // ------------------------------------------------
 
-this.renderer.setRenderTarget(null);
-this.renderer.render(this.scene,this.camera);
+    this.renderTarget = new THREE.WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight
+    );
 
-}
+
+    // ------------------------------------------------
+    // CANVAS SETUP
+    // ------------------------------------------------
+
+    const canvas = this.renderer.domElement;
+
+    canvas.style.position = "fixed";
+    canvas.style.top = "0";
+    canvas.style.left = "0";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.pointerEvents = "none";
+    canvas.style.zIndex = "-1";
+
+    document.body.appendChild(canvas);
+
+
+    // ------------------------------------------------
+    // RESIZE
+    // ------------------------------------------------
+
+    window.addEventListener("resize", () => {
+
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      this.camera.aspect = w / h;
+      this.camera.updateProjectionMatrix();
+
+      this.renderer.setSize(w, h);
+      this.renderTarget.setSize(w, h);
+
+    });
+
+  }
+
+
+  // ------------------------------------------------
+  // RENDER PIPELINE
+  // ------------------------------------------------
+
+  render(){
+
+    // PASS 1 → Scene in Texture (ohne Portal)
+    if(this.portal) this.portal.mesh.visible = false;
+
+    this.renderer.setRenderTarget(this.renderTarget);
+    this.renderer.clear();
+    this.renderer.render(this.scene, this.camera);
+
+
+    // PASS 2 → normale Szene
+    if(this.portal) this.portal.mesh.visible = true;
+
+    this.renderer.setRenderTarget(null);
+    this.renderer.render(this.scene, this.camera);
+
+  }
 
 }

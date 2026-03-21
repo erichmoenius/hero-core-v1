@@ -28,6 +28,7 @@ constructor(){
 
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
+this.camera = this.renderer.camera;
 
 
 // ------------------------------------------------
@@ -73,7 +74,6 @@ this.themeManager.register("seasons", SeasonsTheme);
 this.themeManager.register("images", ImageTheme);
 this.themeManager.register("movies", MoviesTheme);
 
-// default
 this.themeManager.activate("seasons");
 
 
@@ -151,22 +151,30 @@ window.addEventListener("mouseup",()=>{
 
 
 // ------------------------------------------------
-// THEME SWITCHING
+// THEME SWITCHING (anti-spam)
 // ------------------------------------------------
 
 setupThemeSwitching(){
 
+let lastSwitch = 0;
+
 window.addEventListener("keydown",(e)=>{
+
+  if(e.repeat) return;
+
+  const now = performance.now();
+  if(now - lastSwitch < 150) return;
+  lastSwitch = now;
 
   if(e.code === "Digit1"){
     this.themeManager.activate("seasons");
   }
 
-  if(e.code === "Digit2"){
+  else if(e.code === "Digit2"){
     this.themeManager.activate("images");
   }
 
-  if(e.code === "Digit3"){
+  else if(e.code === "Digit3"){
     this.themeManager.activate("movies");
     console.log("Movies theme activated");
   }
@@ -183,6 +191,10 @@ window.addEventListener("keydown",(e)=>{
 
 update(delta){
 
+// ------------------------------------------------
+// SCROLL + STATE
+// ------------------------------------------------
+
 this.scroll.updateScroll();
 
 const progress = this.scroll.getProgress();
@@ -190,6 +202,13 @@ const progress = this.scroll.getProgress();
 this.stateManager.update(progress);
 
 const state = this.stateManager.get();
+
+state.progress = progress;
+
+
+// ------------------------------------------------
+// INTENSITY
+// ------------------------------------------------
 
 if(this.isBoosting){
   this.intensity += 0.04;
@@ -201,12 +220,53 @@ this.intensity = Math.max(0,Math.min(1,this.intensity));
 
 state.intensity = this.intensity;
 
+
+// ------------------------------------------------
+// CAMERA (adaptive per theme)
+// ------------------------------------------------
+
+if(this.camera){
+
+  const t = performance.now() * 0.001;
+  const p = state.progress ?? 0;
+
+  let camStrength = 0.15;
+  let depthStrength = 1.2;
+
+  if(this.themeManager.activeTheme instanceof MoviesTheme){
+    camStrength = 1.0;
+    depthStrength = 3.5;
+  }
+
+  const targetX = Math.sin(t * 0.4) * 0.8 * camStrength;
+  const targetY = Math.cos(t * 0.3) * 0.5 * camStrength;
+  const targetZ = 5 - p * depthStrength;
+
+  const scrollOffset = (p - 0.5) * 1.5 * camStrength;
+
+  this.camera.position.x += (targetX + scrollOffset - this.camera.position.x) * 0.08;
+  this.camera.position.y += (targetY - this.camera.position.y) * 0.08;
+  this.camera.position.z += (targetZ - this.camera.position.z) * 0.12;
+
+  this.camera.lookAt(0,0,0);
+}
+
+
+// ------------------------------------------------
+// SYSTEM UPDATES
+// ------------------------------------------------
+
 this.themeManager.update(state);
 
 this.stars.update();
 this.world.update();
 
 this.portal.update(delta);
+
+
+// ------------------------------------------------
+// PARTICLES
+// ------------------------------------------------
 
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
