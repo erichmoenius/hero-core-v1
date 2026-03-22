@@ -13,10 +13,10 @@ import { ThemeManager } from "../engine/ThemeManager.js";
 
 import { SeasonsTheme } from "../themes/SeasonsTheme.js";
 import { ImageTheme } from "../themes/ImageTheme.js";
+import { MoviesTheme } from "../themes/MoviesTheme.js";
 
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
-
 
 export class App {
 
@@ -28,6 +28,7 @@ constructor(){
 
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
+this.camera = this.renderer.camera;
 
 
 // ------------------------------------------------
@@ -45,11 +46,10 @@ this.stars = new Starfield(this.scene);
 this.stage = new ThemeStage(this.scene);
 
 this.portal = new GlassPortal(
-this.scene,
-this.renderer.renderTarget.texture
+  this.scene,
+  this.renderer.renderTarget.texture
 );
 
-// Renderer benötigt Zugriff für Portal Rendering
 this.renderer.portal = this.portal;
 this.renderer.stage = this.stage;
 
@@ -62,7 +62,7 @@ this.scroll = new ScrollController();
 this.stateManager = new StateManager();
 
 this.themeManager = new ThemeManager(
-this.stage.getContent()
+  this.stage.getContent()
 );
 
 
@@ -72,9 +72,7 @@ this.stage.getContent()
 
 this.themeManager.register("seasons", SeasonsTheme);
 this.themeManager.register("images", ImageTheme);
-
-// zukünftiges Theme
-// this.themeManager.register("movies", MoviesTheme);
+this.themeManager.register("movies", MoviesTheme);
 
 this.themeManager.activate("seasons");
 
@@ -102,8 +100,8 @@ this.setupThemeSwitching();
 // ------------------------------------------------
 
 this.loop = new Loop(
-this.update.bind(this),
-this.renderer.render.bind(this.renderer)
+  this.update.bind(this),
+  this.renderer.render.bind(this.renderer)
 );
 
 this.loop.start();
@@ -124,8 +122,8 @@ this.field = createParticleField(N);
 this.material = createParticleMaterial();
 
 this.points = new THREE.Points(
-this.field.geometry,
-this.material
+  this.field.geometry,
+  this.material
 );
 
 this.scene.add(this.points);
@@ -141,11 +139,11 @@ this.scene.add(this.points);
 setupInput(){
 
 window.addEventListener("mousedown",()=>{
-this.isBoosting = true;
+  this.isBoosting = true;
 });
 
 window.addEventListener("mouseup",()=>{
-this.isBoosting = false;
+  this.isBoosting = false;
 });
 
 }
@@ -153,24 +151,33 @@ this.isBoosting = false;
 
 
 // ------------------------------------------------
-// THEME SWITCHING
+// THEME SWITCHING (anti-spam)
 // ------------------------------------------------
 
 setupThemeSwitching(){
 
+let lastSwitch = 0;
+
 window.addEventListener("keydown",(e)=>{
 
-if(e.code === "Digit1"){
-this.themeManager.activate("seasons");
-}
+  if(e.repeat) return;
 
-if(e.code === "Digit2"){
-this.themeManager.activate("images");
-}
+  const now = performance.now();
+  if(now - lastSwitch < 150) return;
+  lastSwitch = now;
 
-if(e.code === "Digit3"){
-console.log("Movies theme not implemented yet");
-}
+  if(e.code === "Digit1"){
+    this.themeManager.activate("seasons");
+  }
+
+  else if(e.code === "Digit2"){
+    this.themeManager.activate("images");
+  }
+
+  else if(e.code === "Digit3"){
+    this.themeManager.activate("movies");
+    console.log("Movies theme activated");
+  }
 
 });
 
@@ -184,7 +191,10 @@ console.log("Movies theme not implemented yet");
 
 update(delta){
 
-// Scroll
+// ------------------------------------------------
+// SCROLL + STATE
+// ------------------------------------------------
+
 this.scroll.updateScroll();
 
 const progress = this.scroll.getProgress();
@@ -193,12 +203,17 @@ this.stateManager.update(progress);
 
 const state = this.stateManager.get();
 
+state.progress = progress;
 
-// Intensity smoothing
+
+// ------------------------------------------------
+// INTENSITY (LMB)
+// ------------------------------------------------
+
 if(this.isBoosting){
-this.intensity += 0.04;
+  this.intensity += 0.04;
 }else{
-this.intensity -= 0.04;
+  this.intensity -= 0.04;
 }
 
 this.intensity = Math.max(0,Math.min(1,this.intensity));
@@ -206,26 +221,70 @@ this.intensity = Math.max(0,Math.min(1,this.intensity));
 state.intensity = this.intensity;
 
 
-// Theme update
+// ------------------------------------------------
+// CAMERA (adaptive + cinematic)
+// ------------------------------------------------
+
+if(this.camera){
+
+  const t = performance.now() * 0.001;
+  const p = state.progress ?? 0;
+  const i = state.intensity ?? 0;
+
+  // Theme-based strength
+  let camStrength = 0.15;
+  let depthStrength = 1.2;
+
+  if(this.themeManager.activeTheme instanceof MoviesTheme){
+    camStrength = 1.0;
+    depthStrength = 3.5;
+  }
+
+  // movement
+  const targetX = Math.sin(t * 0.4) * 0.8 * camStrength;
+  const targetY = Math.cos(t * 0.3) * 0.5 * camStrength;
+
+  let targetZ = 5 - p * depthStrength;
+
+  // 🔥 LMB BOOST
+  targetZ -= i * 1.5;
+
+  const scrollOffset = (p - 0.5) * 1.5 * camStrength;
+
+  // smoothing
+  this.camera.position.x += (targetX + scrollOffset - this.camera.position.x) * 0.08;
+  this.camera.position.y += (targetY - this.camera.position.y) * 0.08;
+  this.camera.position.z += (targetZ - this.camera.position.z) * 0.12;
+
+  // 🎯 stable center (kein mesh1 bug!)
+  this.camera.lookAt(0, 0, -4);
+
+  // clamp (kein rausfliegen)
+  this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -1.2, 1.2);
+  this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, -0.8, 0.8);
+}
+
+
+// ------------------------------------------------
+// SYSTEM UPDATES
+// ------------------------------------------------
+
 this.themeManager.update(state);
 
-
-// Background systems
 this.stars.update();
 this.world.update();
 
-
-// Portal update
 this.portal.update(delta);
 
 
-// Particle motion
+// ------------------------------------------------
+// PARTICLES
+// ------------------------------------------------
+
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
-
-// Particle shader time
 if(this.material?.uniforms?.uTime){
-this.material.uniforms.uTime.value += 0.01;
+  this.material.uniforms.uTime.value += 0.01;
 }
 
 }

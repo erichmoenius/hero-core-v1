@@ -1,0 +1,12 @@
+// mp4>mp4
+ffmpeg -i blue.mp4 -vf "scale=1024:-1" -vcodec libx264 -pix_fmt yuv420p -crf 20 -an -movflags +faststart blue_r.mp4
+//mehr quality -crf 18
+//kleiner-schneller -crf 23
+
+
+//viele videos>mp4
+for %i in (*.mp4) do ffmpeg -i "%i" -vf "scale=1024:-1" -vcodec libx264 -pix_fmt yuv420p -crf 20 -an -movflags +faststart "converted_%i"
+
+scale=1024     → kleinere Datei (Performance!)
+crf 23         → gute Qualität
+preset fast    → schneller encode
