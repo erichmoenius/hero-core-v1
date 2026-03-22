@@ -207,7 +207,7 @@ state.progress = progress;
 
 
 // ------------------------------------------------
-// INTENSITY
+// INTENSITY (LMB)
 // ------------------------------------------------
 
 if(this.isBoosting){
@@ -222,14 +222,16 @@ state.intensity = this.intensity;
 
 
 // ------------------------------------------------
-// CAMERA (adaptive per theme)
+// CAMERA (adaptive + cinematic)
 // ------------------------------------------------
 
 if(this.camera){
 
   const t = performance.now() * 0.001;
   const p = state.progress ?? 0;
+  const i = state.intensity ?? 0;
 
+  // Theme-based strength
   let camStrength = 0.15;
   let depthStrength = 1.2;
 
@@ -238,17 +240,28 @@ if(this.camera){
     depthStrength = 3.5;
   }
 
+  // movement
   const targetX = Math.sin(t * 0.4) * 0.8 * camStrength;
   const targetY = Math.cos(t * 0.3) * 0.5 * camStrength;
-  const targetZ = 5 - p * depthStrength;
+
+  let targetZ = 5 - p * depthStrength;
+
+  // 🔥 LMB BOOST
+  targetZ -= i * 1.5;
 
   const scrollOffset = (p - 0.5) * 1.5 * camStrength;
 
+  // smoothing
   this.camera.position.x += (targetX + scrollOffset - this.camera.position.x) * 0.08;
   this.camera.position.y += (targetY - this.camera.position.y) * 0.08;
   this.camera.position.z += (targetZ - this.camera.position.z) * 0.12;
 
-  this.camera.lookAt(0,0,0);
+  // 🎯 stable center (kein mesh1 bug!)
+  this.camera.lookAt(0, 0, -4);
+
+  // clamp (kein rausfliegen)
+  this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -1.2, 1.2);
+  this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, -0.8, 0.8);
 }
 
 

@@ -36,7 +36,7 @@ export class MoviesTheme {
     // 🎬 VIDEO LAYER 2 (ENERGY)
     // ------------------------------------------------
 
-    const tex2 = loadMovieTexture("/mov/sun.mp4");
+    const tex2 = loadMovieTexture("/mov/blue.mp4");
 
     this.mat2 = new THREE.MeshBasicMaterial({
       map: tex2,
