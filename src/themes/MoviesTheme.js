@@ -9,66 +9,98 @@ export class MoviesTheme {
     this.time = 0;
 
     // ------------------------------------------------
-    // 🎬 VIDEO A + B (Crossfade Base)
+    // 🎬 FILE CONFIG
     // ------------------------------------------------
 
-    this.texA = loadMovieTexture("/mov/hyper.mp4");
-    this.texB = loadMovieTexture("/mov/blue.mp4");
-
-    this.matA = new THREE.MeshBasicMaterial({
-      map: this.texA,
-      transparent: true,
-      opacity: 1.0,
-      toneMapped: false
-    });
-
-    this.matB = new THREE.MeshBasicMaterial({
-      map: this.texB,
-      transparent: true,
-      opacity: 0.0,
-      toneMapped: false
-    });
-
-    // Base planes (gleich groß!)
-    this.meshA = new THREE.Mesh(
-      new THREE.PlaneGeometry(16,9),
-      this.matA
-    );
-
-    this.meshB = new THREE.Mesh(
-      new THREE.PlaneGeometry(16,9),
-      this.matB
-    );
-
-    this.meshA.position.set(0,0,-4);
-    this.meshB.position.set(0,0,-4);
-
-    this.container.add(this.meshA);
-    this.container.add(this.meshB);
-
+    this.files = {
+      base: "/mov/base.mp4",
+      mid: "/mov/mid.mp4",
+      energy: "/mov/energy.mp4"
+    };
 
     // ------------------------------------------------
-    // 🎬 ENERGY LAYER (dein alter Layer 2)
+    // 🎬 BASE (A/B CROSSFADE)
     // ------------------------------------------------
 
-    const texEnergy = loadMovieTexture("/mov/blue.mp4");
+    this.baseA = this.createLayer(this.files.base, 14, -8, 0.5);
+    this.baseB = this.createLayer(this.files.base, 14, -8, 0.0);
 
-    this.matEnergy = new THREE.MeshBasicMaterial({
-      map: texEnergy,
-      transparent: true,
-      opacity: 0.2,
-      toneMapped: false
-    });
+    this.baseActive = "A";
+    this.baseFade = 0;
+    this.baseTimer = 0;
 
-    this.matEnergy.blending = THREE.AdditiveBlending;
+    this.baseSwitchTime = 12;
+    this.baseFadeSpeed = 0.01;
 
-    this.meshEnergy = new THREE.Mesh(
-      new THREE.PlaneGeometry(16,9),
-      this.matEnergy
+    // ------------------------------------------------
+    // 🎬 MID + ENERGY
+    // ------------------------------------------------
+
+    this.mid = this.createLayer(this.files.mid, 10, -6, 0.4);
+
+    this.energy = this.createLayer(
+      this.files.energy,
+      6,
+      -4,
+      0.25,
+      true
     );
 
-    this.meshEnergy.position.set(0,0,-3.5);
-    this.container.add(this.meshEnergy);
+    // ------------------------------------------------
+    // 🎬 STATIC OFFSETS (Composition)
+    // ------------------------------------------------
+
+    this.baseOffset = new THREE.Vector2(-0.2, 0.0);
+    this.midOffset = new THREE.Vector2(0.3, 0.1);
+    this.energyOffset = new THREE.Vector2(-0.4, -0.2);
+  }
+
+
+  // ------------------------------------------------
+  // 🎬 CREATE LAYER
+  // ------------------------------------------------
+
+  createLayer(path, width, z, opacity, additive=false){
+
+    const texture = loadMovieTexture(path);
+
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      opacity: opacity,
+      toneMapped: false,
+      depthWrite: false
+    });
+
+    if(additive){
+      material.blending = THREE.AdditiveBlending;
+    }
+
+    const geometry = new THREE.PlaneGeometry(
+      width,
+      width * 9 / 16
+    );
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(0,0,z);
+
+    this.container.add(mesh);
+
+    return { mesh, material };
+  }
+
+
+  // ------------------------------------------------
+  // 🎬 RELOAD BASE
+  // ------------------------------------------------
+
+  reloadBase(layer){
+
+    const texture = loadMovieTexture(this.files.base);
+
+    layer.material.map = texture;
+    layer.material.needsUpdate = true;
+    layer.material.opacity = 0;
   }
 
 
@@ -79,98 +111,122 @@ export class MoviesTheme {
   update(state){
 
     this.time += 0.016;
+    this.baseTimer += 0.016;
 
-    const i = state.intensity ?? 0;
     const p = state.progress ?? 0;
-
-
-    // ------------------------------------------------
-    // 🎬 CROSSFADE (CORE FEATURE)
-    // ------------------------------------------------
-
-    const fade = (Math.sin(this.time * 0.15) + 1) * 0.5;
-
-    this.matA.opacity = 1.0 - fade;
-    this.matB.opacity = fade;
-
+    const i = state.intensity ?? 0;
 
     // ------------------------------------------------
-    // 🎥 PARALLAX + BREATHING
+    // 🎬 BASE SWITCH
     // ------------------------------------------------
 
-    this.meshA.position.x = Math.sin(this.time * 0.1) * 0.2;
-    this.meshA.position.y = Math.cos(this.time * 0.08) * 0.15;
+    if(this.baseTimer > this.baseSwitchTime){
 
-    this.meshB.position.x = Math.sin(this.time * 0.12) * 0.25;
-    this.meshB.position.y = Math.cos(this.time * 0.1) * 0.2;
+      this.baseTimer = 0;
 
-    this.meshEnergy.position.x = Math.sin(this.time * 0.37) * 0.6;
-    this.meshEnergy.position.y = Math.cos(this.time * 0.23) * 0.4;
+      if(this.baseActive === "A"){
+        this.reloadBase(this.baseB);
+      } else {
+        this.reloadBase(this.baseA);
+      }
 
-
-    this.meshA.scale.setScalar(1.02 + Math.sin(this.time * 0.25) * 0.03);
-    this.meshB.scale.setScalar(1.03 + Math.sin(this.time * 0.28) * 0.035);
-    this.meshEnergy.scale.setScalar(1.05 + Math.sin(this.time * 0.4) * 0.05);
-
-
-    // ------------------------------------------------
-    // 🚀 SCROLL DEPTH
-    // ------------------------------------------------
-
-    this.meshA.position.z = -4 + p * 2.5;
-    this.meshB.position.z = -4 + p * 2.5;
-    this.meshEnergy.position.z = -3.5 + p * 2;
-
-
-    // ------------------------------------------------
-    // 🎬 ENERGY LAYER CONTROL
-    // ------------------------------------------------
-
-    let energyOpacity = 0.1 + p * 0.4;
-
-    if(state.fire > 0){
-      energyOpacity += state.fire * 0.6;
-      this.matEnergy.blending = THREE.AdditiveBlending;
-    }
-
-    else if(state.water > 0){
-      energyOpacity += state.water * 0.3;
-      this.matEnergy.blending = THREE.NormalBlending;
-    }
-
-    else if(state.gas > 0){
-      energyOpacity += state.gas * 0.2;
-    }
-
-    else if(state.solid > 0){
-      energyOpacity *= 0.5;
-      this.matEnergy.blending = THREE.NormalBlending;
+      this.baseFade = 0;
     }
 
 
-    // intensity boost (LMB)
-    energyOpacity += i * 0.4;
+    // ------------------------------------------------
+    // 🎬 CROSSFADE (CINEMATIC)
+    // ------------------------------------------------
+
+    const ease = (t) => t * t * (3 - 2 * t);
+
+    this.baseFade += this.baseFadeSpeed;
+
+    const f = Math.min(this.baseFade, 1);
+    const e = ease(f);
+
+    if(this.baseActive === "A"){
+      this.baseA.material.opacity = (1 - e) * 0.5;
+      this.baseB.material.opacity = e * 0.5;
+    } else {
+      this.baseA.material.opacity = e * 0.5;
+      this.baseB.material.opacity = (1 - e) * 0.5;
+    }
+
+    if(f >= 1){
+      this.baseActive = this.baseActive === "A" ? "B" : "A";
+    }
 
 
-    // smooth fade
-    this.matEnergy.opacity += (energyOpacity - this.matEnergy.opacity) * 0.05;
+    // ------------------------------------------------
+    // 🎥 CINEMATIC DRIFT (offset + motion)
+    // ------------------------------------------------
+
+    // BASE
+    const baseX = this.baseOffset.x + Math.sin(this.time * 0.05) * 0.08;
+
+    this.baseA.mesh.position.x = baseX;
+    this.baseB.mesh.position.x = baseX;
+
+    // MID
+    this.mid.mesh.position.x =
+      this.midOffset.x + Math.sin(this.time * 0.2) * 0.25;
+
+    this.mid.mesh.position.y =
+      this.midOffset.y + Math.cos(this.time * 0.15) * 0.15;
+
+    // ENERGY
+    this.energy.mesh.position.x =
+      this.energyOffset.x + Math.sin(this.time * 0.5) * 0.6;
+
+    this.energy.mesh.position.y =
+      this.energyOffset.y + Math.cos(this.time * 0.4) * 0.4;
+
+
+    // Scroll verstärkt Offset
+    this.mid.mesh.position.x += (p - 0.5) * 0.5;
+    this.energy.mesh.position.x += (p - 0.5) * 1.2;
+
+
+    // ------------------------------------------------
+    // 🚀 SCROLL = CINEMATIC ZOOM
+    // ------------------------------------------------
+
+    const zoom = 1 + p * 1.5;
+
+    this.baseA.mesh.position.z = -8 + p * 3;
+    this.baseB.mesh.position.z = -8 + p * 3;
+
+    this.baseA.mesh.scale.setScalar(1.0 * zoom);
+    this.baseB.mesh.scale.setScalar(1.0 * zoom);
+
+    this.mid.mesh.position.z = -6 + p * 4;
+    this.mid.mesh.scale.setScalar(1.1 * zoom);
+
+    this.energy.mesh.position.z = -4 + p * 5;
+    this.energy.mesh.scale.setScalar(1.3 * zoom);
+
+
+    // ------------------------------------------------
+    // ⚡ INTENSITY (LMB)
+    // ------------------------------------------------
+
+    this.energy.material.opacity = 0.25 + i * 0.5;
+    this.mid.material.opacity = 0.4 + i * 0.2;
 
 
     // ------------------------------------------------
     // 💓 ENERGY PULSE
     // ------------------------------------------------
 
-    this.matEnergy.opacity += Math.sin(this.time * 1.7) * 0.02;
+    this.energy.material.opacity += Math.sin(this.time * 2) * 0.05;
 
 
     // ------------------------------------------------
-    // 🔥 BREAK MOMENT
+    // 🎬 SUBTLE GLOBAL DRIFT
     // ------------------------------------------------
 
-    if(p > 0.8){
-      this.matEnergy.opacity += (p - 0.8) * 0.5;
-    }
-
+    this.container.position.z = Math.sin(this.time * 0.2) * 0.2;
   }
 
 
@@ -180,17 +236,19 @@ export class MoviesTheme {
 
   destroy(){
 
-    this.container.remove(this.meshA);
-    this.container.remove(this.meshB);
-    this.container.remove(this.meshEnergy);
+    this.container.remove(this.baseA.mesh);
+    this.container.remove(this.baseB.mesh);
+    this.container.remove(this.mid.mesh);
+    this.container.remove(this.energy.mesh);
 
-    this.meshA.geometry.dispose();
-    this.meshB.geometry.dispose();
-    this.meshEnergy.geometry.dispose();
+    this.baseA.mesh.geometry.dispose();
+    this.baseB.mesh.geometry.dispose();
+    this.mid.mesh.geometry.dispose();
+    this.energy.mesh.geometry.dispose();
 
-    this.matA.dispose();
-    this.matB.dispose();
-    this.matEnergy.dispose();
+    this.baseA.material.dispose();
+    this.baseB.material.dispose();
+    this.mid.material.dispose();
+    this.energy.material.dispose();
   }
-
 }
