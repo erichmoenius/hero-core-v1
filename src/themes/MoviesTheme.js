@@ -13,10 +13,20 @@ export class MoviesTheme {
     // ------------------------------------------------
 
     this.files = {
-      base: "/mov/base.mp4",
-      mid: "/mov/mid.mp4",
-      energy: "/mov/energy.mp4"
-    };
+      base: [
+        "/mov/base_1.mp4",
+        "/mov/base_2.mp4",
+        "/mov/base_3.mp4"
+      ],
+      mid: [
+        "/mov/mid_1.mp4",
+        "/mov/mid_2.mp4"
+      ],
+      energy: [
+        "/mov/energy_1.mp4",
+        "/mov/energy_2.mp4"
+      ]
+};
 
     // ------------------------------------------------
     // 🎬 BASE (A/B CROSSFADE)
@@ -37,6 +47,7 @@ export class MoviesTheme {
     // ------------------------------------------------
 
     this.mid = this.createLayer(this.files.mid, 10, -6, 0.4);
+    this.energy = this.createLayer(this.files.energy, 6, -4, 0.25, true);
 
     this.energy = this.createLayer(
       this.files.energy,
@@ -64,12 +75,28 @@ export class MoviesTheme {
     return path + "?v=" + Date.now();
   }
 
+  getRandom(arr){
+
+    let next;
+
+    do {
+    next = arr[Math.floor(Math.random() * arr.length)];
+    } while(next === this.lastPick);
+
+    this.lastPick = next;
+
+    return next;
+}
 
   // ------------------------------------------------
   // 🎬 CREATE LAYER
   // ------------------------------------------------
 
-  createLayer(path, width, z, opacity, additive=false){
+  createLayer(paths, width, z, opacity, additive=false){
+
+    const path = Array.isArray(paths)
+      ? this.getRandom(paths)
+      : paths;
 
     const texture = loadMovieTexture(this.getFreshPath(path));
 
@@ -105,15 +132,14 @@ export class MoviesTheme {
 
   reloadBase(layer){
 
-    const texture = loadMovieTexture(
-      this.getFreshPath(this.files.base)
-    );
+    const path = this.getRandom(this.files.base);
+
+    const texture = loadMovieTexture(this.getFreshPath(path));
 
     layer.material.map = texture;
     layer.material.needsUpdate = true;
     layer.material.opacity = 0;
   }
-
 
   // ------------------------------------------------
   // 🎬 UPDATE
