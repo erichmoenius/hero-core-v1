@@ -47,7 +47,7 @@ export class MoviesTheme {
     );
 
     // ------------------------------------------------
-    // 🎬 STATIC OFFSETS (Composition)
+    // 🎬 STATIC OFFSETS
     // ------------------------------------------------
 
     this.baseOffset = new THREE.Vector2(-0.2, 0.0);
@@ -57,12 +57,21 @@ export class MoviesTheme {
 
 
   // ------------------------------------------------
+  // 🎬 CACHE HELPER
+  // ------------------------------------------------
+
+  getFreshPath(path){
+    return path + "?v=" + Date.now();
+  }
+
+
+  // ------------------------------------------------
   // 🎬 CREATE LAYER
   // ------------------------------------------------
 
   createLayer(path, width, z, opacity, additive=false){
 
-    const texture = loadMovieTexture(path);
+    const texture = loadMovieTexture(this.getFreshPath(path));
 
     const material = new THREE.MeshBasicMaterial({
       map: texture,
@@ -96,7 +105,9 @@ export class MoviesTheme {
 
   reloadBase(layer){
 
-    const texture = loadMovieTexture(this.files.base);
+    const texture = loadMovieTexture(
+      this.getFreshPath(this.files.base)
+    );
 
     layer.material.map = texture;
     layer.material.needsUpdate = true;
@@ -159,29 +170,25 @@ export class MoviesTheme {
 
 
     // ------------------------------------------------
-    // 🎥 CINEMATIC DRIFT (offset + motion)
+    // 🎥 CINEMATIC DRIFT
     // ------------------------------------------------
 
-    // BASE
     const baseX = this.baseOffset.x + Math.sin(this.time * 0.05) * 0.08;
 
     this.baseA.mesh.position.x = baseX;
     this.baseB.mesh.position.x = baseX;
 
-    // MID
     this.mid.mesh.position.x =
       this.midOffset.x + Math.sin(this.time * 0.2) * 0.25;
 
     this.mid.mesh.position.y =
       this.midOffset.y + Math.cos(this.time * 0.15) * 0.15;
 
-    // ENERGY
     this.energy.mesh.position.x =
       this.energyOffset.x + Math.sin(this.time * 0.5) * 0.6;
 
     this.energy.mesh.position.y =
       this.energyOffset.y + Math.cos(this.time * 0.4) * 0.4;
-
 
     // Scroll verstärkt Offset
     this.mid.mesh.position.x += (p - 0.5) * 0.5;
@@ -223,7 +230,7 @@ export class MoviesTheme {
 
 
     // ------------------------------------------------
-    // 🎬 SUBTLE GLOBAL DRIFT
+    // 🎬 GLOBAL DRIFT
     // ------------------------------------------------
 
     this.container.position.z = Math.sin(this.time * 0.2) * 0.2;
