@@ -13,20 +13,15 @@ export class MoviesTheme {
     // ------------------------------------------------
 
     this.files = {
-      base: [
-        "/mov/base_1.mp4",
-        "/mov/base_2.mp4",
-        "/mov/base_3.mp4"
-      ],
-      mid: [
-        "/mov/mid_1.mp4",
-        "/mov/mid_2.mp4"
-      ],
-      energy: [
-        "/mov/energy_1.mp4",
-        "/mov/energy_2.mp4"
-      ]
-};
+      base: {
+        fire: ["/mov/fire_1.mp4","/mov/fire_2.mp4"],
+        water: ["/mov/water_1.mp4","/mov/water_2.mp4"],
+        gas: ["/mov/gas_1.mp4","/mov/gas_2.mp4"],
+        solid: ["/mov/solid_1.mp4","/mov/solid_2.mp4"]
+      },
+      mid: ["/mov/mid_1.mp4","/mov/mid_2.mp4"],
+      energy: ["/mov/energy_1.mp4","/mov/energy_2.mp4"]
+    };
 
     // ------------------------------------------------
     // 🎬 BASE (A/B CROSSFADE)
@@ -49,26 +44,39 @@ export class MoviesTheme {
     this.mid = this.createLayer(this.files.mid, 10, -6, 0.4);
     this.energy = this.createLayer(this.files.energy, 6, -4, 0.25, true);
 
-    this.energy = this.createLayer(
-      this.files.energy,
-      6,
-      -4,
-      0.25,
-      true
-    );
-
     // ------------------------------------------------
-    // 🎬 STATIC OFFSETS
+    // 🎬 OFFSETS
     // ------------------------------------------------
 
     this.baseOffset = new THREE.Vector2(-0.2, 0.0);
     this.midOffset = new THREE.Vector2(0.3, 0.1);
     this.energyOffset = new THREE.Vector2(-0.4, -0.2);
+
+    // ------------------------------------------------
+    // 🧠 DEBUG STATE
+    // ------------------------------------------------
+
+    this.lastStateKey = null;
   }
 
 
   // ------------------------------------------------
-  // 🎬 CACHE HELPER
+  // 🎬 STATE LOGIC
+  // ------------------------------------------------
+
+  getStateKey(state){
+
+    if(state.fire > 0.5) return "fire";
+    if(state.water > 0.5) return "water";
+    if(state.gas > 0.5) return "gas";
+    if(state.solid > 0.5) return "solid";
+
+    return "gas";
+  }
+
+
+  // ------------------------------------------------
+  // 🎬 HELPERS
   // ------------------------------------------------
 
   getFreshPath(path){
@@ -76,17 +84,9 @@ export class MoviesTheme {
   }
 
   getRandom(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 
-    let next;
-
-    do {
-    next = arr[Math.floor(Math.random() * arr.length)];
-    } while(next === this.lastPick);
-
-    this.lastPick = next;
-
-    return next;
-}
 
   // ------------------------------------------------
   // 🎬 CREATE LAYER
@@ -94,16 +94,20 @@ export class MoviesTheme {
 
   createLayer(paths, width, z, opacity, additive=false){
 
-    const path = Array.isArray(paths)
-      ? this.getRandom(paths)
-      : paths;
+    let path;
+
+    if(typeof paths === "object" && !Array.isArray(paths)){
+      path = this.getRandom(paths.gas); // default start
+    } else {
+      path = this.getRandom(paths);
+    }
 
     const texture = loadMovieTexture(this.getFreshPath(path));
 
     const material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
-      opacity: opacity,
+      opacity,
       toneMapped: false,
       depthWrite: false
     });
@@ -112,10 +116,7 @@ export class MoviesTheme {
       material.blending = THREE.AdditiveBlending;
     }
 
-    const geometry = new THREE.PlaneGeometry(
-      width,
-      width * 9 / 16
-    );
+    const geometry = new THREE.PlaneGeometry(width, width * 9/16);
 
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0,0,z);
@@ -130,9 +131,12 @@ export class MoviesTheme {
   // 🎬 RELOAD BASE
   // ------------------------------------------------
 
-  reloadBase(layer){
+  reloadBase(layer, state){
 
-    const path = this.getRandom(this.files.base);
+    const key = this.getStateKey(state);
+    const pool = this.files.base[key];
+
+    const path = this.getRandom(pool);
 
     const texture = loadMovieTexture(this.getFreshPath(path));
 
@@ -140,6 +144,7 @@ export class MoviesTheme {
     layer.material.needsUpdate = true;
     layer.material.opacity = 0;
   }
+
 
   // ------------------------------------------------
   // 🎬 UPDATE
@@ -154,6 +159,18 @@ export class MoviesTheme {
     const i = state.intensity ?? 0;
 
     // ------------------------------------------------
+    // 🧠 DEBUG (STATE CHANGE ONLY)
+    // ------------------------------------------------
+
+    const key = this.getStateKey(state);
+
+    if(this.lastStateKey !== key){
+      console.log("STATE →", key, "| progress:", p.toFixed(2));
+      this.lastStateKey = key;
+    }
+
+
+    // ------------------------------------------------
     // 🎬 BASE SWITCH
     // ------------------------------------------------
 
@@ -162,9 +179,9 @@ export class MoviesTheme {
       this.baseTimer = 0;
 
       if(this.baseActive === "A"){
-        this.reloadBase(this.baseB);
+        this.reloadBase(this.baseB, state);
       } else {
-        this.reloadBase(this.baseA);
+        this.reloadBase(this.baseA, state);
       }
 
       this.baseFade = 0;
@@ -172,7 +189,7 @@ export class MoviesTheme {
 
 
     // ------------------------------------------------
-    // 🎬 CROSSFADE (CINEMATIC)
+    // 🎬 CROSSFADE
     // ------------------------------------------------
 
     const ease = (t) => t * t * (3 - 2 * t);
@@ -196,7 +213,7 @@ export class MoviesTheme {
 
 
     // ------------------------------------------------
-    // 🎥 CINEMATIC DRIFT
+    // 🎥 MOTION
     // ------------------------------------------------
 
     const baseX = this.baseOffset.x + Math.sin(this.time * 0.05) * 0.08;
@@ -204,25 +221,18 @@ export class MoviesTheme {
     this.baseA.mesh.position.x = baseX;
     this.baseB.mesh.position.x = baseX;
 
-    this.mid.mesh.position.x =
-      this.midOffset.x + Math.sin(this.time * 0.2) * 0.25;
+    this.mid.mesh.position.x = this.midOffset.x + Math.sin(this.time * 0.2) * 0.25;
+    this.mid.mesh.position.y = this.midOffset.y + Math.cos(this.time * 0.15) * 0.15;
 
-    this.mid.mesh.position.y =
-      this.midOffset.y + Math.cos(this.time * 0.15) * 0.15;
+    this.energy.mesh.position.x = this.energyOffset.x + Math.sin(this.time * 0.5) * 0.6;
+    this.energy.mesh.position.y = this.energyOffset.y + Math.cos(this.time * 0.4) * 0.4;
 
-    this.energy.mesh.position.x =
-      this.energyOffset.x + Math.sin(this.time * 0.5) * 0.6;
-
-    this.energy.mesh.position.y =
-      this.energyOffset.y + Math.cos(this.time * 0.4) * 0.4;
-
-    // Scroll verstärkt Offset
     this.mid.mesh.position.x += (p - 0.5) * 0.5;
     this.energy.mesh.position.x += (p - 0.5) * 1.2;
 
 
     // ------------------------------------------------
-    // 🚀 SCROLL = CINEMATIC ZOOM
+    // 🚀 ZOOM
     // ------------------------------------------------
 
     const zoom = 1 + p * 1.5;
@@ -230,8 +240,8 @@ export class MoviesTheme {
     this.baseA.mesh.position.z = -8 + p * 3;
     this.baseB.mesh.position.z = -8 + p * 3;
 
-    this.baseA.mesh.scale.setScalar(1.0 * zoom);
-    this.baseB.mesh.scale.setScalar(1.0 * zoom);
+    this.baseA.mesh.scale.setScalar(zoom);
+    this.baseB.mesh.scale.setScalar(zoom);
 
     this.mid.mesh.position.z = -6 + p * 4;
     this.mid.mesh.scale.setScalar(1.1 * zoom);
@@ -241,22 +251,17 @@ export class MoviesTheme {
 
 
     // ------------------------------------------------
-    // ⚡ INTENSITY (LMB)
+    // ⚡ INTENSITY
     // ------------------------------------------------
 
     this.energy.material.opacity = 0.25 + i * 0.5;
     this.mid.material.opacity = 0.4 + i * 0.2;
 
-
-    // ------------------------------------------------
-    // 💓 ENERGY PULSE
-    // ------------------------------------------------
-
     this.energy.material.opacity += Math.sin(this.time * 2) * 0.05;
 
 
     // ------------------------------------------------
-    // 🎬 GLOBAL DRIFT
+    // 🌌 GLOBAL DRIFT
     // ------------------------------------------------
 
     this.container.position.z = Math.sin(this.time * 0.2) * 0.2;
