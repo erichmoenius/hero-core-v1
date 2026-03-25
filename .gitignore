@@ -1,4 +1,6 @@
-# Logs
+# ------------------------------------------------
+# LOGS
+# ------------------------------------------------
 logs
 *.log
 npm-debug.log*
@@ -7,16 +9,39 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ------------------------------------------------
+# DEPENDENCIES / BUILD
+# ------------------------------------------------
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# ------------------------------------------------
+# VIDEO ASSETS (🔥 IMPORTANT)
+# ------------------------------------------------
+public/mov/*.mp4
+public/mov/*.webm
+public/mov/*.mov
+
+# optional: raw footage folder
+public/mov/raw_files/
+
+# ------------------------------------------------
+# IMAGES (optional – only if needed)
+# ------------------------------------------------
+# public/assets/images/*.png
+# public/assets/images/*.jpg
+
+# ------------------------------------------------
+# EDITOR / SYSTEM
+# ------------------------------------------------
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
+
 *.suo
 *.ntvs*
 *.njsproj
