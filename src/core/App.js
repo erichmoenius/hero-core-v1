@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import GUI from "lil-gui";
 
 import { Renderer } from "../graphics/Renderer.js";
 import { ShaderWorld } from "../graphics/ShaderWorld.js";
@@ -22,26 +23,20 @@ export class App {
 
 constructor(){
 
-// ------------------------------------------------
-// RENDERER
-// ------------------------------------------------
+// ---------------- RENDERER ----------------
 
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
 this.camera = this.renderer.camera;
 
 
-// ------------------------------------------------
-// BACKGROUND
-// ------------------------------------------------
+// ---------------- BACKGROUND ----------------
 
 this.world = new ShaderWorld(this.scene);
 this.stars = new Starfield(this.scene);
 
 
-// ------------------------------------------------
-// PORTAL + THEME STAGE
-// ------------------------------------------------
+// ---------------- STAGE + PORTAL ----------------
 
 this.stage = new ThemeStage(this.scene);
 
@@ -51,12 +46,9 @@ this.portal = new GlassPortal(
 );
 
 this.renderer.portal = this.portal;
-this.renderer.stage = this.stage;
 
 
-// ------------------------------------------------
-// CORE SYSTEMS
-// ------------------------------------------------
+// ---------------- CORE ----------------
 
 this.scroll = new ScrollController();
 this.stateManager = new StateManager();
@@ -66,9 +58,7 @@ this.themeManager = new ThemeManager(
 );
 
 
-// ------------------------------------------------
-// THEMES
-// ------------------------------------------------
+// ---------------- THEMES ----------------
 
 this.themeManager.register("seasons", SeasonsTheme);
 this.themeManager.register("images", ImageTheme);
@@ -77,27 +67,43 @@ this.themeManager.register("movies", MoviesTheme);
 this.themeManager.activate("seasons");
 
 
-// ------------------------------------------------
-// PARTICLES
-// ------------------------------------------------
+// ---------------- PARTICLES ----------------
 
 this.setupParticles();
 
 
-// ------------------------------------------------
-// INPUT
-// ------------------------------------------------
+// ---------------- INPUT ----------------
 
 this.isBoosting = false;
 this.intensity = 0;
 
 this.setupInput();
 this.setupThemeSwitching();
+this.setupGuiToggle();
 
 
-// ------------------------------------------------
-// LOOP
-// ------------------------------------------------
+// ---------------- GUI ----------------
+
+this.settings = {
+  baseOpacity: 0.4,
+  midOpacity: 0.5,
+  energyOpacity: 0.2,
+  zoomStrength: 1.5,
+  motionStrength: 1.0
+};
+
+this.gui = new GUI();
+
+this.gui.add(this.settings, "baseOpacity", 0, 1, 0.01);
+this.gui.add(this.settings, "midOpacity", 0, 1, 0.01);
+this.gui.add(this.settings, "energyOpacity", 0, 1, 0.01);
+this.gui.add(this.settings, "zoomStrength", 0, 3, 0.1);
+this.gui.add(this.settings, "motionStrength", 0, 2, 0.1);
+
+this.gui.hide();
+
+
+// ---------------- LOOP ----------------
 
 this.loop = new Loop(
   this.update.bind(this),
@@ -109,10 +115,7 @@ this.loop.start();
 }
 
 
-
-// ------------------------------------------------
-// PARTICLE SYSTEM
-// ------------------------------------------------
+// ---------------- PARTICLES ----------------
 
 setupParticles(){
 
@@ -131,14 +134,18 @@ this.scene.add(this.points);
 }
 
 
-
-// ------------------------------------------------
-// INPUT HANDLING
-// ------------------------------------------------
+// ---------------- INPUT ----------------
 
 setupInput(){
 
-window.addEventListener("mousedown",()=>{
+const canvas = this.renderer.renderer.domElement;
+
+if(!canvas){
+  console.warn("Canvas not found");
+  return;
+}
+
+canvas.addEventListener("mousedown",()=>{
   this.isBoosting = true;
 });
 
@@ -149,32 +156,44 @@ window.addEventListener("mouseup",()=>{
 }
 
 
+// ---------------- GUI TOGGLE ----------------
 
-// ------------------------------------------------
-// THEME SWITCHING (anti-spam)
-// ------------------------------------------------
+setupGuiToggle(){
+
+window.addEventListener("keydown",(e)=>{
+
+  if(e.code === "KeyG"){
+
+    if(this.gui._hidden){
+      this.gui.show();
+    }else{
+      this.gui.hide();
+    }
+
+  }
+
+});
+
+}
+
+
+// ---------------- THEME SWITCH ----------------
 
 setupThemeSwitching(){
-
-let lastSwitch = 0;
 
 window.addEventListener("keydown",(e)=>{
 
   if(e.repeat) return;
 
-  const now = performance.now();
-  if(now - lastSwitch < 150) return;
-  lastSwitch = now;
-
   if(e.code === "Digit1"){
     this.themeManager.activate("seasons");
   }
 
-  else if(e.code === "Digit2"){
+  if(e.code === "Digit2"){
     this.themeManager.activate("images");
   }
 
-  else if(e.code === "Digit3"){
+  if(e.code === "Digit3"){
     this.themeManager.activate("movies");
     console.log("Movies theme activated");
   }
@@ -184,31 +203,22 @@ window.addEventListener("keydown",(e)=>{
 }
 
 
-
-// ------------------------------------------------
-// MAIN UPDATE LOOP
-// ------------------------------------------------
+// ---------------- UPDATE ----------------
 
 update(delta){
 
-// ------------------------------------------------
-// SCROLL + STATE
-// ------------------------------------------------
+// SCROLL
 
 this.scroll.updateScroll();
-
 const progress = this.scroll.getProgress();
 
 this.stateManager.update(progress);
-
 const state = this.stateManager.get();
 
 state.progress = progress;
 
 
-// ------------------------------------------------
-// INTENSITY (LMB)
-// ------------------------------------------------
+// INTENSITY
 
 if(this.isBoosting){
   this.intensity += 0.04;
@@ -216,14 +226,13 @@ if(this.isBoosting){
   this.intensity -= 0.04;
 }
 
-this.intensity = Math.max(0,Math.min(1,this.intensity));
+this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
 state.intensity = this.intensity;
+state.settings = this.settings;
 
 
-// ------------------------------------------------
-// CAMERA (adaptive + cinematic)
-// ------------------------------------------------
+// CAMERA
 
 if(this.camera){
 
@@ -231,7 +240,6 @@ if(this.camera){
   const p = state.progress ?? 0;
   const i = state.intensity ?? 0;
 
-  // Theme-based strength
   let camStrength = 0.15;
   let depthStrength = 1.2;
 
@@ -240,34 +248,23 @@ if(this.camera){
     depthStrength = 3.5;
   }
 
-  // movement
   const targetX = Math.sin(t * 0.4) * 0.8 * camStrength;
   const targetY = Math.cos(t * 0.3) * 0.5 * camStrength;
 
   let targetZ = 5 - p * depthStrength;
-
-  // 🔥 LMB BOOST
   targetZ -= i * 1.5;
 
   const scrollOffset = (p - 0.5) * 1.5 * camStrength;
 
-  // smoothing
   this.camera.position.x += (targetX + scrollOffset - this.camera.position.x) * 0.08;
   this.camera.position.y += (targetY - this.camera.position.y) * 0.08;
   this.camera.position.z += (targetZ - this.camera.position.z) * 0.12;
 
-  // 🎯 stable center (kein mesh1 bug!)
-  this.camera.lookAt(0, 0, -4);
-
-  // clamp (kein rausfliegen)
-  this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -1.2, 1.2);
-  this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, -0.8, 0.8);
+  this.camera.lookAt(0,0,-4);
 }
 
 
-// ------------------------------------------------
-// SYSTEM UPDATES
-// ------------------------------------------------
+// SYSTEM
 
 this.themeManager.update(state);
 
@@ -277,9 +274,7 @@ this.world.update();
 this.portal.update(delta);
 
 
-// ------------------------------------------------
 // PARTICLES
-// ------------------------------------------------
 
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 

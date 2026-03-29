@@ -100,6 +100,8 @@ export class MoviesTheme {
       path = this.getRandom(paths.gas); // default start
     } else {
       path = this.getRandom(paths);
+
+      const safePath = path || "/mov/fallback.mp4";
     }
 
     const texture = loadMovieTexture(this.getFreshPath(path));
@@ -187,6 +189,55 @@ export class MoviesTheme {
       this.baseFade = 0;
     }
 
+    // ------------------------------------------------
+// 🎬 FOCUS SYSTEM
+// ------------------------------------------------
+
+let baseOpacity = 0.4;
+let midOpacity = 0.5;
+let energyOpacity = 0.2;
+
+// 🔥 STATE PRIORITY
+if(state.fire > 0.5){
+  baseOpacity = 0.5;
+  midOpacity = 0.7;     // 👁️ Fokus
+  energyOpacity = 0.25;
+}
+
+else if(state.water > 0.5){
+  baseOpacity = 0.6;    // Atmosphäre
+  midOpacity = 0.5;
+  energyOpacity = 0.15;
+}
+
+else if(state.gas > 0.5){
+  baseOpacity = 0.45;
+  midOpacity = 0.4;
+  energyOpacity = 0.2;
+}
+
+else if(state.solid > 0.5){
+  baseOpacity = 0.35;
+  midOpacity = 0.3;
+  energyOpacity = 0.1;  // ruhig
+}
+
+// ------------------------------------------------
+// ⚡ INTENSITY (LMB)
+// ------------------------------------------------
+
+energyOpacity += state.intensity * 0.3;
+
+// ------------------------------------------------
+// 🎬 APPLY (smooth!)
+// ------------------------------------------------
+
+this.baseA.material.opacity += (baseOpacity - this.baseA.material.opacity) * 0.05;
+this.baseB.material.opacity += (baseOpacity - this.baseB.material.opacity) * 0.05;
+
+this.mid.material.opacity += (midOpacity - this.mid.material.opacity) * 0.05;
+
+this.energy.material.opacity += (energyOpacity - this.energy.material.opacity) * 0.05;
 
     // ------------------------------------------------
     // 🎬 CROSSFADE
