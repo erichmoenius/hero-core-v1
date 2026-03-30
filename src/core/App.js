@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import GUI from "lil-gui";
+import Stats from "stats.js";
 
 import { Renderer } from "../graphics/Renderer.js";
 import { ShaderWorld } from "../graphics/ShaderWorld.js";
@@ -28,6 +29,7 @@ constructor(){
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
 this.camera = this.renderer.camera;
+this.canvas = this.renderer.renderer.domElement;
 
 
 // ---------------- BACKGROUND ----------------
@@ -101,6 +103,15 @@ this.gui.add(this.settings, "zoomStrength", 0, 3, 0.1);
 this.gui.add(this.settings, "motionStrength", 0, 2, 0.1);
 
 this.gui.hide();
+
+// ------------------------------------------------
+// 📊 STATS (FPS MONITOR)
+// ------------------------------------------------
+
+this.stats = new Stats();
+this.stats.showPanel(0); // 0 = FPS, 1 = MS, 2 = MB
+
+document.body.appendChild(this.stats.dom);
 
 
 // ---------------- LOOP ----------------
@@ -207,6 +218,9 @@ window.addEventListener("keydown",(e)=>{
 
 update(delta){
 
+// 📊 START MEASURE
+this.stats.begin();  
+
 // SCROLL
 
 this.scroll.updateScroll();
@@ -281,6 +295,9 @@ this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 if(this.material?.uniforms?.uTime){
   this.material.uniforms.uTime.value += 0.01;
 }
+
+// 📊 END MEASURE
+this.stats.end();
 
 }
 

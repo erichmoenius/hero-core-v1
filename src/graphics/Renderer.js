@@ -54,8 +54,8 @@ export class Renderer {
     canvas.style.left = "0";
     canvas.style.width = "100%";
     canvas.style.height = "100%";
-    canvas.style.pointerEvents = "none";
-    canvas.style.zIndex = "-1";
+    canvas.style.pointerEvents = "auto";
+    canvas.style.zIndex = "0";
 
     document.body.appendChild(canvas);
 
