@@ -20,15 +20,24 @@ dist-ssr
 # ------------------------------------------------
 # VIDEO ASSETS (🔥 IMPORTANT)
 # ------------------------------------------------
-public/mov/*.mp4
-public/mov/*.webm
-public/mov/*.mov
 
-# optional: raw footage folder
+# 👉 IGNORE ALL VIDEOS
+*.mp4
+*.mov
+*.webm
+
+# 👉 ALLOW ONLY FINAL HERO FILES
+!public/mov/base.mp4
+!public/mov/mid.mp4
+!public/mov/energy.mp4
+
+# 👉 RAW TEST FOLDER (DEIN WORKFLOW)
+raw/
+public/mov/raw/
 public/mov/raw_files/
 
 # ------------------------------------------------
-# IMAGES (optional – only if needed)
+# IMAGES (optional)
 # ------------------------------------------------
 # public/assets/images/*.png
 # public/assets/images/*.jpg
