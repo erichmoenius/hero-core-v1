@@ -2,6 +2,8 @@ import * as THREE from "three";
 import GUI from "lil-gui";
 import Stats from "stats.js";
 
+import { getNames, getVideo } from "../media/videoLibrary.js";
+
 import { Renderer } from "../graphics/Renderer.js";
 import { ShaderWorld } from "../graphics/ShaderWorld.js";
 import { Starfield } from "../graphics/Starfield.js";
@@ -29,7 +31,6 @@ constructor(){
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
 this.camera = this.renderer.camera;
-this.canvas = this.renderer.renderer.domElement;
 
 
 // ---------------- BACKGROUND ----------------
@@ -94,23 +95,53 @@ this.settings = {
   motionStrength: 1.0
 };
 
+this.videoControls = {
+  base: getNames("base")[0],
+  mid: getNames("mid")[0],
+  energy: getNames("energy")[0]
+};
+
 this.gui = new GUI();
 
+// --- opacity
 this.gui.add(this.settings, "baseOpacity", 0, 1, 0.01);
 this.gui.add(this.settings, "midOpacity", 0, 1, 0.01);
 this.gui.add(this.settings, "energyOpacity", 0, 1, 0.01);
+
+// --- motion
 this.gui.add(this.settings, "zoomStrength", 0, 3, 0.1);
 this.gui.add(this.settings, "motionStrength", 0, 2, 0.1);
 
+// --- VIDEO PICKER 🔥
+this.gui.add(this.videoControls, "base", getNames("base"))
+.name("Base Video")
+.onChange((name)=>{
+  this.setVideoSafe("base", name);
+});
+
+this.gui.add(this.videoControls, "mid", getNames("mid"))
+.name("Mid Video")
+.onChange((name)=>{
+  this.setVideoSafe("mid", name);
+});
+
+this.gui.add(this.videoControls, "energy", getNames("energy"))
+.name("Energy Video")
+.onChange((name)=>{
+  this.setVideoSafe("energy", name);
+});
+
+// GUI sichtbar + klickbar machen
+this.gui.domElement.style.zIndex = "10";
+this.gui.domElement.style.pointerEvents = "auto";
+
 this.gui.hide();
 
-// ------------------------------------------------
-// 📊 STATS (FPS MONITOR)
-// ------------------------------------------------
+
+// ---------------- STATS ----------------
 
 this.stats = new Stats();
-this.stats.showPanel(0); // 0 = FPS, 1 = MS, 2 = MB
-
+this.stats.showPanel(0);
 document.body.appendChild(this.stats.dom);
 
 
@@ -122,6 +153,23 @@ this.loop = new Loop(
 );
 
 this.loop.start();
+
+}
+
+
+// ---------------- VIDEO SWITCH SAFE ----------------
+
+setVideoSafe(layer, name){
+
+const theme = this.themeManager.activeTheme;
+
+if(!theme || !theme.setVideo) return;
+
+const v = getVideo(layer, name);
+
+if(!v) return;
+
+theme.setVideo(layer, v.path);
 
 }
 
@@ -151,10 +199,8 @@ setupInput(){
 
 const canvas = this.renderer.renderer.domElement;
 
-if(!canvas){
-  console.warn("Canvas not found");
-  return;
-}
+// 🔥 wichtig: nur canvas bekommt LMB
+canvas.style.pointerEvents = "auto";
 
 canvas.addEventListener("mousedown",()=>{
   this.isBoosting = true;
@@ -207,6 +253,11 @@ window.addEventListener("keydown",(e)=>{
   if(e.code === "Digit3"){
     this.themeManager.activate("movies");
     console.log("Movies theme activated");
+
+    // 👉 apply selected videos
+    this.setVideoSafe("base", this.videoControls.base);
+    this.setVideoSafe("mid", this.videoControls.mid);
+    this.setVideoSafe("energy", this.videoControls.energy);
   }
 
 });
@@ -218,11 +269,9 @@ window.addEventListener("keydown",(e)=>{
 
 update(delta){
 
-// 📊 START MEASURE
-this.stats.begin();  
+this.stats.begin();
 
 // SCROLL
-
 this.scroll.updateScroll();
 const progress = this.scroll.getProgress();
 
@@ -296,7 +345,6 @@ if(this.material?.uniforms?.uTime){
   this.material.uniforms.uTime.value += 0.01;
 }
 
-// 📊 END MEASURE
 this.stats.end();
 
 }
