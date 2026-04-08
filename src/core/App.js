@@ -85,15 +85,49 @@ this.setupThemeSwitching();
 this.setupGuiToggle();
 
 
-// ---------------- GUI ----------------
+// ---------------- SETTINGS ----------------
 
 this.settings = {
-  baseOpacity: 0.4,
-  midOpacity: 0.5,
-  energyOpacity: 0.2,
+  baseOpacity: 1.0,
+  midOpacity: 1.0,
+  energyOpacity: 0.6,
   zoomStrength: 1.5,
   motionStrength: 1.0
 };
+
+
+// ---------------- PRESETS 🔥 ----------------
+
+this.presets = {
+  calm: {
+    baseOpacity: 1.2,
+    midOpacity: 0.8,
+    energyOpacity: 0.3,
+    zoomStrength: 1.0,
+    motionStrength: 0.5
+  },
+  cinematic: {
+    baseOpacity: 0.9,
+    midOpacity: 1.2,
+    energyOpacity: 0.5,
+    zoomStrength: 1.5,
+    motionStrength: 1.0
+  },
+  intense: {
+    baseOpacity: 0.7,
+    midOpacity: 1.0,
+    energyOpacity: 1.0,
+    zoomStrength: 2.0,
+    motionStrength: 1.5
+  }
+};
+
+this.guiControls = {
+  preset: "cinematic"
+};
+
+
+// ---------------- VIDEO PICKER ----------------
 
 this.videoControls = {
   base: getNames("base")[0],
@@ -101,37 +135,39 @@ this.videoControls = {
   energy: getNames("energy")[0]
 };
 
+
+// ---------------- GUI ----------------
+
 this.gui = new GUI();
 
+// 🔥 PRESET DROPDOWN
+this.gui.add(this.guiControls, "preset", ["calm","cinematic","intense"])
+  .name("Preset")
+  .onChange((v)=> this.applyPreset(v));
+
 // --- opacity
-this.gui.add(this.settings, "baseOpacity", 0, 1, 0.01);
-this.gui.add(this.settings, "midOpacity", 0, 1, 0.01);
-this.gui.add(this.settings, "energyOpacity", 0, 1, 0.01);
+this.gui.add(this.settings, "baseOpacity", 0, 2, 0.01);
+this.gui.add(this.settings, "midOpacity", 0, 2, 0.01);
+this.gui.add(this.settings, "energyOpacity", 0, 2, 0.01);
 
 // --- motion
 this.gui.add(this.settings, "zoomStrength", 0, 3, 0.1);
 this.gui.add(this.settings, "motionStrength", 0, 2, 0.1);
 
-// --- VIDEO PICKER 🔥
+// --- VIDEO PICKER
 this.gui.add(this.videoControls, "base", getNames("base"))
-.name("Base Video")
-.onChange((name)=>{
-  this.setVideoSafe("base", name);
-});
+  .name("Base Video")
+  .onChange((name)=> this.setVideoSafe("base", name));
 
 this.gui.add(this.videoControls, "mid", getNames("mid"))
-.name("Mid Video")
-.onChange((name)=>{
-  this.setVideoSafe("mid", name);
-});
+  .name("Mid Video")
+  .onChange((name)=> this.setVideoSafe("mid", name));
 
 this.gui.add(this.videoControls, "energy", getNames("energy"))
-.name("Energy Video")
-.onChange((name)=>{
-  this.setVideoSafe("energy", name);
-});
+  .name("Energy Video")
+  .onChange((name)=> this.setVideoSafe("energy", name));
 
-// GUI sichtbar + klickbar machen
+// GUI fix
 this.gui.domElement.style.zIndex = "10";
 this.gui.domElement.style.pointerEvents = "auto";
 
@@ -157,6 +193,22 @@ this.loop.start();
 }
 
 
+// ------------------------------------------------
+// 🎬 APPLY PRESET
+// ------------------------------------------------
+
+applyPreset(name){
+
+const preset = this.presets[name];
+if(!preset) return;
+
+Object.assign(this.settings, preset);
+
+this.gui.updateDisplay();
+
+}
+
+
 // ---------------- VIDEO SWITCH SAFE ----------------
 
 setVideoSafe(layer, name){
@@ -166,7 +218,6 @@ const theme = this.themeManager.activeTheme;
 if(!theme || !theme.setVideo) return;
 
 const v = getVideo(layer, name);
-
 if(!v) return;
 
 theme.setVideo(layer, v.path);
@@ -199,7 +250,6 @@ setupInput(){
 
 const canvas = this.renderer.renderer.domElement;
 
-// 🔥 wichtig: nur canvas bekommt LMB
 canvas.style.pointerEvents = "auto";
 
 canvas.addEventListener("mousedown",()=>{
@@ -254,7 +304,6 @@ window.addEventListener("keydown",(e)=>{
     this.themeManager.activate("movies");
     console.log("Movies theme activated");
 
-    // 👉 apply selected videos
     this.setVideoSafe("base", this.videoControls.base);
     this.setVideoSafe("mid", this.videoControls.mid);
     this.setVideoSafe("energy", this.videoControls.energy);
@@ -271,7 +320,6 @@ update(delta){
 
 this.stats.begin();
 
-// SCROLL
 this.scroll.updateScroll();
 const progress = this.scroll.getProgress();
 
