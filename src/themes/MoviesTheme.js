@@ -5,42 +5,42 @@ export class MoviesTheme {
 
 constructor(container){
 
-  this.container = container;
-  this.time = 0;
+this.container = container;
+this.time = 0;
+this.focusStrength = 0;
+this.currentMidName = "default";
 
-  // ------------------------------------------------
-  // 🎬 FILE CONFIG (RUNTIME ONLY)
-  // ------------------------------------------------
 
-  this.files = {
-    active: {
-      base: "/mov/base.mp4",
-      mid: "/mov/mid.mp4",
-      energy: "/mov/energy.mp4"
-    }
-  };
+// ------------------------------------------------
+// 🎬 FILES
+// ------------------------------------------------
 
-  // ------------------------------------------------
-  // 🎬 LAYERS
-  // ------------------------------------------------
+this.files = {
+  active: {
+    base: "/mov/base.mp4",
+    mid: "/mov/mid.mp4",
+    energy: "/mov/energy.mp4"
+  }
+};
 
-  this.base   = this.createLayer(this.files.active.base,   14, -8, 0.35);
-  this.mid    = this.createLayer(this.files.active.mid,    10, -6, 0.65);
-  this.energy = this.createLayer(this.files.active.energy,  6, -4, 0.1, true);
 
-  // ------------------------------------------------
-  // 🎬 OFFSETS (composition)
-  // ------------------------------------------------
+// ------------------------------------------------
+// 🎬 LAYERS
+// ------------------------------------------------
 
-  this.baseOffset   = new THREE.Vector2(-0.2,  0.0);
-  this.midOffset    = new THREE.Vector2( 0.3,  0.1);
-  this.energyOffset = new THREE.Vector2(-0.4, -0.2);
+this.base   = this.createLayer(this.files.active.base,   14, -8, 0.5);
+this.mid    = this.createLayer(this.files.active.mid,    10, -6, 0.7);
+this.energy = this.createLayer(this.files.active.energy,  6, -4, 0.2, true);
 
-  // ------------------------------------------------
-  // 🧠 DEBUG
-  // ------------------------------------------------
 
-  this.lastStateKey = null;
+// ------------------------------------------------
+// 🎬 OFFSETS
+// ------------------------------------------------
+
+this.baseOffset   = new THREE.Vector2(-0.2,  0.0);
+this.midOffset    = new THREE.Vector2( 0.3,  0.1);
+this.energyOffset = new THREE.Vector2(-0.4, -0.2);
+
 }
 
 
@@ -85,16 +85,20 @@ createLayer(path, width, z, opacity, additive=false){
 
 
 // ------------------------------------------------
-// 🎬 SET VIDEO (SAFE, NO DISPOSE)
+// 🎬 VIDEO SWITCH (GUI)
 // ------------------------------------------------
 
 setVideo(layerName, path){
 
   const layer = this[layerName];
+  if(!layer) return;
 
-  if(!layer){
-    console.warn("❌ Layer not found:", layerName);
-    return;
+  if(layerName === "mid"){
+    this.currentMidName = path;
+  }
+
+  if(layer.material.map){
+    layer.material.map.dispose?.();
   }
 
   const texture = loadMovieTexture(this.getFreshPath(path));
@@ -107,126 +111,132 @@ setVideo(layerName, path){
 
 
 // ------------------------------------------------
+// 👁️ FOCUS DETECTION
+// ------------------------------------------------
+
+isFocusContent(){
+  return this.currentMidName?.includes("eye");
+}
+
+
+// ------------------------------------------------
 // 🎬 UPDATE
 // ------------------------------------------------
 
 update(state){
 
-  this.time += 0.016;
+this.time += 0.016;
 
-  const p = state.progress ?? 0;
-  const focus = state.intensity ?? 0;
-  const s = state.settings ?? {};
-
-  // ------------------------------------------------
-  // 🎬 HYBRID CINEMATIC BALANCE
-  // ------------------------------------------------
-
-  let autoBase   = 0.35 + p * 0.15;
-  let autoMid    = 0.65 + focus * 0.25;
-  let autoEnergy = 0.08 + focus * 0.25;
-
-  // subtle dramaturgy
-  if(state.fire > 0.5){
-    autoMid += 0.1;
-  }
-  else if(state.water > 0.5){
-    autoBase += 0.1;
-  }
-  else if(state.solid > 0.5){
-    autoEnergy *= 0.5;
-  }
-
-  // GUI multipliers
-  let baseOpacity   = autoBase   * (s.baseOpacity   ?? 1.0);
-  let midOpacity    = autoMid    * (s.midOpacity    ?? 1.0);
-  let energyOpacity = autoEnergy * (s.energyOpacity ?? 1.0);
-
-  // ------------------------------------------------
-  // 👁️ EYE GUARANTEE SYSTEM
-  // ------------------------------------------------
-
-  const minMid = 0.35;
-
-  if(energyOpacity > midOpacity){
-    midOpacity += 0.2;
-  }
-
-  midOpacity = Math.max(midOpacity, minMid);
-
-  // ------------------------------------------------
-  // 🎬 CLAMP
-  // ------------------------------------------------
-
-  baseOpacity   = THREE.MathUtils.clamp(baseOpacity,   0, 0.8);
-  midOpacity    = THREE.MathUtils.clamp(midOpacity,    0, 1.2);
-  energyOpacity = THREE.MathUtils.clamp(energyOpacity, 0, 0.6);
-
-  // ------------------------------------------------
-  // 🎬 SMOOTH APPLY
-  // ------------------------------------------------
-
-  const smooth = 0.06;
-
-  this.base.material.opacity += (baseOpacity - this.base.material.opacity) * smooth;
-  this.mid.material.opacity += (midOpacity - this.mid.material.opacity) * smooth;
-  this.energy.material.opacity += (energyOpacity - this.energy.material.opacity) * smooth;
-
-  // subtle energy pulse
-  this.energy.material.opacity += Math.sin(this.time * 1.2) * 0.015;
+const p = state.progress ?? 0;
+const i = state.intensity ?? 0;
+const s = state.settings ?? {};
 
 
-  // ------------------------------------------------
-  // 🎥 MOTION
-  // ------------------------------------------------
+// ------------------------------------------------
+// 🎬 BASE VALUES (GUI FIRST)
+// ------------------------------------------------
 
-  const m = s.motionStrength ?? 1.0;
-
-  this.base.mesh.position.x =
-    this.baseOffset.x + Math.sin(this.time * 0.05) * 0.08 * m;
-
-  this.mid.mesh.position.x =
-    this.midOffset.x + Math.sin(this.time * 0.2) * 0.25 * m;
-
-  this.mid.mesh.position.y =
-    this.midOffset.y + Math.cos(this.time * 0.15) * 0.15 * m;
-
-  this.energy.mesh.position.x =
-    this.energyOffset.x + Math.sin(this.time * 0.5) * 0.6 * m;
-
-  this.energy.mesh.position.y =
-    this.energyOffset.y + Math.cos(this.time * 0.4) * 0.4 * m;
-
-  // scroll influence
-  this.mid.mesh.position.x += (p - 0.5) * 0.5;
-  this.energy.mesh.position.x += (p - 0.5) * 1.2;
+let baseOpacity   = s.baseOpacity   ?? 0.5;
+let midOpacity    = s.midOpacity    ?? 0.7;
+let energyOpacity = s.energyOpacity ?? 0.2;
 
 
-  // ------------------------------------------------
-  // 🚀 ZOOM
-  // ------------------------------------------------
+// ------------------------------------------------
+// 👁️ SMOOTH FOCUS SYSTEM
+// ------------------------------------------------
 
-  const zoom = 1 + p * (s.zoomStrength ?? 1.5);
+const targetFocus = this.isFocusContent() ? 1 : 0;
 
-  this.base.mesh.position.z = -8 + p * 3;
-  this.base.mesh.scale.setScalar(zoom);
-
-  this.mid.mesh.position.z = -6 + p * 4;
-  this.mid.mesh.scale.setScalar(1.1 * zoom);
-
-  this.energy.mesh.position.z = -4 + p * 5;
-  this.energy.mesh.scale.setScalar(1.3 * zoom);
-
-  // 👁️ focus boost
-  const focusScale = 1 + focus * 0.15;
-  this.mid.mesh.scale.multiplyScalar(1.0 + (focusScale - 1.0) * 0.1);
+this.focusStrength += (targetFocus - this.focusStrength) * 0.05;
 
 
-  // ------------------------------------------------
-  // 🌌 GLOBAL DRIFT
-  // ------------------------------------------------
+// apply focus
 
-  this.container.position.z = Math.sin(this.time * 0.2) * 0.2;
+baseOpacity   *= (1 - this.focusStrength * 0.3);
+energyOpacity *= (1 - this.focusStrength * 0.4);
+midOpacity    *= (1 + this.focusStrength * 0.3);
+
+
+// hard visibility lock
+
+midOpacity = Math.max(midOpacity, 0.4 + this.focusStrength * 0.2);
+
+
+// ------------------------------------------------
+// ⚡ INTENSITY (LMB)
+// ------------------------------------------------
+
+energyOpacity += i * 0.25;
+
+
+// ------------------------------------------------
+// 🎬 SMOOTH APPLY
+// ------------------------------------------------
+
+this.base.material.opacity += (baseOpacity - this.base.material.opacity) * 0.05;
+this.mid.material.opacity += (midOpacity - this.mid.material.opacity) * 0.05;
+this.energy.material.opacity += (energyOpacity - this.energy.material.opacity) * 0.05;
+
+
+// subtle energy pulse
+
+this.energy.material.opacity += Math.sin(this.time * 1.5) * 0.01;
+
+
+// ------------------------------------------------
+// 🎥 MOTION
+// ------------------------------------------------
+
+const m = s.motionStrength ?? 1.0;
+
+this.base.mesh.position.x =
+  this.baseOffset.x + Math.sin(this.time * 0.05) * 0.08 * m;
+
+this.mid.mesh.position.x =
+  this.midOffset.x + Math.sin(this.time * 0.2) * 0.25 * m;
+
+this.mid.mesh.position.y =
+  this.midOffset.y + Math.cos(this.time * 0.15) * 0.15 * m;
+
+this.energy.mesh.position.x =
+  this.energyOffset.x + Math.sin(this.time * 0.5) * 0.6 * m;
+
+this.energy.mesh.position.y =
+  this.energyOffset.y + Math.cos(this.time * 0.4) * 0.4 * m;
+
+
+// scroll influence
+
+this.mid.mesh.position.x += (p - 0.5) * 0.5;
+this.energy.mesh.position.x += (p - 0.5) * 1.2;
+
+
+// ------------------------------------------------
+// 🚀 DEPTH (CINEMATIC)
+// ------------------------------------------------
+
+const zoom = 1 + p * (s.zoomStrength ?? 1.5);
+
+this.base.mesh.position.z = -8 + p * 3;
+this.base.mesh.scale.setScalar(zoom);
+
+this.mid.mesh.position.z = -5 + p * 4; // 👁️ forward
+this.mid.mesh.scale.setScalar(1.1 * zoom);
+
+this.energy.mesh.position.z = -4 + p * 5;
+this.energy.mesh.scale.setScalar(1.3 * zoom);
+
+
+// slight focus boost
+
+this.mid.mesh.scale.multiplyScalar(1.02);
+
+
+// ------------------------------------------------
+// 🌌 GLOBAL DRIFT
+// ------------------------------------------------
+
+this.container.position.z = Math.sin(this.time * 0.2) * 0.2;
 
 }
 
@@ -237,17 +247,17 @@ update(state){
 
 destroy(){
 
-  this.container.remove(this.base.mesh);
-  this.container.remove(this.mid.mesh);
-  this.container.remove(this.energy.mesh);
+this.container.remove(this.base.mesh);
+this.container.remove(this.mid.mesh);
+this.container.remove(this.energy.mesh);
 
-  this.base.mesh.geometry.dispose();
-  this.mid.mesh.geometry.dispose();
-  this.energy.mesh.geometry.dispose();
+this.base.mesh.geometry.dispose();
+this.mid.mesh.geometry.dispose();
+this.energy.mesh.geometry.dispose();
 
-  this.base.material.dispose();
-  this.mid.material.dispose();
-  this.energy.material.dispose();
+this.base.material.dispose();
+this.mid.material.dispose();
+this.energy.material.dispose();
 
 }
 
