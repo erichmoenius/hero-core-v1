@@ -18,6 +18,7 @@ import { ThemeManager } from "../engine/ThemeManager.js";
 import { SeasonsTheme } from "../themes/SeasonsTheme.js";
 import { ImageTheme } from "../themes/ImageTheme.js";
 import { MoviesTheme } from "../themes/MoviesTheme.js";
+import { SpaceTheme } from "../themes/SpaceTheme.js";
 
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
@@ -66,6 +67,7 @@ this.themeManager = new ThemeManager(
 this.themeManager.register("seasons", SeasonsTheme);
 this.themeManager.register("images", ImageTheme);
 this.themeManager.register("movies", MoviesTheme);
+this.themeManager.register("space", SpaceTheme);
 
 this.themeManager.activate("seasons");
 
@@ -283,7 +285,6 @@ window.addEventListener("keydown",(e)=>{
 
 }
 
-
 // ---------------- THEME SWITCH ----------------
 
 setupThemeSwitching(){
@@ -307,6 +308,10 @@ window.addEventListener("keydown",(e)=>{
     this.setVideoSafe("base", this.videoControls.base);
     this.setVideoSafe("mid", this.videoControls.mid);
     this.setVideoSafe("energy", this.videoControls.energy);
+  }
+
+  if(e.code === "Digit4"){
+  this.themeManager.activate("space");
   }
 
 });
@@ -362,7 +367,7 @@ if(this.camera){
   const targetX = Math.sin(t * 0.4) * 0.8 * camStrength;
   const targetY = Math.cos(t * 0.3) * 0.5 * camStrength;
 
-  let targetZ = 5 - p * depthStrength;
+  let targetZ = 2 - p * 20; // 🔥 tiefer Flug
   targetZ -= i * 1.5;
 
   const scrollOffset = (p - 0.5) * 1.5 * camStrength;
