@@ -28,20 +28,17 @@ export class App {
 constructor(){
 
 // ---------------- RENDERER ----------------
-
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
 this.camera = this.renderer.camera;
 
 
 // ---------------- BACKGROUND ----------------
-
 this.world = new ShaderWorld(this.scene);
 this.stars = new Starfield(this.scene);
 
 
-// ---------------- STAGE + PORTAL ----------------
-
+// ---------------- STAGE ----------------
 this.stage = new ThemeStage(this.scene);
 
 this.portal = new GlassPortal(
@@ -53,7 +50,6 @@ this.renderer.portal = this.portal;
 
 
 // ---------------- CORE ----------------
-
 this.scroll = new ScrollController();
 this.stateManager = new StateManager();
 
@@ -63,7 +59,6 @@ this.themeManager = new ThemeManager(
 
 
 // ---------------- THEMES ----------------
-
 this.themeManager.register("seasons", SeasonsTheme);
 this.themeManager.register("images", ImageTheme);
 this.themeManager.register("movies", MoviesTheme);
@@ -73,22 +68,23 @@ this.themeManager.activate("seasons");
 
 
 // ---------------- PARTICLES ----------------
-
 this.setupParticles();
 
 
 // ---------------- INPUT ----------------
-
 this.isBoosting = false;
 this.intensity = 0;
 
+this.mouse = new THREE.Vector2();
+this.mouseTarget = new THREE.Vector2();
+
 this.setupInput();
+this.setupMouse();
 this.setupThemeSwitching();
 this.setupGuiToggle();
 
 
 // ---------------- SETTINGS ----------------
-
 this.settings = {
   baseOpacity: 1.0,
   midOpacity: 1.0,
@@ -97,9 +93,10 @@ this.settings = {
   motionStrength: 1.0
 };
 
+this.targetSettings = { ...this.settings };
 
-// ---------------- PRESETS 🔥 ----------------
 
+// ---------------- PRESETS ----------------
 this.presets = {
   calm: {
     baseOpacity: 1.2,
@@ -124,67 +121,69 @@ this.presets = {
   }
 };
 
+
+// ---------------- GUI STATE ----------------
 this.guiControls = {
   preset: "cinematic"
 };
 
 
 // ---------------- VIDEO PICKER ----------------
+const baseList = getNames("base");
+const midList = getNames("mid");
+const energyList = getNames("energy");
 
 this.videoControls = {
-  base: getNames("base")[0],
-  mid: getNames("mid")[0],
-  energy: getNames("energy")[0]
+  base: baseList[0] ?? "",
+  mid: midList[0] ?? "",
+  energy: energyList[0] ?? ""
 };
 
 
 // ---------------- GUI ----------------
-
 this.gui = new GUI();
 
-// 🔥 PRESET DROPDOWN
-this.gui.add(this.guiControls, "preset", ["calm","cinematic","intense"])
+// PRESET
+this.presetController = this.gui
+  .add(this.guiControls, "preset", ["calm","cinematic","intense"])
   .name("Preset")
   .onChange((v)=> this.applyPreset(v));
 
-// --- opacity
+// OPACITY
 this.gui.add(this.settings, "baseOpacity", 0, 2, 0.01);
 this.gui.add(this.settings, "midOpacity", 0, 2, 0.01);
 this.gui.add(this.settings, "energyOpacity", 0, 2, 0.01);
 
-// --- motion
+// MOTION
 this.gui.add(this.settings, "zoomStrength", 0, 3, 0.1);
 this.gui.add(this.settings, "motionStrength", 0, 2, 0.1);
 
-// --- VIDEO PICKER
-this.gui.add(this.videoControls, "base", getNames("base"))
+// VIDEO PICKER
+this.gui.add(this.videoControls, "base", baseList)
   .name("Base Video")
   .onChange((name)=> this.setVideoSafe("base", name));
 
-this.gui.add(this.videoControls, "mid", getNames("mid"))
+this.gui.add(this.videoControls, "mid", midList)
   .name("Mid Video")
   .onChange((name)=> this.setVideoSafe("mid", name));
 
-this.gui.add(this.videoControls, "energy", getNames("energy"))
+this.gui.add(this.videoControls, "energy", energyList)
   .name("Energy Video")
   .onChange((name)=> this.setVideoSafe("energy", name));
 
-// GUI fix
+// GUI FIX
 this.gui.domElement.style.zIndex = "10";
 this.gui.domElement.style.pointerEvents = "auto";
-
 this.gui.hide();
 
 
 // ---------------- STATS ----------------
-
 this.stats = new Stats();
 this.stats.showPanel(0);
 document.body.appendChild(this.stats.dom);
 
 
 // ---------------- LOOP ----------------
-
 this.loop = new Loop(
   this.update.bind(this),
   this.renderer.render.bind(this.renderer)
@@ -195,29 +194,26 @@ this.loop.start();
 }
 
 
-// ------------------------------------------------
-// 🎬 APPLY PRESET
-// ------------------------------------------------
-
+// ---------------- PRESET ----------------
 applyPreset(name){
 
 const preset = this.presets[name];
 if(!preset) return;
 
-Object.assign(this.settings, preset);
+this.guiControls.preset = name;
 
-this.gui.updateDisplay();
+Object.assign(this.targetSettings, preset);
+
+this.presetController.updateDisplay();
 
 }
 
 
-// ---------------- VIDEO SWITCH SAFE ----------------
-
+// ---------------- VIDEO ----------------
 setVideoSafe(layer, name){
 
 const theme = this.themeManager.activeTheme;
-
-if(!theme || !theme.setVideo) return;
+if(!theme?.setVideo) return;
 
 const v = getVideo(layer, name);
 if(!v) return;
@@ -228,7 +224,6 @@ theme.setVideo(layer, v.path);
 
 
 // ---------------- PARTICLES ----------------
-
 setupParticles(){
 
 const N = 6000;
@@ -247,71 +242,64 @@ this.scene.add(this.points);
 
 
 // ---------------- INPUT ----------------
-
 setupInput(){
 
 const canvas = this.renderer.renderer.domElement;
 
 canvas.style.pointerEvents = "auto";
 
-canvas.addEventListener("mousedown",()=>{
-  this.isBoosting = true;
-});
+canvas.addEventListener("mousedown", ()=> this.isBoosting = true);
+window.addEventListener("mouseup", ()=> this.isBoosting = false);
 
-window.addEventListener("mouseup",()=>{
-  this.isBoosting = false;
+}
+
+
+// ---------------- MOUSE ----------------
+setupMouse(){
+
+window.addEventListener("mousemove",(e)=>{
+
+  const x = (e.clientX / window.innerWidth) * 2 - 1;
+  const y = (e.clientY / window.innerHeight) * 2 - 1;
+
+  this.mouseTarget.set(x, -y);
+
 });
 
 }
 
 
 // ---------------- GUI TOGGLE ----------------
-
 setupGuiToggle(){
 
 window.addEventListener("keydown",(e)=>{
-
   if(e.code === "KeyG"){
-
-    if(this.gui._hidden){
-      this.gui.show();
-    }else{
-      this.gui.hide();
-    }
-
+    this.gui._hidden ? this.gui.show() : this.gui.hide();
   }
-
 });
 
 }
 
-// ---------------- THEME SWITCH ----------------
 
+// ---------------- THEME SWITCH ----------------
 setupThemeSwitching(){
 
 window.addEventListener("keydown",(e)=>{
 
   if(e.repeat) return;
 
-  if(e.code === "Digit1"){
-    this.themeManager.activate("seasons");
-  }
-
-  if(e.code === "Digit2"){
-    this.themeManager.activate("images");
-  }
+  if(e.code === "Digit1") this.themeManager.activate("seasons");
+  if(e.code === "Digit2") this.themeManager.activate("images");
 
   if(e.code === "Digit3"){
     this.themeManager.activate("movies");
-    console.log("Movies theme activated");
-
     this.setVideoSafe("base", this.videoControls.base);
     this.setVideoSafe("mid", this.videoControls.mid);
     this.setVideoSafe("energy", this.videoControls.energy);
   }
 
   if(e.code === "Digit4"){
-  this.themeManager.activate("space");
+    this.themeManager.activate("space");
   }
 
 });
@@ -319,12 +307,57 @@ window.addEventListener("keydown",(e)=>{
 }
 
 
-// ---------------- UPDATE ----------------
+// ---------------- CAMERA ----------------
+updateCamera(state){
 
+const t = performance.now() * 0.001;
+const p = state.progress ?? 0;
+const i = state.intensity ?? 0;
+
+// smooth mouse
+this.mouse.lerp(this.mouseTarget, 0.05);
+
+let camStrength = 0.15;
+let targetZ = 5;
+let mouseInfluence = 0.4;
+
+if(this.themeManager.activeTheme instanceof MoviesTheme){
+  camStrength = 1.0;
+  targetZ = 5 - p * 3.5;
+  mouseInfluence = 0.8;
+}
+else if(this.themeManager.activeTheme instanceof SpaceTheme){
+  camStrength = 0.4;
+  targetZ = 2 - p * 20;
+  mouseInfluence = 0.2;
+}
+
+const mouseX = this.mouse.x * mouseInfluence;
+const mouseY = this.mouse.y * mouseInfluence;
+
+const targetX =
+  Math.sin(t * 0.4) * 0.8 * camStrength + mouseX;
+
+const targetY =
+  Math.cos(t * 0.3) * 0.5 * camStrength + mouseY;
+
+targetZ -= i * 1.5;
+
+this.camera.position.x += (targetX - this.camera.position.x) * 0.08;
+this.camera.position.y += (targetY - this.camera.position.y) * 0.08;
+this.camera.position.z += (targetZ - this.camera.position.z) * 0.12;
+
+this.camera.lookAt(0,0,-4);
+
+}
+
+
+// ---------------- UPDATE ----------------
 update(delta){
 
 this.stats.begin();
 
+// STATE
 this.scroll.updateScroll();
 const progress = this.scroll.getProgress();
 
@@ -335,63 +368,41 @@ state.progress = progress;
 
 
 // INTENSITY
-
-if(this.isBoosting){
-  this.intensity += 0.04;
-}else{
-  this.intensity -= 0.04;
-}
-
+this.intensity += this.isBoosting ? 0.04 : -0.04;
 this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
 state.intensity = this.intensity;
 state.settings = this.settings;
 
 
-// CAMERA
+// 🔥 SMOOTH PRESET
+const speeds = {
+  baseOpacity: 0.03,
+  midOpacity: 0.05,
+  energyOpacity: 0.08,
+  zoomStrength: 0.02,
+  motionStrength: 0.04
+};
 
-if(this.camera){
-
-  const t = performance.now() * 0.001;
-  const p = state.progress ?? 0;
-  const i = state.intensity ?? 0;
-
-  let camStrength = 0.15;
-  let depthStrength = 1.2;
-
-  if(this.themeManager.activeTheme instanceof MoviesTheme){
-    camStrength = 1.0;
-    depthStrength = 3.5;
-  }
-
-  const targetX = Math.sin(t * 0.4) * 0.8 * camStrength;
-  const targetY = Math.cos(t * 0.3) * 0.5 * camStrength;
-
-  let targetZ = 2 - p * 20; // 🔥 tiefer Flug
-  targetZ -= i * 1.5;
-
-  const scrollOffset = (p - 0.5) * 1.5 * camStrength;
-
-  this.camera.position.x += (targetX + scrollOffset - this.camera.position.x) * 0.08;
-  this.camera.position.y += (targetY - this.camera.position.y) * 0.08;
-  this.camera.position.z += (targetZ - this.camera.position.z) * 0.12;
-
-  this.camera.lookAt(0,0,-4);
+for(const key in this.settings){
+  const s = speeds[key] ?? 0.05;
+  this.settings[key] +=
+    (this.targetSettings[key] - this.settings[key]) * s;
 }
 
 
-// SYSTEM
+// CAMERA
+this.updateCamera(state);
 
+
+// SYSTEMS
 this.themeManager.update(state);
-
 this.stars.update();
 this.world.update();
-
 this.portal.update(delta);
 
 
 // PARTICLES
-
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
 if(this.material?.uniforms?.uTime){
