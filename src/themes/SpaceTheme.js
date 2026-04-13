@@ -8,11 +8,11 @@ this.container = container;
 this.time = 0;
 
 // ---------------- LAYERS ----------------
-// konstante Tiefe (nicht mehr abhängig von scroll!)
+// depth is now POSITIVE (important!)
 
-this.far  = this.createLayer(1500, -30);
-this.mid  = this.createLayer(1000, -15);
-this.near = this.createLayer(600,  -5);
+this.far  = this.createLayer(1500, 30);
+this.mid  = this.createLayer(1000, 15);
+this.near = this.createLayer(600,  6);
 
 }
 
@@ -22,25 +22,26 @@ this.near = this.createLayer(600,  -5);
 createLayer(count, depth){
 
 const geometry = new THREE.BufferGeometry();
-const positions = [];
+const positions = new Float32Array(count * 3);
 
 for(let i = 0; i < count; i++){
 
-  positions.push(
-    (Math.random() - 0.5) * 40,
-    (Math.random() - 0.5) * 40,
-    Math.random() * depth
-  );
+  const i3 = i * 3;
 
+  positions[i3 + 0] = (Math.random() - 0.5) * 40;
+  positions[i3 + 1] = (Math.random() - 0.5) * 40;
+
+  // 🔥 IMPORTANT: distribute BETWEEN -depth → +depth
+  positions[i3 + 2] = -Math.random() * depth;
 }
 
 geometry.setAttribute(
   "position",
-  new THREE.Float32BufferAttribute(positions, 3)
+  new THREE.BufferAttribute(positions, 3)
 );
 
 const material = new THREE.PointsMaterial({
-  size: 0.05,
+  size: 0.04 + Math.random() * 0.04,
   transparent: true,
   opacity: 0.9,
   depthWrite: false
@@ -66,41 +67,37 @@ const i = state.intensity ?? 0;
 
 
 // ------------------------------------------------
-// 🚀 INFINITE MOTION (KEY FIX)
+// 🚀 MOTION (NO COLLAPSE)
 // ------------------------------------------------
 
-// 👉 smooth loop (kein Ende mehr!)
+// smooth cinematic motion
 const scrollMotion = Math.sin(p * Math.PI);
 
-// 👉 konstante Bewegung + Boost
-const forward = scrollMotion * 12 + i * 6;
+// forward movement
+const forward = scrollMotion * 8 + i * 6;
 
 
 // ------------------------------------------------
-// 🌌 DEPTH MOVEMENT
+// 🌌 PARALLAX DEPTH
 // ------------------------------------------------
 
 this.updateLayer(this.far,  forward * 0.2);
-this.updateLayer(this.mid,  forward * 0.5);
-this.updateLayer(this.near, forward * 1.0);
+this.updateLayer(this.mid,  forward * 0.6);
+this.updateLayer(this.near, forward * 1.4);
 
 
 // ------------------------------------------------
-// 🌌 ATMOSPHERE (subtle)
+// 🌌 ATMOSPHERE
 // ------------------------------------------------
 
 let opacity = 0.9;
 
-if(state.water > 0.5){
-  opacity = 0.6;
-}
-else if(state.fire > 0.5){
-  opacity = 0.8;
-}
+if(state.water > 0.5) opacity = 0.6;
+if(state.fire > 0.5)  opacity = 0.8;
 
-[this.far, this.mid, this.near].forEach(layer => {
-  layer.points.material.opacity = opacity;
-});
+this.far.points.material.opacity  = opacity * 0.6;
+this.mid.points.material.opacity  = opacity * 0.8;
+this.near.points.material.opacity = opacity;
 
 }
 
@@ -110,16 +107,22 @@ else if(state.fire > 0.5){
 updateLayer(layer, speed){
 
 const positions = layer.points.geometry.attributes.position;
+const depth = layer.depth;
 
 for(let i = 0; i < positions.count; i++){
 
   let z = positions.getZ(i);
 
+  // 🚀 move forward
   z += speed * 0.02;
 
-  // 🔥 recycle (infinite space)
+  // 🔥 TRUE INFINITE SPACE (WRAP, NOT RESET)
   if(z > 2){
-    z = -layer.depth;
+    z -= depth;
+  }
+
+  if(z < -depth){
+    z += depth;
   }
 
   positions.setZ(i, z);
