@@ -8,11 +8,11 @@ this.container = container;
 this.time = 0;
 
 // ---------------- LAYERS ----------------
-// depth is now POSITIVE (important!)
+// depth = positiv (wichtig!)
 
-this.far  = this.createLayer(1500, 30);
-this.mid  = this.createLayer(1000, 15);
-this.near = this.createLayer(600,  6);
+this.far  = this.createLayer(1500, 40);
+this.mid  = this.createLayer(1000, 20);
+this.near = this.createLayer(600,  10);
 
 }
 
@@ -28,11 +28,12 @@ for(let i = 0; i < count; i++){
 
   const i3 = i * 3;
 
+  // XY verteilt
   positions[i3 + 0] = (Math.random() - 0.5) * 40;
   positions[i3 + 1] = (Math.random() - 0.5) * 40;
 
-  // 🔥 IMPORTANT: distribute BETWEEN -depth → +depth
-  positions[i3 + 2] = -Math.random() * depth;
+  // 🔥 KEY FIX: symmetrische Tiefe (kein collapsing!)
+  positions[i3 + 2] = (Math.random() - 0.5) * depth;
 }
 
 geometry.setAttribute(
@@ -41,7 +42,7 @@ geometry.setAttribute(
 );
 
 const material = new THREE.PointsMaterial({
-  size: 0.04 + Math.random() * 0.04,
+  size: 0.03 + Math.random() * 0.05,
   transparent: true,
   opacity: 0.9,
   depthWrite: false
@@ -67,18 +68,18 @@ const i = state.intensity ?? 0;
 
 
 // ------------------------------------------------
-// 🚀 MOTION (NO COLLAPSE)
+// 🚀 MOTION (DECOUPLED FROM SPACE SIZE)
 // ------------------------------------------------
 
-// smooth cinematic motion
+// smooth cinematic curve
 const scrollMotion = Math.sin(p * Math.PI);
 
-// forward movement
-const forward = scrollMotion * 8 + i * 6;
+// forward motion
+const forward = scrollMotion * 6 + i * 6;
 
 
 // ------------------------------------------------
-// 🌌 PARALLAX DEPTH
+// 🌌 PARALLAX (REAL DEPTH)
 // ------------------------------------------------
 
 this.updateLayer(this.far,  forward * 0.2);
@@ -113,17 +114,15 @@ for(let i = 0; i < positions.count; i++){
 
   let z = positions.getZ(i);
 
-  // 🚀 move forward
-  z += speed * 0.02;
+  // 🔥 movement mit variation → natürlicher flow
+  const movement = speed * 0.02;
+  const variance = 0.6 + Math.sin(i * 12.9898) * 0.4;
 
-  // 🔥 TRUE INFINITE SPACE (WRAP, NOT RESET)
-  if(z > 2){
-    z -= depth;
-  }
+  z += movement * variance;
 
-  if(z < -depth){
-    z += depth;
-  }
+  // 🔥 TRUE INFINITE SPACE (WRAP)
+  if(z > depth * 0.5) z -= depth;
+  if(z < -depth * 0.5) z += depth;
 
   positions.setZ(i, z);
 }
