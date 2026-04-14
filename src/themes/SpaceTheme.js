@@ -6,20 +6,20 @@ constructor(container){
 
 this.container = container;
 this.time = 0;
+this.velocity = 0;
 
-// ---------------- LAYERS ----------------
-// depth = positiv (wichtig!)
+// ---------------- STAR LAYERS ----------------
 
-this.far  = this.createLayer(1500, 40);
-this.mid  = this.createLayer(1000, 20);
-this.near = this.createLayer(600,  10);
+this.far  = this.createLayer(1500, 40, 0.02, 0x6688ff);
+this.mid  = this.createLayer(1000, 20, 0.04, 0xffffff);
+this.near = this.createLayer(600,  10, 0.07, 0xffaa55);
 
 }
 
 
 // ---------------- CREATE LAYER ----------------
 
-createLayer(count, depth){
+createLayer(count, depth, size, color){
 
 const geometry = new THREE.BufferGeometry();
 const positions = new Float32Array(count * 3);
@@ -28,11 +28,8 @@ for(let i = 0; i < count; i++){
 
   const i3 = i * 3;
 
-  // XY verteilt
-  positions[i3 + 0] = (Math.random() - 0.5) * 40;
+  positions[i3]     = (Math.random() - 0.5) * 40;
   positions[i3 + 1] = (Math.random() - 0.5) * 40;
-
-  // 🔥 KEY FIX: symmetrische Tiefe (kein collapsing!)
   positions[i3 + 2] = (Math.random() - 0.5) * depth;
 }
 
@@ -42,17 +39,23 @@ geometry.setAttribute(
 );
 
 const material = new THREE.PointsMaterial({
-  size: 0.03 + Math.random() * 0.05,
+  size,
+  color,
   transparent: true,
   opacity: 0.9,
-  depthWrite: false
+  depthWrite: false,
+  blending: THREE.AdditiveBlending
 });
 
 const points = new THREE.Points(geometry, material);
 
 this.container.add(points);
 
-return { points, depth };
+return {
+  points,
+  depth,
+  baseSize: size
+};
 
 }
 
@@ -68,18 +71,26 @@ const i = state.intensity ?? 0;
 
 
 // ------------------------------------------------
-// 🚀 MOTION (DECOUPLED FROM SPACE SIZE)
+// 🚀 VELOCITY SYSTEM (KEY FIX)
 // ------------------------------------------------
 
-// smooth cinematic curve
-const scrollMotion = Math.sin(p * Math.PI);
+// scroll steuert richtung
+const targetSpeed = (p - 0.5) * 20;
 
-// forward motion
-const forward = scrollMotion * 6 + i * 6;
+// smoothing (kein ruckeln!)
+this.velocity += (targetSpeed - this.velocity) * 0.08;
+
+// damping (kein runaway)
+this.velocity *= 0.98;
+
+// boost (LMB)
+this.velocity += i * 0.6;
+
+const forward = this.velocity;
 
 
 // ------------------------------------------------
-// 🌌 PARALLAX (REAL DEPTH)
+// 🌌 PARALLAX DEPTH
 // ------------------------------------------------
 
 this.updateLayer(this.far,  forward * 0.2);
@@ -88,17 +99,22 @@ this.updateLayer(this.near, forward * 1.4);
 
 
 // ------------------------------------------------
-// 🌌 ATMOSPHERE
+// 🌫️ DEPTH FOG (subtle cinematic)
 // ------------------------------------------------
 
-let opacity = 0.9;
+const fog = 0.75 + Math.sin(this.time * 0.3) * 0.1;
 
-if(state.water > 0.5) opacity = 0.6;
-if(state.fire > 0.5)  opacity = 0.8;
+this.far.points.material.opacity  = 0.25 * fog;
+this.mid.points.material.opacity  = 0.6  * fog;
+this.near.points.material.opacity = 1.0  * fog;
 
-this.far.points.material.opacity  = opacity * 0.6;
-this.mid.points.material.opacity  = opacity * 0.8;
-this.near.points.material.opacity = opacity;
+
+// ------------------------------------------------
+// ✨ LIGHT PULSE
+// ------------------------------------------------
+
+const pulse = 1 + Math.sin(this.time * 2.0) * 0.05;
+this.near.points.material.size = this.near.baseSize * pulse;
 
 }
 
@@ -107,27 +123,25 @@ this.near.points.material.opacity = opacity;
 
 updateLayer(layer, speed){
 
-const positions = layer.points.geometry.attributes.position;
+const pos = layer.points.geometry.attributes.position;
 const depth = layer.depth;
 
-for(let i = 0; i < positions.count; i++){
+for(let i = 0; i < pos.count; i++){
 
-  let z = positions.getZ(i);
+  let z = pos.getZ(i);
 
-  // 🔥 movement mit variation → natürlicher flow
-  const movement = speed * 0.02;
   const variance = 0.6 + Math.sin(i * 12.9898) * 0.4;
 
-  z += movement * variance;
+  z += speed * 0.02 * variance;
 
-  // 🔥 TRUE INFINITE SPACE (WRAP)
+  // 🔥 TRUE INFINITE SPACE
   if(z > depth * 0.5) z -= depth;
   if(z < -depth * 0.5) z += depth;
 
-  positions.setZ(i, z);
+  pos.setZ(i, z);
 }
 
-positions.needsUpdate = true;
+pos.needsUpdate = true;
 
 }
 
