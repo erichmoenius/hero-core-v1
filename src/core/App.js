@@ -113,22 +113,24 @@ this.gui = new GUI();
 
 this.presetController = this.gui
   .add(this.guiControls, "preset", ["calm","cinematic","intense"])
-  .onChange(v=>this.applyPreset(v));
+  .name("Preset")
+  .onChange(v => this.applyPreset(v));
 
 this.gui.add(this.settings,"baseOpacity",0,2,0.01);
 this.gui.add(this.settings,"midOpacity",0,2,0.01);
 this.gui.add(this.settings,"energyOpacity",0,2,0.01);
+
 this.gui.add(this.settings,"zoomStrength",0,3,0.1);
 this.gui.add(this.settings,"motionStrength",0,2,0.1);
 
 this.gui.add(this.videoControls,"base",baseList)
-  .onChange(n=>this.setVideoSafe("base",n));
+  .onChange(n => this.setVideoSafe("base",n));
 
 this.gui.add(this.videoControls,"mid",midList)
-  .onChange(n=>this.setVideoSafe("mid",n));
+  .onChange(n => this.setVideoSafe("mid",n));
 
 this.gui.add(this.videoControls,"energy",energyList)
-  .onChange(n=>this.setVideoSafe("energy",n));
+  .onChange(n => this.setVideoSafe("energy",n));
 
 this.gui.hide();
 
@@ -150,8 +152,9 @@ this.loop.start();
 applyPreset(name){
 const p = this.presets[name];
 if(!p) return;
+
 this.guiControls.preset = name;
-Object.assign(this.targetSettings,p);
+Object.assign(this.targetSettings, p);
 this.presetController.updateDisplay();
 }
 
@@ -159,6 +162,7 @@ this.presetController.updateDisplay();
 setVideoSafe(layer,name){
 const theme = this.themeManager.activeTheme;
 if(!theme?.setVideo) return;
+
 const v = getVideo(layer,name);
 if(v) theme.setVideo(layer,v.path);
 }
@@ -167,82 +171,92 @@ if(v) theme.setVideo(layer,v.path);
 setupParticles(){
 const geo = createParticleField(6000);
 const mat = createParticleMaterial();
-this.points = new THREE.Points(geo.geometry,mat);
+
+this.points = new THREE.Points(geo.geometry, mat);
 this.material = mat;
+
 this.scene.add(this.points);
 }
 
 // ---------- INPUT ----------
 setupInput(){
 const canvas = this.renderer.renderer.domElement;
-canvas.addEventListener("mousedown",()=>this.isBoosting=true);
-window.addEventListener("mouseup",()=>this.isBoosting=false);
+
+canvas.addEventListener("mousedown",()=> this.isBoosting = true);
+window.addEventListener("mouseup",()=> this.isBoosting = false);
 }
 
 // ---------- MOUSE ----------
 setupMouse(){
 window.addEventListener("mousemove",(e)=>{
-const x=(e.clientX/window.innerWidth)*2-1;
-const y=(e.clientY/window.innerHeight)*2-1;
-this.mouseTarget.set(x,-y);
+  const x = (e.clientX/window.innerWidth)*2 - 1;
+  const y = (e.clientY/window.innerHeight)*2 - 1;
+  this.mouseTarget.set(x,-y);
 });
 }
 
 // ---------- GUI ----------
 setupGuiToggle(){
 if(this._guiBound) return;
-this._guiBound=true;
+this._guiBound = true;
 
 window.addEventListener("keydown",(e)=>{
-if(e.code==="KeyG"){
-this.gui._hidden ? this.gui.show() : this.gui.hide();
-}
+  if(e.code==="KeyG"){
+    this.gui._hidden ? this.gui.show() : this.gui.hide();
+  }
 });
 }
 
 // ---------- THEMES ----------
 setupThemeSwitching(){
 if(this._themeSwitchBound) return;
-this._themeSwitchBound=true;
+this._themeSwitchBound = true;
 
 window.addEventListener("keydown",(e)=>{
-if(e.repeat) return;
+  if(e.repeat) return;
 
-if(e.code==="Digit1") this.themeManager.activate("seasons");
-if(e.code==="Digit2") this.themeManager.activate("images");
+  if(e.code==="Digit1") this.themeManager.activate("seasons");
+  if(e.code==="Digit2") this.themeManager.activate("images");
 
-if(e.code==="Digit3"){
-this.themeManager.activate("movies");
-this.setVideoSafe("base",this.videoControls.base);
-this.setVideoSafe("mid",this.videoControls.mid);
-this.setVideoSafe("energy",this.videoControls.energy);
-}
+  if(e.code==="Digit3"){
+    this.themeManager.activate("movies");
+    this.setVideoSafe("base",this.videoControls.base);
+    this.setVideoSafe("mid",this.videoControls.mid);
+    this.setVideoSafe("energy",this.videoControls.energy);
+  }
 
-if(e.code==="Digit4"){
-this.themeManager.activate("space");
-}
+  if(e.code==="Digit4"){
+    this.themeManager.activate("space");
+  }
 });
 }
 
 // ---------- ENVIRONMENT ----------
 updateEnvironment(){
 
-const isSpace = this.themeManager.activeTheme instanceof SpaceTheme;
+const theme = this.themeManager.activeTheme;
+const isSpace = theme instanceof SpaceTheme;
 
-// ShaderWorld
-this.world?.setActive(!isSpace);
+// 🌌 ShaderWorld OFF in Space
+if(this.world){
+  this.world.farNebula.visible  = !isSpace;
+  this.world.nearNebula.visible = !isSpace;
+  this.world.fogLayer.visible   = !isSpace;
+}
 
-// Starfield
+// ⭐ Starfield OFF in Space
 if(this.stars?.points){
-this.stars.points.visible = !isSpace;
+  this.stars.points.visible = !isSpace;
 }
 
-// 🔥 CRITICAL FIX
-if(this.portal?.mesh){
-this.portal.mesh.visible = !isSpace;
+// 🌀 Portal OFF in Space
+if(isSpace){
+  this.renderer.portal = null;
+  if(this.portal) this.portal.visible = false;
+}else{
+  this.renderer.portal = this.portal;
+  if(this.portal) this.portal.visible = true;
 }
-
-this.renderer.portal = isSpace ? null : this.portal;
 
 }
 
@@ -259,22 +273,22 @@ let camStrength = 0.15;
 let targetZ = 5;
 
 if(this.themeManager.activeTheme instanceof MoviesTheme){
-camStrength = 1;
-targetZ = 5 - p*3.5;
+  camStrength = 1;
+  targetZ = 5 - p * 3.5;
 }
 else if(this.themeManager.activeTheme instanceof SpaceTheme){
-camStrength = 0.4;
-targetZ = 3 - p*8; // softer flight
+  camStrength = 0.25;
+  targetZ = 3 - p * 8;
 }
 
 const targetX = Math.sin(t*0.4)*0.8*camStrength + this.mouse.x*0.3;
 const targetY = Math.cos(t*0.3)*0.5*camStrength + this.mouse.y*0.3;
 
-targetZ -= i*1.5;
+targetZ -= i * 1.5;
 
-this.camera.position.x += (targetX-this.camera.position.x)*0.08;
-this.camera.position.y += (targetY-this.camera.position.y)*0.08;
-this.camera.position.z += (targetZ-this.camera.position.z)*0.12;
+this.camera.position.x += (targetX - this.camera.position.x)*0.08;
+this.camera.position.y += (targetY - this.camera.position.y)*0.08;
+this.camera.position.z += (targetZ - this.camera.position.z)*0.12;
 
 this.camera.lookAt(0,0,-4);
 
@@ -285,6 +299,7 @@ update(delta){
 
 this.stats.begin();
 
+// STATE
 this.scroll.updateScroll();
 const progress = this.scroll.getProgress();
 
@@ -293,34 +308,38 @@ const state = this.stateManager.get();
 
 state.progress = progress;
 
-// intensity
+// INTENSITY
 this.intensity += this.isBoosting ? 0.04 : -0.04;
 this.intensity = THREE.MathUtils.clamp(this.intensity,0,1);
 
 state.intensity = this.intensity;
 state.settings = this.settings;
 
-// smooth presets
+// SMOOTH PRESETS
 for(const k in this.settings){
-this.settings[k] += (this.targetSettings[k]-this.settings[k])*0.05;
+  this.settings[k] += (this.targetSettings[k] - this.settings[k]) * 0.05;
 }
 
-// camera
+// CAMERA
 this.updateCamera(state);
 
-// systems
+// SYSTEMS
 this.themeManager.update(state);
 this.updateEnvironment();
 
+// 🔥 IMPORTANT: world nur wenn NICHT space
+if(!(this.themeManager.activeTheme instanceof SpaceTheme)){
+  this.world.update();
+}
+
 this.stars.update();
-this.world.update();
 this.portal?.update(delta);
 
-// particles
-this.points.rotation.y += 0.0003 + this.intensity*0.001;
+// PARTICLES
+this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
 if(this.material?.uniforms?.uTime){
-this.material.uniforms.uTime.value += 0.01;
+  this.material.uniforms.uTime.value += 0.01;
 }
 
 this.stats.end();

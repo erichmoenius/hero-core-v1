@@ -4,15 +4,16 @@ export class SpaceTheme {
 
 constructor(container){
 
-this.container = container;
-this.time = 0;
-this.velocity = 0;
+  this.container = container;
+  this.time = 0;
+  this.velocity = 0;
 
-// ---------------- STAR LAYERS ----------------
+  // ---------------- STAR LAYERS ----------------
+  // unterschiedliche Tiefe + Größen für echtes Parallax
 
-this.far  = this.createLayer(1500, 40, 0.02, 0x6688ff);
-this.mid  = this.createLayer(1000, 20, 0.04, 0xffffff);
-this.near = this.createLayer(600,  10, 0.07, 0xffaa55);
+  this.far  = this.createLayer(1500, 40, 0.015, 0x6688ff);
+  this.mid  = this.createLayer(1000, 20, 0.03,  0xffffff);
+  this.near = this.createLayer(600,  10, 0.05,  0xffaa55);
 
 }
 
@@ -21,41 +22,44 @@ this.near = this.createLayer(600,  10, 0.07, 0xffaa55);
 
 createLayer(count, depth, size, color){
 
-const geometry = new THREE.BufferGeometry();
-const positions = new Float32Array(count * 3);
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(count * 3);
 
-for(let i = 0; i < count; i++){
+  for(let i = 0; i < count; i++){
 
-  const i3 = i * 3;
+    const i3 = i * 3;
 
-  positions[i3]     = (Math.random() - 0.5) * 40;
-  positions[i3 + 1] = (Math.random() - 0.5) * 40;
-  positions[i3 + 2] = (Math.random() - 0.5) * depth;
-}
+    positions[i3 + 0] = (Math.random() - 0.5) * 40;
+    positions[i3 + 1] = (Math.random() - 0.5) * 40;
 
-geometry.setAttribute(
-  "position",
-  new THREE.BufferAttribute(positions, 3)
-);
+    // 🔥 symmetrische Tiefe → kein collapsing mehr
+    positions[i3 + 2] = (Math.random() - 0.5) * depth;
+  }
 
-const material = new THREE.PointsMaterial({
-  size,
-  color,
-  transparent: true,
-  opacity: 0.9,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending
-});
+  geometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(positions, 3)
+  );
 
-const points = new THREE.Points(geometry, material);
+  const material = new THREE.PointsMaterial({
+    size,
+    color,
+    transparent: true,
+    opacity: 0.15,          // 🔥 FIX: kein Nebel mehr
+    depthWrite: false,
+    depthTest: true,        // 🔥 FIX: verhindert Layer-Fog
+    blending: THREE.AdditiveBlending
+  });
 
-this.container.add(points);
+  const points = new THREE.Points(geometry, material);
 
-return {
-  points,
-  depth,
-  baseSize: size
-};
+  this.container.add(points);
+
+  return {
+    points,
+    depth,
+    baseSize: size
+  };
 
 }
 
@@ -64,57 +68,57 @@ return {
 
 update(state){
 
-this.time += 0.016;
+  this.time += 0.016;
 
-const p = state.progress ?? 0;
-const i = state.intensity ?? 0;
-
-
-// ------------------------------------------------
-// 🚀 VELOCITY SYSTEM (KEY FIX)
-// ------------------------------------------------
-
-// scroll steuert richtung
-const targetSpeed = (p - 0.5) * 20;
-
-// smoothing (kein ruckeln!)
-this.velocity += (targetSpeed - this.velocity) * 0.08;
-
-// damping (kein runaway)
-this.velocity *= 0.98;
-
-// boost (LMB)
-this.velocity += i * 0.6;
-
-const forward = this.velocity;
+  const p = state.progress ?? 0;
+  const i = state.intensity ?? 0;
 
 
-// ------------------------------------------------
-// 🌌 PARALLAX DEPTH
-// ------------------------------------------------
+  // ------------------------------------------------
+  // 🚀 VELOCITY SYSTEM (smooth + cinematic)
+  // ------------------------------------------------
 
-this.updateLayer(this.far,  forward * 0.2);
-this.updateLayer(this.mid,  forward * 0.6);
-this.updateLayer(this.near, forward * 1.4);
+  // Richtung durch Scroll
+  const targetSpeed = (p - 0.5) * 20;
+
+  // smoothing (kein Ruckeln)
+  this.velocity += (targetSpeed - this.velocity) * 0.08;
+
+  // damping (stabil)
+  this.velocity *= 0.96;
+
+  // boost (LMB)
+  this.velocity += i * 0.6;
+
+  const forward = this.velocity;
 
 
-// ------------------------------------------------
-// 🌫️ DEPTH FOG (subtle cinematic)
-// ------------------------------------------------
+  // ------------------------------------------------
+  // 🌌 PARALLAX (echte Tiefe)
+  // ------------------------------------------------
 
-const fog = 0.75 + Math.sin(this.time * 0.3) * 0.1;
-
-this.far.points.material.opacity  = 0.25 * fog;
-this.mid.points.material.opacity  = 0.6  * fog;
-this.near.points.material.opacity = 1.0  * fog;
+  this.updateLayer(this.far,  forward * 0.2);
+  this.updateLayer(this.mid,  forward * 0.6);
+  this.updateLayer(this.near, forward * 1.4);
 
 
-// ------------------------------------------------
-// ✨ LIGHT PULSE
-// ------------------------------------------------
+  // ------------------------------------------------
+  // 🌫️ DEPTH ATMOSPHERE (subtle!)
+  // ------------------------------------------------
 
-const pulse = 1 + Math.sin(this.time * 2.0) * 0.05;
-this.near.points.material.size = this.near.baseSize * pulse;
+  const fog = 0.85 + Math.sin(this.time * 0.3) * 0.1;
+
+  this.far.points.material.opacity  = 0.10 * fog;
+  this.mid.points.material.opacity  = 0.18 * fog;
+  this.near.points.material.opacity = 0.25 * fog;
+
+
+  // ------------------------------------------------
+  // ✨ LIGHT PULSE (nur near layer)
+  // ------------------------------------------------
+
+  const pulse = 1 + Math.sin(this.time * 2.0) * 0.05;
+  this.near.points.material.size = this.near.baseSize * pulse;
 
 }
 
@@ -123,25 +127,26 @@ this.near.points.material.size = this.near.baseSize * pulse;
 
 updateLayer(layer, speed){
 
-const pos = layer.points.geometry.attributes.position;
-const depth = layer.depth;
+  const pos = layer.points.geometry.attributes.position;
+  const depth = layer.depth;
 
-for(let i = 0; i < pos.count; i++){
+  for(let i = 0; i < pos.count; i++){
 
-  let z = pos.getZ(i);
+    let z = pos.getZ(i);
 
-  const variance = 0.6 + Math.sin(i * 12.9898) * 0.4;
+    // leichte Variation → natürlicher Flow
+    const variance = 0.6 + Math.sin(i * 12.9898) * 0.4;
 
-  z += speed * 0.02 * variance;
+    z += speed * 0.02 * variance;
 
-  // 🔥 TRUE INFINITE SPACE
-  if(z > depth * 0.5) z -= depth;
-  if(z < -depth * 0.5) z += depth;
+    // 🔥 echtes Infinite Space (Wrap)
+    if(z > depth * 0.5) z -= depth;
+    if(z < -depth * 0.5) z += depth;
 
-  pos.setZ(i, z);
-}
+    pos.setZ(i, z);
+  }
 
-pos.needsUpdate = true;
+  pos.needsUpdate = true;
 
 }
 
@@ -150,14 +155,14 @@ pos.needsUpdate = true;
 
 destroy(){
 
-[this.far, this.mid, this.near].forEach(layer => {
+  [this.far, this.mid, this.near].forEach(layer => {
 
-  this.container.remove(layer.points);
+    this.container.remove(layer.points);
 
-  layer.points.geometry.dispose();
-  layer.points.material.dispose();
+    layer.points.geometry.dispose();
+    layer.points.material.dispose();
 
-});
+  });
 
 }
 
