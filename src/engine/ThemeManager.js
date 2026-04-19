@@ -1,63 +1,59 @@
 export class ThemeManager {
 
-  constructor(container){
-    this.container = container;
-    this.themes = {};
-    this.activeTheme = null;
-    this.activeName = null;
+constructor(container, gui){
+
+this.container = container;
+this.gui = gui;
+
+this.themes = new Map();
+this.activeTheme = null;
+
+}
+
+
+// ---------- REGISTER ----------
+register(name, ThemeClass){
+this.themes.set(name, ThemeClass);
+}
+
+
+// ---------- ACTIVATE ----------
+activate(name){
+
+const ThemeClass = this.themes.get(name);
+if(!ThemeClass){
+  console.warn("Theme not found:", name);
+  return;
+}
+
+// 🔥 destroy old theme
+if(this.activeTheme){
+
+  if(this.activeTheme.destroy){
+    this.activeTheme.destroy();
   }
 
-  register(name, ThemeClass){
-    this.themes[name] = ThemeClass;
-  }
+  this.activeTheme = null;
+}
 
-  activate(name){
+// 🔥 create new theme WITH GUI
+this.activeTheme = new ThemeClass(
+  this.container,
+  this.gui
+);
 
-    // ❌ gleiches Theme blocken
-    if(this.activeName === name) return;
+}
 
-    if(!this.themes[name]) return;
 
-    // ------------------------------------------------
-    // 🔥 HARD RESET CONTAINER (WICHTIG!)
-    // ------------------------------------------------
+// ---------- UPDATE ----------
+update(state){
 
-    while(this.container.children.length > 0){
-      const obj = this.container.children[0];
-      this.container.remove(obj);
-    }
+if(!this.activeTheme) return;
 
-    // ------------------------------------------------
-    // 🔥 CLEANUP (optional zusätzlich)
-    // ------------------------------------------------
+if(this.activeTheme.update){
+  this.activeTheme.update(state);
+}
 
-    if(this.activeTheme && this.activeTheme.destroy){
-      this.activeTheme.destroy();
-    }
-
-    // ------------------------------------------------
-    // NEW THEME
-    // ------------------------------------------------
-
-    const ThemeClass = this.themes[name];
-    this.activeTheme = new ThemeClass(this.container);
-    this.activeName = name;
-
-    if(this.activeTheme.init){
-      this.activeTheme.init();
-    }
-
-    console.log("Theme activated:", name);
-  }
-
-  update(state){
-
-    if(!this.activeTheme) return;
-
-    if(this.activeTheme.update){
-      this.activeTheme.update(state);
-    }
-
-  }
+}
 
 }

@@ -1,8 +1,6 @@
 import * as THREE from "three";
-import GUI from "lil-gui";
 import Stats from "stats.js";
-
-import { getNames, getVideo } from "../media/videoLibrary.js";
+import GUI from "lil-gui";
 
 import { Renderer } from "../graphics/Renderer.js";
 import { ShaderWorld } from "../graphics/ShaderWorld.js";
@@ -12,12 +10,11 @@ import { ThemeStage } from "../graphics/ThemeStage.js";
 
 import { Loop } from "./Loop.js";
 import { ScrollController } from "../engine/ScrollController.js";
-import { StateManager } from "../engine/StateManager.js";
 import { ThemeManager } from "../engine/ThemeManager.js";
 
 import { SeasonsTheme } from "../themes/SeasonsTheme.js";
-import { ImageTheme } from "../themes/ImageTheme.js";
 import { MoviesTheme } from "../themes/MoviesTheme.js";
+import { ImageTheme } from "../themes/ImageTheme.js";
 import { SpaceTheme } from "../themes/SpaceTheme.js";
 
 import { createParticleField } from "../particles/ParticleField.js";
@@ -27,16 +24,19 @@ export class App {
 
 constructor(){
 
-// ---------- RENDER ----------
+// ---------- CORE ----------
 this.renderer = new Renderer();
 this.scene = this.renderer.scene;
 this.camera = this.renderer.camera;
 
-// ---------- BACKGROUND ----------
+// ---------- GUI ----------
+this.gui = new GUI();
+this.gui.title("Hero Core");
+this.guiHidden = false;
+
+// ---------- ENV ----------
 this.world = new ShaderWorld(this.scene);
 this.stars = new Starfield(this.scene);
-
-// ---------- STAGE ----------
 this.stage = new ThemeStage(this.scene);
 
 this.portal = new GlassPortal(
@@ -44,23 +44,22 @@ this.portal = new GlassPortal(
   this.renderer.renderTarget.texture
 );
 
-this.renderer.portal = this.portal;
-
-// ---------- CORE ----------
+// ---------- ENGINE ----------
 this.scroll = new ScrollController();
-this.stateManager = new StateManager();
 
 this.themeManager = new ThemeManager(
-  this.stage.getContent()
+  this.stage.getContent(),
+  this.gui
 );
 
 // ---------- THEMES ----------
-this.themeManager.register("seasons", SeasonsTheme);
-this.themeManager.register("images", ImageTheme);
 this.themeManager.register("movies", MoviesTheme);
+this.themeManager.register("images", ImageTheme);
 this.themeManager.register("space", SpaceTheme);
+this.themeManager.register("seasons", SeasonsTheme);
 
-this.themeManager.activate("seasons");
+// 🎬 DEFAULT
+this.themeManager.activate("movies");
 
 // ---------- PARTICLES ----------
 this.setupParticles();
@@ -68,71 +67,11 @@ this.setupParticles();
 // ---------- INPUT ----------
 this.isBoosting = false;
 this.intensity = 0;
-
-this.mouse = new THREE.Vector2();
-this.mouseTarget = new THREE.Vector2();
+this._inputInitialized = false;
 
 this.setupInput();
-this.setupMouse();
 this.setupThemeSwitching();
 this.setupGuiToggle();
-
-// ---------- SETTINGS ----------
-this.settings = {
-  baseOpacity: 1,
-  midOpacity: 1,
-  energyOpacity: 0.6,
-  zoomStrength: 1.5,
-  motionStrength: 1
-};
-
-this.targetSettings = { ...this.settings };
-
-// ---------- PRESETS ----------
-this.presets = {
-  calm: { baseOpacity:1.2, midOpacity:0.8, energyOpacity:0.3, zoomStrength:1, motionStrength:0.5 },
-  cinematic: { baseOpacity:0.9, midOpacity:1.2, energyOpacity:0.5, zoomStrength:1.5, motionStrength:1 },
-  intense: { baseOpacity:0.7, midOpacity:1, energyOpacity:1, zoomStrength:2, motionStrength:1.5 }
-};
-
-this.guiControls = { preset:"cinematic" };
-
-// ---------- VIDEO ----------
-const baseList = getNames("base");
-const midList = getNames("mid");
-const energyList = getNames("energy");
-
-this.videoControls = {
-  base: baseList[0] ?? "",
-  mid: midList[0] ?? "",
-  energy: energyList[0] ?? ""
-};
-
-// ---------- GUI ----------
-this.gui = new GUI();
-
-this.presetController = this.gui
-  .add(this.guiControls, "preset", ["calm","cinematic","intense"])
-  .name("Preset")
-  .onChange(v => this.applyPreset(v));
-
-this.gui.add(this.settings,"baseOpacity",0,2,0.01);
-this.gui.add(this.settings,"midOpacity",0,2,0.01);
-this.gui.add(this.settings,"energyOpacity",0,2,0.01);
-
-this.gui.add(this.settings,"zoomStrength",0,3,0.1);
-this.gui.add(this.settings,"motionStrength",0,2,0.1);
-
-this.gui.add(this.videoControls,"base",baseList)
-  .onChange(n => this.setVideoSafe("base",n));
-
-this.gui.add(this.videoControls,"mid",midList)
-  .onChange(n => this.setVideoSafe("mid",n));
-
-this.gui.add(this.videoControls,"energy",energyList)
-  .onChange(n => this.setVideoSafe("energy",n));
-
-this.gui.hide();
 
 // ---------- STATS ----------
 this.stats = new Stats();
@@ -148,27 +87,25 @@ this.loop.start();
 
 }
 
-// ---------- PRESET ----------
-applyPreset(name){
-const p = this.presets[name];
-if(!p) return;
 
-this.guiControls.preset = name;
-Object.assign(this.targetSettings, p);
-this.presetController.updateDisplay();
+// ---------- GUI TOGGLE ----------
+setupGuiToggle(){
+
+window.addEventListener("keydown",(e)=>{
+
+  if(e.code === "KeyG"){
+    this.guiHidden = !this.guiHidden;
+    this.gui.domElement.style.display = this.guiHidden ? "none" : "block";
+  }
+
+});
+
 }
 
-// ---------- VIDEO ----------
-setVideoSafe(layer,name){
-const theme = this.themeManager.activeTheme;
-if(!theme?.setVideo) return;
-
-const v = getVideo(layer,name);
-if(v) theme.setVideo(layer,v.path);
-}
 
 // ---------- PARTICLES ----------
 setupParticles(){
+
 const geo = createParticleField(6000);
 const mat = createParticleMaterial();
 
@@ -176,166 +113,161 @@ this.points = new THREE.Points(geo.geometry, mat);
 this.material = mat;
 
 this.scene.add(this.points);
+
 }
+
 
 // ---------- INPUT ----------
 setupInput(){
-const canvas = this.renderer.renderer.domElement;
 
-canvas.addEventListener("mousedown",()=> this.isBoosting = true);
-window.addEventListener("mouseup",()=> this.isBoosting = false);
+if(this._inputInitialized) return;
+this._inputInitialized = true;
+
+const canvas = this.renderer.renderer?.domElement;
+
+if(!canvas){
+  console.error("❌ Canvas not found");
+  return;
 }
 
-// ---------- MOUSE ----------
-setupMouse(){
-window.addEventListener("mousemove",(e)=>{
-  const x = (e.clientX/window.innerWidth)*2 - 1;
-  const y = (e.clientY/window.innerHeight)*2 - 1;
-  this.mouseTarget.set(x,-y);
+console.log("✅ Input bound to:", canvas);
+
+canvas.addEventListener("pointerdown", () => {
+  this.isBoosting = true;
 });
-}
 
-// ---------- GUI ----------
-setupGuiToggle(){
-if(this._guiBound) return;
-this._guiBound = true;
-
-window.addEventListener("keydown",(e)=>{
-  if(e.code==="KeyG"){
-    this.gui._hidden ? this.gui.show() : this.gui.hide();
-  }
+window.addEventListener("pointerup", () => {
+  this.isBoosting = false;
 });
+
+window.addEventListener("pointercancel", () => {
+  this.isBoosting = false;
+});
+
 }
 
-// ---------- THEMES ----------
+
+// ---------- THEME SWITCH ----------
 setupThemeSwitching(){
-if(this._themeSwitchBound) return;
-this._themeSwitchBound = true;
 
 window.addEventListener("keydown",(e)=>{
+
   if(e.repeat) return;
 
-  if(e.code==="Digit1") this.themeManager.activate("seasons");
+  if(e.code==="Digit1") this.themeManager.activate("movies");
   if(e.code==="Digit2") this.themeManager.activate("images");
+  if(e.code==="Digit3") this.themeManager.activate("space");
+  if(e.code==="Digit4") this.themeManager.activate("seasons");
 
-  if(e.code==="Digit3"){
-    this.themeManager.activate("movies");
-    this.setVideoSafe("base",this.videoControls.base);
-    this.setVideoSafe("mid",this.videoControls.mid);
-    this.setVideoSafe("energy",this.videoControls.energy);
-  }
-
-  if(e.code==="Digit4"){
-    this.themeManager.activate("space");
-  }
 });
+
 }
 
-// ---------- ENVIRONMENT ----------
+
+// ---------- ENV ----------
 updateEnvironment(){
 
 const theme = this.themeManager.activeTheme;
-const isSpace = theme instanceof SpaceTheme;
+const env = theme?.getEnvironment ? theme.getEnvironment() : {};
 
-// 🌌 ShaderWorld OFF in Space
-if(this.world){
-  this.world.farNebula.visible  = !isSpace;
-  this.world.nearNebula.visible = !isSpace;
-  this.world.fogLayer.visible   = !isSpace;
-}
+this.world.setActive(env.world ?? true);
 
-// ⭐ Starfield OFF in Space
 if(this.stars?.points){
-  this.stars.points.visible = !isSpace;
+  this.stars.points.visible = env.stars ?? true;
 }
 
-// 🌀 Portal OFF in Space
-if(isSpace){
-  this.renderer.portal = null;
-  if(this.portal) this.portal.visible = false;
-}else{
-  this.renderer.portal = this.portal;
-  if(this.portal) this.portal.visible = true;
+this.renderer.portal = env.portal ? this.portal : null;
+
+if(this.stage?.mesh){
+  this.stage.mesh.visible = env.stage ?? true;
 }
 
 }
+
 
 // ---------- CAMERA ----------
-updateCamera(state){
+updateCamera(){
+
+if(this.themeManager.activeTheme instanceof SpaceTheme){
+  this.camera.position.set(0,0,5);
+  this.camera.lookAt(0,0,-4);
+  return;
+}
 
 const t = performance.now()*0.001;
-const p = state.progress ?? 0;
-const i = state.intensity ?? 0;
 
-this.mouse.lerp(this.mouseTarget,0.05);
-
-let camStrength = 0.15;
-let targetZ = 5;
-
-if(this.themeManager.activeTheme instanceof MoviesTheme){
-  camStrength = 1;
-  targetZ = 5 - p * 3.5;
-}
-else if(this.themeManager.activeTheme instanceof SpaceTheme){
-  camStrength = 0.25;
-  targetZ = 3 - p * 8;
-}
-
-const targetX = Math.sin(t*0.4)*0.8*camStrength + this.mouse.x*0.3;
-const targetY = Math.cos(t*0.3)*0.5*camStrength + this.mouse.y*0.3;
-
-targetZ -= i * 1.5;
-
-this.camera.position.x += (targetX - this.camera.position.x)*0.08;
-this.camera.position.y += (targetY - this.camera.position.y)*0.08;
-this.camera.position.z += (targetZ - this.camera.position.z)*0.12;
+this.camera.position.x = Math.sin(t*0.3)*0.2;
+this.camera.position.y = Math.cos(t*0.2)*0.2;
 
 this.camera.lookAt(0,0,-4);
 
 }
 
+
+// ---------- STATE ----------
+buildState(time){
+
+const p = this.scroll.getProgress();
+
+// legacy support (Seasons)
+const states = ["state1","state2","state3","state4"];
+const scaled = p * (states.length - 1);
+
+const index = Math.floor(scaled);
+const nextIndex = Math.min(index + 1, states.length - 1);
+
+return {
+  progress: p,
+  intensity: this.intensity,
+  time,
+
+  current: states[index],
+  next: states[nextIndex],
+  blend: scaled - index
+};
+
+}
+
+
 // ---------- UPDATE ----------
-update(delta){
+update(){
 
 this.stats.begin();
 
-// STATE
+// time
+const time = performance.now() * 0.001;
+
+// scroll
 this.scroll.updateScroll();
-const progress = this.scroll.getProgress();
 
-this.stateManager.update(progress);
-const state = this.stateManager.get();
+// intensity (smooth cinematic)
+const target = this.isBoosting ? 1 : 0;
+this.intensity += (target - this.intensity) * 0.08;
+this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
-state.progress = progress;
+// state
+const state = this.buildState(time);
 
-// INTENSITY
-this.intensity += this.isBoosting ? 0.04 : -0.04;
-this.intensity = THREE.MathUtils.clamp(this.intensity,0,1);
+// camera
+this.updateCamera();
 
-state.intensity = this.intensity;
-state.settings = this.settings;
-
-// SMOOTH PRESETS
-for(const k in this.settings){
-  this.settings[k] += (this.targetSettings[k] - this.settings[k]) * 0.05;
+// theme update (safe)
+if(this.themeManager?.update){
+  try{
+    this.themeManager.update(state);
+  }catch(e){
+    console.error("Theme crash:", e);
+  }
 }
 
-// CAMERA
-this.updateCamera(state);
-
-// SYSTEMS
-this.themeManager.update(state);
+// env
 this.updateEnvironment();
 
-// 🔥 IMPORTANT: world nur wenn NICHT space
-if(!(this.themeManager.activeTheme instanceof SpaceTheme)){
-  this.world.update();
-}
-
+// systems
+this.world.update();
 this.stars.update();
-this.portal?.update(delta);
 
-// PARTICLES
+// particles
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
 if(this.material?.uniforms?.uTime){

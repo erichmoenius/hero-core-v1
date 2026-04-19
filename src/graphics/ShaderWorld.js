@@ -12,10 +12,10 @@ this.uniforms = {
 };
 
 this.mouse = new THREE.Vector2();
-
-// 🔥 NEW: zentrale Layer-Liste
 this.layers = [];
+this._active = true;
 
+// mouse
 window.addEventListener("mousemove",(e)=>{
 
   const x = e.clientX / window.innerWidth - 0.5;
@@ -44,7 +44,7 @@ this.nearNebula = this._createNebulaLayer(-9,0.007,0.10,3.0);
 
 
 // ------------------------------------------------
-// NEBULA
+// NEBULA LAYER
 // ------------------------------------------------
 
 _createNebulaLayer(z, speed, mouseStrength, noiseScale){
@@ -128,11 +128,12 @@ transparent:false
 });
 
 const mesh = new THREE.Mesh(geo,mat);
+
+// store original z
+mesh.userData.baseZ = z;
 mesh.position.z = z;
 
 this.scene.add(mesh);
-
-// 🔥 NEW: track layer
 this.layers.push(mesh);
 
 return mesh;
@@ -141,7 +142,7 @@ return mesh;
 
 
 // ------------------------------------------------
-// FOG
+// FOG LAYER
 // ------------------------------------------------
 
 _createFogLayer(z){
@@ -156,11 +157,12 @@ const mat = new THREE.MeshBasicMaterial({
 });
 
 const mesh = new THREE.Mesh(geo,mat);
+
+// store original z
+mesh.userData.baseZ = z;
 mesh.position.z = z;
 
 this.scene.add(mesh);
-
-// 🔥 NEW
 this.layers.push(mesh);
 
 return mesh;
@@ -169,13 +171,25 @@ return mesh;
 
 
 // ------------------------------------------------
-// 🔥 NEW: GLOBAL VISIBILITY CONTROL
+// GLOBAL CONTROL
 // ------------------------------------------------
 
 setActive(active){
 
+this._active = active;
+
 this.layers.forEach(layer=>{
+
+  // toggle visibility
   layer.visible = active;
+
+  // 🔥 HARD FIX → remove from camera space
+  if(active){
+    layer.position.z = layer.userData.baseZ;
+  }else{
+    layer.position.z = 9999; // guaranteed out of view
+  }
+
 });
 
 }
@@ -186,6 +200,8 @@ this.layers.forEach(layer=>{
 // ------------------------------------------------
 
 update(){
+
+if(!this._active) return;
 
 this.uniforms.uTime.value += 0.01;
 this.uniforms.uMouse.value.lerp(this.mouse,0.05);
