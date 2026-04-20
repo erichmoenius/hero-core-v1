@@ -34,6 +34,14 @@ this.gui = new GUI();
 this.gui.title("Hero Core");
 this.guiHidden = false;
 
+// ---------- GLOBAL CINEMATIC ----------
+this.cinematic = {
+  parallaxStrength: 0.2, // 🔥 reduced so layer parallax dominates
+  masterBoost: 1.0
+};
+
+this.setupCinematicGUI();
+
 // ---------- ENV ----------
 this.world = new ShaderWorld(this.scene);
 this.stars = new Starfield(this.scene);
@@ -58,7 +66,7 @@ this.themeManager.register("images", ImageTheme);
 this.themeManager.register("space", SpaceTheme);
 this.themeManager.register("seasons", SeasonsTheme);
 
-// 🎬 DEFAULT
+// 🎬 DEFAULT THEME
 this.themeManager.activate("movies");
 
 // ---------- PARTICLES ----------
@@ -69,7 +77,12 @@ this.isBoosting = false;
 this.intensity = 0;
 this._inputInitialized = false;
 
+// ---------- PARALLAX ----------
+this.mouse = { x: 0, y: 0 };
+this.parallax = { x: 0, y: 0 };
+
 this.setupInput();
+this.setupMouseParallax();
 this.setupThemeSwitching();
 this.setupGuiToggle();
 
@@ -84,6 +97,19 @@ this.loop = new Loop(
 );
 
 this.loop.start();
+
+}
+
+
+// ---------- GUI ----------
+setupCinematicGUI(){
+
+const f = this.gui.addFolder("🎬 Cinematic");
+
+f.add(this.cinematic, "parallaxStrength", 0, 1, 0.01);
+f.add(this.cinematic, "masterBoost", 0, 2, 0.01);
+
+f.open();
 
 }
 
@@ -130,8 +156,6 @@ if(!canvas){
   return;
 }
 
-console.log("✅ Input bound to:", canvas);
-
 canvas.addEventListener("pointerdown", () => {
   this.isBoosting = true;
 });
@@ -142,6 +166,22 @@ window.addEventListener("pointerup", () => {
 
 window.addEventListener("pointercancel", () => {
   this.isBoosting = false;
+});
+
+}
+
+
+// ---------- PARALLAX ----------
+setupMouseParallax(){
+
+window.addEventListener("pointermove",(e)=>{
+
+  const x = e.clientX / window.innerWidth;
+  const y = e.clientY / window.innerHeight;
+
+  this.mouse.x = (x - 0.5) * 2;
+  this.mouse.y = (y - 0.5) * 2;
+
 });
 
 }
@@ -188,16 +228,23 @@ if(this.stage?.mesh){
 // ---------- CAMERA ----------
 updateCamera(){
 
+const t = performance.now() * 0.001;
+
+// smooth parallax
+this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
+this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
+
+const px = this.parallax.x * this.cinematic.parallaxStrength;
+const py = this.parallax.y * this.cinematic.parallaxStrength;
+
 if(this.themeManager.activeTheme instanceof SpaceTheme){
-  this.camera.position.set(0,0,5);
+  this.camera.position.set(px, py, 5);
   this.camera.lookAt(0,0,-4);
   return;
 }
 
-const t = performance.now()*0.001;
-
-this.camera.position.x = Math.sin(t*0.3)*0.2;
-this.camera.position.y = Math.cos(t*0.2)*0.2;
+this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px;
+this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py;
 
 this.camera.lookAt(0,0,-4);
 
@@ -209,7 +256,6 @@ buildState(time){
 
 const p = this.scroll.getProgress();
 
-// legacy support (Seasons)
 const states = ["state1","state2","state3","state4"];
 const scaled = p * (states.length - 1);
 
@@ -218,8 +264,9 @@ const nextIndex = Math.min(index + 1, states.length - 1);
 
 return {
   progress: p,
-  intensity: this.intensity,
+  intensity: this.intensity * this.cinematic.masterBoost,
   time,
+  parallax: this.parallax,
 
   current: states[index],
   next: states[nextIndex],
@@ -234,13 +281,12 @@ update(){
 
 this.stats.begin();
 
-// time
 const time = performance.now() * 0.001;
 
 // scroll
 this.scroll.updateScroll();
 
-// intensity (smooth cinematic)
+// intensity
 const target = this.isBoosting ? 1 : 0;
 this.intensity += (target - this.intensity) * 0.08;
 this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
@@ -251,13 +297,11 @@ const state = this.buildState(time);
 // camera
 this.updateCamera();
 
-// theme update (safe)
-if(this.themeManager?.update){
-  try{
-    this.themeManager.update(state);
-  }catch(e){
-    console.error("Theme crash:", e);
-  }
+// theme
+try{
+  this.themeManager.update(state);
+}catch(e){
+  console.error("Theme crash:", e);
 }
 
 // env

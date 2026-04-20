@@ -9,7 +9,6 @@ this.container = container;
 this.gui = gui;
 
 this.time = 0;
-this.focusStrength = 0;
 this.currentMidName = "default";
 
 // ---------- SETTINGS ----------
@@ -19,8 +18,32 @@ this.settings = {
   energyOpacity: 0.2,
   motionStrength: 1.0,
   zoomStrength: 1.5,
-  boostStrength: 1.0
+  boostStrength: 1.0,
+  focusTracking: 0.3,
+  focusBoost: 0.5
 };
+
+// ---------- PARALLAX ----------
+this.parallaxGlobal = 2.0;
+
+this.parallaxStrengths = {
+  base: 0.1,
+  mid: 0.3,
+  energy: 0.6
+};
+
+// 🎬 BLENDING SYSTEM
+this.parallaxTarget = { ...this.parallaxStrengths };
+this.blendSpeed = 0.08;
+
+this.parallaxPresets = {
+  calm:      { base: 0.01, mid: 0.05, energy: 0.1 },
+  cinematic: { base: 0.08, mid: 0.3,  energy: 0.7 },
+  intense:   { base: 0.25, mid: 0.8,  energy: 1.5 }
+};
+
+// ---------- FOCUS ----------
+this.focusOffset = { x: 0, y: 0 };
 
 // ---------- GUI ----------
 this.initGUI();
@@ -64,7 +87,37 @@ this.folder.add(this.settings, "motionStrength", 0, 2, 0.01);
 this.folder.add(this.settings, "zoomStrength", 0, 3, 0.01);
 this.folder.add(this.settings, "boostStrength", 0, 2, 0.01);
 
+this.folder.add(this.settings, "focusTracking", 0, 1, 0.01);
+this.folder.add(this.settings, "focusBoost", 0, 1, 0.01);
+
+this.folder.add(this, "parallaxGlobal", 0, 5, 0.1);
+
+const pFolder = this.folder.addFolder("🖱️ Parallax Presets");
+
+pFolder.add({ calm: ()=>this.applyParallaxPreset("calm") }, "calm");
+pFolder.add({ cinematic: ()=>this.applyParallaxPreset("cinematic") }, "cinematic");
+pFolder.add({ intense: ()=>this.applyParallaxPreset("intense") }, "intense");
+
+pFolder.open();
 this.folder.open();
+
+}
+
+
+// ------------------------------------------------
+// 🎬 PRESETS (BLENDED)
+// ------------------------------------------------
+applyParallaxPreset(name){
+
+const preset = this.parallaxPresets[name];
+if(!preset) return;
+
+// 🎬 TARGET instead of direct set
+this.parallaxTarget.base = preset.base;
+this.parallaxTarget.mid = preset.mid;
+this.parallaxTarget.energy = preset.energy;
+
+console.log("🎬 Blend to preset:", name);
 
 }
 
@@ -129,27 +182,32 @@ this.time += 0.016;
 
 const p = state.progress ?? 0;
 const i = state.intensity ?? 0;
+const px = state.parallax?.x ?? 0;
+const py = state.parallax?.y ?? 0;
+
 const s = this.settings;
+const P = this.parallaxGlobal;
+
+// 🎬 PRESET BLENDING
+this.parallaxStrengths.base += (this.parallaxTarget.base - this.parallaxStrengths.base) * this.blendSpeed;
+this.parallaxStrengths.mid += (this.parallaxTarget.mid - this.parallaxStrengths.mid) * this.blendSpeed;
+this.parallaxStrengths.energy += (this.parallaxTarget.energy - this.parallaxStrengths.energy) * this.blendSpeed;
 
 
-// ---------- BASE VALUES ----------
+// ---------- OPACITY ----------
 let baseOpacity   = s.baseOpacity;
 let midOpacity    = s.midOpacity;
 let energyOpacity = s.energyOpacity;
 
 
 // ---------- FOCUS ----------
-const targetFocus = this.currentMidName?.includes("eye") ? 1 : 0;
-this.focusStrength += (targetFocus - this.focusStrength) * 0.05;
+this.focusOffset.x += (px - this.focusOffset.x) * 0.08;
+this.focusOffset.y += (py - this.focusOffset.y) * 0.08;
 
-baseOpacity   *= (1 - this.focusStrength * 0.3);
-energyOpacity *= (1 - this.focusStrength * 0.4);
-midOpacity    *= (1 + this.focusStrength * 0.3);
-
-midOpacity = Math.max(midOpacity, 0.4 + this.focusStrength * 0.2);
+const focusPower = s.focusTracking * (1 + i * s.focusBoost);
 
 
-// ---------- 🎯 INTENSITY BOOST (KEY PART)
+// ---------- INTENSITY ----------
 const boost = i * s.boostStrength;
 
 energyOpacity += boost * 1.5;
@@ -157,34 +215,55 @@ baseOpacity   *= (1 - boost * 0.6);
 midOpacity    *= (1 - boost * 0.4);
 
 
-// ---------- SMOOTH APPLY ----------
+// ---------- APPLY ----------
 this.base.material.opacity += (baseOpacity - this.base.material.opacity) * 0.06;
 this.mid.material.opacity += (midOpacity - this.mid.material.opacity) * 0.06;
 this.energy.material.opacity += (energyOpacity - this.energy.material.opacity) * 0.08;
 
 
-// ---------- ⚡ ENERGY SHIMMER ----------
+// ---------- SHIMMER ----------
 this.energy.material.opacity += Math.sin(this.time * 8) * boost * 0.04;
 
 
-// ---------- 🎥 MOTION ----------
+// ---------- MOTION + PARALLAX ----------
 const m = s.motionStrength;
 const motionBoost = 1 + boost * 0.8;
 
+// base
 this.base.mesh.position.x =
-  this.baseOffset.x + Math.sin(this.time * 0.05) * 0.08 * m;
+  this.baseOffset.x +
+  Math.sin(this.time * 0.05) * 0.08 * m +
+  px * this.parallaxStrengths.base * P;
 
+this.base.mesh.position.y =
+  this.baseOffset.y +
+  py * this.parallaxStrengths.base * P;
+
+
+// mid
 this.mid.mesh.position.x =
-  this.midOffset.x + Math.sin(this.time * 0.2) * 0.25 * m * motionBoost;
+  this.midOffset.x +
+  Math.sin(this.time * 0.2) * 0.25 * m * motionBoost +
+  px * this.parallaxStrengths.mid * P +
+  this.focusOffset.x * focusPower;
 
 this.mid.mesh.position.y =
-  this.midOffset.y + Math.cos(this.time * 0.15) * 0.15 * m;
+  this.midOffset.y +
+  Math.cos(this.time * 0.15) * 0.15 * m +
+  py * this.parallaxStrengths.mid * P +
+  this.focusOffset.y * focusPower;
 
+
+// energy
 this.energy.mesh.position.x =
-  this.energyOffset.x + Math.sin(this.time * 0.5) * 0.6 * m * motionBoost;
+  this.energyOffset.x +
+  Math.sin(this.time * 0.5) * 0.6 * m * motionBoost +
+  px * this.parallaxStrengths.energy * P;
 
 this.energy.mesh.position.y =
-  this.energyOffset.y + Math.cos(this.time * 0.4) * 0.4 * m * motionBoost;
+  this.energyOffset.y +
+  Math.cos(this.time * 0.4) * 0.4 * m * motionBoost +
+  py * this.parallaxStrengths.energy * P;
 
 
 // ---------- SCROLL ----------
