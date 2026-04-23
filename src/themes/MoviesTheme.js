@@ -9,7 +9,6 @@ this.container = container;
 this.gui = gui;
 
 this.time = 0;
-this.currentMidName = "default";
 
 // ---------- SETTINGS ----------
 this.settings = {
@@ -20,8 +19,24 @@ this.settings = {
   zoomStrength: 1.5,
   boostStrength: 1.0,
   focusTracking: 0.3,
-  focusBoost: 0.5
+  focusBoost: 0.5,
+  audioStrength: 0.8
 };
+
+// ---------- AUDIO INPUT ----------
+this.audioInput = document.createElement("input");
+this.audioInput.type = "file";
+this.audioInput.accept = "audio/*";
+this.audioInput.style.display = "none";
+document.body.appendChild(this.audioInput);
+
+this.audioInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file || !window.audio) return;
+
+  await window.audio.load(file);
+  await window.audio.play();
+});
 
 // ---------- PARALLAX ----------
 this.parallaxGlobal = 2.0;
@@ -32,7 +47,6 @@ this.parallaxStrengths = {
   energy: 0.6
 };
 
-// 🎬 BLENDING SYSTEM
 this.parallaxTarget = { ...this.parallaxStrengths };
 this.blendSpeed = 0.08;
 
@@ -79,6 +93,7 @@ if(!this.gui) return;
 
 this.folder = this.gui.addFolder("🎬 Movies");
 
+// visual controls
 this.folder.add(this.settings, "baseOpacity", 0, 1, 0.01);
 this.folder.add(this.settings, "midOpacity", 0, 1, 0.01);
 this.folder.add(this.settings, "energyOpacity", 0, 1, 0.01);
@@ -90,8 +105,34 @@ this.folder.add(this.settings, "boostStrength", 0, 2, 0.01);
 this.folder.add(this.settings, "focusTracking", 0, 1, 0.01);
 this.folder.add(this.settings, "focusBoost", 0, 1, 0.01);
 
+this.folder.add(this.settings, "audioStrength", 0, 2, 0.01).name("Audio Impact");
+
 this.folder.add(this, "parallaxGlobal", 0, 5, 0.1);
 
+// ---------- AUDIO GUI ----------
+const audioFolder = this.folder.addFolder("🎧 Audio");
+
+audioFolder.add({
+  load: () => this.audioInput.click()
+}, "load");
+
+audioFolder.add({
+  play: async () => window.audio?.play()
+}, "play");
+
+audioFolder.add({
+  pause: () => window.audio?.pause()
+}, "pause");
+
+audioFolder.add({
+  resume: () => window.audio?.resume()
+}, "resume");
+
+audioFolder.add(window.audio.settings, "masterGain", 0, 3, 0.01).name("Volume");
+
+audioFolder.open();
+
+// ---------- PARALLAX ----------
 const pFolder = this.folder.addFolder("🖱️ Parallax Presets");
 
 pFolder.add({ calm: ()=>this.applyParallaxPreset("calm") }, "calm");
@@ -105,19 +146,16 @@ this.folder.open();
 
 
 // ------------------------------------------------
-// 🎬 PRESETS (BLENDED)
+// 🎬 PRESETS
 // ------------------------------------------------
 applyParallaxPreset(name){
 
 const preset = this.parallaxPresets[name];
 if(!preset) return;
 
-// 🎬 TARGET instead of direct set
 this.parallaxTarget.base = preset.base;
 this.parallaxTarget.mid = preset.mid;
 this.parallaxTarget.energy = preset.energy;
-
-console.log("🎬 Blend to preset:", name);
 
 }
 
@@ -185,51 +223,33 @@ const i = state.intensity ?? 0;
 const px = state.parallax?.x ?? 0;
 const py = state.parallax?.y ?? 0;
 
+const a = state.audio || {};
 const s = this.settings;
 const P = this.parallaxGlobal;
 
-// 🎬 PRESET BLENDING
+// 🎧 AUDIO
+const energy = Math.pow(a.energy || 0, 0.6) * s.audioStrength;
+const bass = (a.bass || 0) * s.audioStrength;
+const mid  = (a.mid  || 0) * s.audioStrength;
+const high = (a.high || 0) * s.audioStrength;
+
+
+// ---------- PARALLAX ----------
 this.parallaxStrengths.base += (this.parallaxTarget.base - this.parallaxStrengths.base) * this.blendSpeed;
 this.parallaxStrengths.mid += (this.parallaxTarget.mid - this.parallaxStrengths.mid) * this.blendSpeed;
 this.parallaxStrengths.energy += (this.parallaxTarget.energy - this.parallaxStrengths.energy) * this.blendSpeed;
 
 
-// ---------- OPACITY ----------
-let baseOpacity   = s.baseOpacity;
-let midOpacity    = s.midOpacity;
-let energyOpacity = s.energyOpacity;
+// ---------- BOOST ----------
+const boost = (i + energy * 1.5) * s.boostStrength;
 
 
-// ---------- FOCUS ----------
-this.focusOffset.x += (px - this.focusOffset.x) * 0.08;
-this.focusOffset.y += (py - this.focusOffset.y) * 0.08;
-
-const focusPower = s.focusTracking * (1 + i * s.focusBoost);
-
-
-// ---------- INTENSITY ----------
-const boost = i * s.boostStrength;
-
-energyOpacity += boost * 1.5;
-baseOpacity   *= (1 - boost * 0.6);
-midOpacity    *= (1 - boost * 0.4);
-
-
-// ---------- APPLY ----------
-this.base.material.opacity += (baseOpacity - this.base.material.opacity) * 0.06;
-this.mid.material.opacity += (midOpacity - this.mid.material.opacity) * 0.06;
-this.energy.material.opacity += (energyOpacity - this.energy.material.opacity) * 0.08;
-
-
-// ---------- SHIMMER ----------
-this.energy.material.opacity += Math.sin(this.time * 8) * boost * 0.04;
-
-
-// ---------- MOTION + PARALLAX ----------
+// ---------- MOTION ----------
 const m = s.motionStrength;
-const motionBoost = 1 + boost * 0.8;
+const motionBoost = 1 + boost + mid * 0.6;
 
-// base
+
+// ---------- BASE ----------
 this.base.mesh.position.x =
   this.baseOffset.x +
   Math.sin(this.time * 0.05) * 0.08 * m +
@@ -240,21 +260,19 @@ this.base.mesh.position.y =
   py * this.parallaxStrengths.base * P;
 
 
-// mid
+// ---------- MID ----------
 this.mid.mesh.position.x =
   this.midOffset.x +
   Math.sin(this.time * 0.2) * 0.25 * m * motionBoost +
-  px * this.parallaxStrengths.mid * P +
-  this.focusOffset.x * focusPower;
+  px * this.parallaxStrengths.mid * P;
 
 this.mid.mesh.position.y =
   this.midOffset.y +
   Math.cos(this.time * 0.15) * 0.15 * m +
-  py * this.parallaxStrengths.mid * P +
-  this.focusOffset.y * focusPower;
+  py * this.parallaxStrengths.mid * P;
 
 
-// energy
+// ---------- ENERGY ----------
 this.energy.mesh.position.x =
   this.energyOffset.x +
   Math.sin(this.time * 0.5) * 0.6 * m * motionBoost +
@@ -266,26 +284,12 @@ this.energy.mesh.position.y =
   py * this.parallaxStrengths.energy * P;
 
 
-// ---------- SCROLL ----------
-this.mid.mesh.position.x += (p - 0.5) * 0.5;
-this.energy.mesh.position.x += (p - 0.5) * 1.2;
-
-
 // ---------- DEPTH ----------
 const zoom = 1 + p * s.zoomStrength;
 
-this.base.mesh.position.z = -8 + p * 3;
 this.base.mesh.scale.setScalar(zoom);
-
-this.mid.mesh.position.z = -5 + p * 4;
-this.mid.mesh.scale.setScalar(1.1 * zoom * (1 + boost * 0.2));
-
-this.energy.mesh.position.z = -4 + p * 5;
-this.energy.mesh.scale.setScalar(1.3 * zoom * (1 + boost * 0.5));
-
-
-// ---------- DRIFT ----------
-this.container.position.z = Math.sin(this.time * 0.2) * 0.2;
+this.mid.mesh.scale.setScalar(1.1 * zoom * (1 + bass * 0.4));
+this.energy.mesh.scale.setScalar(1.3 * zoom * (1 + bass * 0.6));
 
 }
 

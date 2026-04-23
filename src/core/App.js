@@ -20,6 +20,8 @@ import { SpaceTheme } from "../themes/SpaceTheme.js";
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
 
+import { AudioManager } from "../audio/AudioManager.js";
+
 export class App {
 
 constructor(){
@@ -34,10 +36,12 @@ this.gui = new GUI();
 this.gui.title("Hero Core");
 this.guiHidden = false;
 
-// ---------- GLOBAL CINEMATIC ----------
+// ---------- CINEMATIC ----------
 this.cinematic = {
-  parallaxStrength: 0.2, // 🔥 reduced so layer parallax dominates
-  masterBoost: 1.0
+  parallaxStrength: 0.25,
+  masterBoost: 1.0,
+  flightSpeed: 0.05,
+  flightDamping: 0.92
 };
 
 this.setupCinematicGUI();
@@ -55,18 +59,21 @@ this.portal = new GlassPortal(
 // ---------- ENGINE ----------
 this.scroll = new ScrollController();
 
+// 🎧 AUDIO (NEW SYSTEM)
+this.audio = new AudioManager();
+window.audio = this.audio;
+
+// ---------- THEMES ----------
 this.themeManager = new ThemeManager(
   this.stage.getContent(),
   this.gui
 );
 
-// ---------- THEMES ----------
 this.themeManager.register("movies", MoviesTheme);
 this.themeManager.register("images", ImageTheme);
 this.themeManager.register("space", SpaceTheme);
 this.themeManager.register("seasons", SeasonsTheme);
 
-// 🎬 DEFAULT THEME
 this.themeManager.activate("movies");
 
 // ---------- PARTICLES ----------
@@ -75,14 +82,18 @@ this.setupParticles();
 // ---------- INPUT ----------
 this.isBoosting = false;
 this.intensity = 0;
-this._inputInitialized = false;
 
 // ---------- PARALLAX ----------
 this.mouse = { x: 0, y: 0 };
 this.parallax = { x: 0, y: 0 };
 
+// ---------- FLIGHT ----------
+this.mouseVel = { x: 0, y: 0 };
+this.flight = { x: 0, y: 0, z: 0 };
+
+// ---------- SETUP ----------
 this.setupInput();
-this.setupMouseParallax();
+this.setupMouse();
 this.setupThemeSwitching();
 this.setupGuiToggle();
 
@@ -108,6 +119,8 @@ const f = this.gui.addFolder("🎬 Cinematic");
 
 f.add(this.cinematic, "parallaxStrength", 0, 1, 0.01);
 f.add(this.cinematic, "masterBoost", 0, 2, 0.01);
+f.add(this.cinematic, "flightSpeed", 0, 0.2, 0.001);
+f.add(this.cinematic, "flightDamping", 0.8, 0.99, 0.001);
 
 f.open();
 
@@ -146,41 +159,30 @@ this.scene.add(this.points);
 // ---------- INPUT ----------
 setupInput(){
 
-if(this._inputInitialized) return;
-this._inputInitialized = true;
+const canvas = this.renderer.renderer.domElement;
 
-const canvas = this.renderer.renderer?.domElement;
-
-if(!canvas){
-  console.error("❌ Canvas not found");
-  return;
-}
-
-canvas.addEventListener("pointerdown", () => {
-  this.isBoosting = true;
-});
-
-window.addEventListener("pointerup", () => {
-  this.isBoosting = false;
-});
-
-window.addEventListener("pointercancel", () => {
-  this.isBoosting = false;
-});
+canvas.addEventListener("pointerdown", () => this.isBoosting = true);
+window.addEventListener("pointerup", () => this.isBoosting = false);
 
 }
 
 
-// ---------- PARALLAX ----------
-setupMouseParallax(){
+// ---------- MOUSE ----------
+setupMouse(){
 
 window.addEventListener("pointermove",(e)=>{
 
   const x = e.clientX / window.innerWidth;
   const y = e.clientY / window.innerHeight;
 
-  this.mouse.x = (x - 0.5) * 2;
-  this.mouse.y = (y - 0.5) * 2;
+  const nx = (x - 0.5) * 2;
+  const ny = (y - 0.5) * 2;
+
+  this.mouseVel.x = nx - this.mouse.x;
+  this.mouseVel.y = ny - this.mouse.y;
+
+  this.mouse.x = nx;
+  this.mouse.y = ny;
 
 });
 
@@ -234,17 +236,27 @@ const t = performance.now() * 0.001;
 this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
 this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
 
+// 🎬 FLIGHT
+if(this.isBoosting){
+
+  this.flight.x += this.mouseVel.x * 0.5;
+  this.flight.y += this.mouseVel.y * 0.5;
+  this.flight.z -= this.cinematic.flightSpeed;
+
+}
+
+// damping
+this.flight.x *= this.cinematic.flightDamping;
+this.flight.y *= this.cinematic.flightDamping;
+this.flight.z *= 0.96;
+
 const px = this.parallax.x * this.cinematic.parallaxStrength;
 const py = this.parallax.y * this.cinematic.parallaxStrength;
 
-if(this.themeManager.activeTheme instanceof SpaceTheme){
-  this.camera.position.set(px, py, 5);
-  this.camera.lookAt(0,0,-4);
-  return;
-}
-
-this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px;
-this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py;
+// camera
+this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px + this.flight.x;
+this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py + this.flight.y;
+this.camera.position.z = 5 + this.flight.z;
 
 this.camera.lookAt(0,0,-4);
 
@@ -267,7 +279,7 @@ return {
   intensity: this.intensity * this.cinematic.masterBoost,
   time,
   parallax: this.parallax,
-
+  audio: this.audio.getState(),
   current: states[index],
   next: states[nextIndex],
   blend: scaled - index
@@ -286,10 +298,12 @@ const time = performance.now() * 0.001;
 // scroll
 this.scroll.updateScroll();
 
+// 🎧 audio
+this.audio.update();
+
 // intensity
 const target = this.isBoosting ? 1 : 0;
 this.intensity += (target - this.intensity) * 0.08;
-this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
 // state
 const state = this.buildState(time);
@@ -298,11 +312,7 @@ const state = this.buildState(time);
 this.updateCamera();
 
 // theme
-try{
-  this.themeManager.update(state);
-}catch(e){
-  console.error("Theme crash:", e);
-}
+this.themeManager.update(state);
 
 // env
 this.updateEnvironment();
