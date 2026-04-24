@@ -59,9 +59,9 @@ this.portal = new GlassPortal(
 // ---------- ENGINE ----------
 this.scroll = new ScrollController();
 
-// 🎧 AUDIO (NEW SYSTEM)
+// ---------- AUDIO ----------
 this.audio = new AudioManager();
-window.audio = this.audio;
+window.audio = this.audio; // debug access
 
 // ---------- THEMES ----------
 this.themeManager = new ThemeManager(
@@ -120,7 +120,7 @@ const f = this.gui.addFolder("🎬 Cinematic");
 f.add(this.cinematic, "parallaxStrength", 0, 1, 0.01);
 f.add(this.cinematic, "masterBoost", 0, 2, 0.01);
 f.add(this.cinematic, "flightSpeed", 0, 0.2, 0.001);
-f.add(this.cinematic, "flightDamping", 0.8, 0.99, 0.001);
+f.add(this.cinematic, "flightDamping", 0.7, 0.99, 0.001);
 
 f.open();
 
@@ -163,6 +163,7 @@ const canvas = this.renderer.renderer.domElement;
 
 canvas.addEventListener("pointerdown", () => this.isBoosting = true);
 window.addEventListener("pointerup", () => this.isBoosting = false);
+window.addEventListener("pointercancel", () => this.isBoosting = false);
 
 }
 
@@ -236,16 +237,14 @@ const t = performance.now() * 0.001;
 this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
 this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
 
-// 🎬 FLIGHT
+// 🎬 FLIGHT MODE
 if(this.isBoosting){
-
   this.flight.x += this.mouseVel.x * 0.5;
   this.flight.y += this.mouseVel.y * 0.5;
   this.flight.z -= this.cinematic.flightSpeed;
-
 }
 
-// damping
+// damping (now visible)
 this.flight.x *= this.cinematic.flightDamping;
 this.flight.y *= this.cinematic.flightDamping;
 this.flight.z *= 0.96;
@@ -253,7 +252,7 @@ this.flight.z *= 0.96;
 const px = this.parallax.x * this.cinematic.parallaxStrength;
 const py = this.parallax.y * this.cinematic.parallaxStrength;
 
-// camera
+// camera motion
 this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px + this.flight.x;
 this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py + this.flight.y;
 this.camera.position.z = 5 + this.flight.z;
@@ -268,21 +267,16 @@ buildState(time){
 
 const p = this.scroll.getProgress();
 
-const states = ["state1","state2","state3","state4"];
-const scaled = p * (states.length - 1);
-
-const index = Math.floor(scaled);
-const nextIndex = Math.min(index + 1, states.length - 1);
+// stronger cinematic intensity
+const boostedIntensity =
+  this.intensity * (1 + this.cinematic.masterBoost * 2);
 
 return {
   progress: p,
-  intensity: this.intensity * this.cinematic.masterBoost,
+  intensity: boostedIntensity,
   time,
   parallax: this.parallax,
-  audio: this.audio.getState(),
-  current: states[index],
-  next: states[nextIndex],
-  blend: scaled - index
+  audio: this.audio.getState()
 };
 
 }
@@ -298,12 +292,13 @@ const time = performance.now() * 0.001;
 // scroll
 this.scroll.updateScroll();
 
-// 🎧 audio
+// audio
 this.audio.update();
 
 // intensity
 const target = this.isBoosting ? 1 : 0;
 this.intensity += (target - this.intensity) * 0.08;
+this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
 // state
 const state = this.buildState(time);
@@ -311,8 +306,12 @@ const state = this.buildState(time);
 // camera
 this.updateCamera();
 
-// theme
-this.themeManager.update(state);
+// theme (safe)
+try{
+  this.themeManager.update(state);
+}catch(e){
+  console.error("Theme crash:", e);
+}
 
 // env
 this.updateEnvironment();
