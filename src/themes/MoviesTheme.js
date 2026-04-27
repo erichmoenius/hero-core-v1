@@ -1,6 +1,14 @@
 import * as THREE from "three";
 import { loadMovieTexture } from "../movieLoader.js";
 
+// ------------------------------------------------
+// 🎬 CINEMATIC HELPER
+// ------------------------------------------------
+function smoothstep(a, b, x){
+  const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
 export class MoviesTheme {
 
 constructor(container, gui){
@@ -10,18 +18,17 @@ this.gui = gui;
 
 this.time = 0;
 
-// SETTINGS
+// ---------- SETTINGS ----------
 this.settings = {
   baseOpacity: 0.5,
   midOpacity: 0.7,
   energyOpacity: 0.2,
   motionStrength: 1,
-  zoomStrength: 1.5,
   boostStrength: 1,
   audioStrength: 0.8
 };
 
-// AUDIO INPUT
+// ---------- AUDIO INPUT ----------
 this.audioInput = document.createElement("input");
 this.audioInput.type = "file";
 this.audioInput.accept = "audio/*";
@@ -29,23 +36,27 @@ this.audioInput.style.display = "none";
 document.body.appendChild(this.audioInput);
 
 this.audioInput.onchange = async (e)=>{
-  const f=e.target.files[0];
-  if(!f||!window.audio) return;
+  const f = e.target.files[0];
+  if(!f || !window.audio) return;
+
   await window.audio.load(f);
   await window.audio.play();
 };
 
-// GUI
+// ---------- GUI ----------
 this.initGUI();
 
-// LAYERS
-this.base = this.create("/mov/base.mp4",14,-8,this.settings.baseOpacity);
-this.mid  = this.create("/mov/mid.mp4",10,-6,this.settings.midOpacity);
-this.energy = this.create("/mov/energy.mp4",6,-4,this.settings.energyOpacity,true);
+// ---------- LAYERS ----------
+this.base   = this.create("/mov/base.mp4",   14, -8, this.settings.baseOpacity);
+this.mid    = this.create("/mov/mid.mp4",    10, -6, this.settings.midOpacity);
+this.energy = this.create("/mov/energy.mp4",  6, -4, this.settings.energyOpacity, true);
 
 }
 
-// GUI
+
+// ------------------------------------------------
+// 🎛️ GUI
+// ------------------------------------------------
 initGUI(){
 
 this.folder = this.gui.addFolder("🎬 Movies");
@@ -55,11 +66,10 @@ this.folder.add(this.settings,"midOpacity",0,1,0.01);
 this.folder.add(this.settings,"energyOpacity",0,1,0.01);
 
 this.folder.add(this.settings,"motionStrength",0,2,0.01);
-this.folder.add(this.settings,"zoomStrength",0,3,0.01);
 this.folder.add(this.settings,"boostStrength",0,2,0.01);
-
 this.folder.add(this.settings,"audioStrength",0,2,0.01);
 
+// 🎧 AUDIO CONTROLS
 const a = this.folder.addFolder("🎧 Audio");
 
 a.add({load:()=>this.audioInput.click()},"load");
@@ -69,67 +79,126 @@ a.add({resume:()=>window.audio?.resume()},"resume");
 
 a.open();
 this.folder.open();
+
 }
 
-// CREATE
+
+// ------------------------------------------------
+// 🎬 CREATE LAYER
+// ------------------------------------------------
 create(path,w,z,op,add=false){
 
-const tex = loadMovieTexture(path+"?v="+Date.now());
+const tex = loadMovieTexture(path + "?v=" + Date.now());
 
 const mat = new THREE.MeshBasicMaterial({
-  map:tex,transparent:true,opacity:op,depthWrite:false
+  map: tex,
+  transparent: true,
+  opacity: op,
+  depthWrite: false
 });
 
-if(add) mat.blending = THREE.AdditiveBlending;
+if(add){
+  mat.blending = THREE.AdditiveBlending;
+}
 
-const geo = new THREE.PlaneGeometry(w,w*9/16);
-const mesh = new THREE.Mesh(geo,mat);
+const geo = new THREE.PlaneGeometry(w, w * 9/16);
+const mesh = new THREE.Mesh(geo, mat);
 
 mesh.position.z = z;
 this.container.add(mesh);
 
-return {mesh,mat};
+return { mesh, mat };
 }
 
-// UPDATE
+
+// ------------------------------------------------
+// 🎬 UPDATE (NARRATIVE CORE)
+// ------------------------------------------------
 update(state){
 
-this.time+=0.016;
+this.time += 0.016;
 
-const p = state.progress||0;
-const i = state.intensity||0;
-const a = state.audio||{};
+const p = state.progress ?? 0;
+const i = state.intensity ?? 0;
+const audio = state.audio || {};
 
-const s=this.settings;
+const s = this.settings;
 
-// AUDIO
-const energy = Math.pow(a.energy||0,0.6)*s.audioStrength;
-const bass = (a.bass||0)*s.audioStrength;
+// 🎧 AUDIO
+const energy = Math.pow(audio.energy || 0, 0.6) * s.audioStrength;
+const bass   = (audio.bass || 0) * s.audioStrength;
 
-// BOOST
-const boost = (i + energy*2)*s.boostStrength;
+// 🎬 NARRATIVE PHASES
+const a1 = smoothstep(0.0, 0.25, p);
+const a2 = smoothstep(0.25, 0.5, p);
+const a3 = smoothstep(0.5, 0.75, p);
+const a4 = smoothstep(0.75, 1.0, p);
 
-// OPACITY (NOW WORKS)
-this.base.mat.opacity += (s.baseOpacity*(1-boost*0.5)-this.base.mat.opacity)*0.08;
-this.mid.mat.opacity  += (s.midOpacity*(1-boost*0.3)-this.mid.mat.opacity)*0.08;
-this.energy.mat.opacity += (s.energyOpacity+boost-this.energy.mat.opacity)*0.08;
+// 🎬 BOOST
+const boost = (i + energy * 1.5) * s.boostStrength;
 
-// MOTION
-const m=s.motionStrength;
 
-this.mid.mesh.position.x = Math.sin(this.time*0.2)*0.3*m;
-this.energy.mesh.position.x = Math.sin(this.time*0.5)*0.6*m;
+// ----------------------
+// 🎬 OPACITY STORY
+// ----------------------
 
-// DEPTH
-const zoom=1+p*s.zoomStrength;
+const baseTarget =
+  s.baseOpacity * (1 - a4 * 0.5);
 
-this.base.mesh.scale.setScalar(zoom);
-this.mid.mesh.scale.setScalar(1.1*zoom*(1+bass));
-this.energy.mesh.scale.setScalar(1.3*zoom*(1+bass*2));
+const midTarget =
+  s.midOpacity * (a2 + a3 * 0.5 + a4);
+
+const energyTarget =
+  s.energyOpacity * (a3 + a4 * 1.5 + energy * 2);
+
+// smooth
+this.base.mat.opacity += (baseTarget - this.base.mat.opacity) * 0.08;
+this.mid.mat.opacity += (midTarget - this.mid.mat.opacity) * 0.08;
+this.energy.mat.opacity += (energyTarget - this.energy.mat.opacity) * 0.1;
+
+
+// ----------------------
+// 🎬 MOTION STORY
+// ----------------------
+
+const motion =
+  s.motionStrength *
+  (0.2 + a2 * 0.5 + a3 * 1.0 + a4 * 1.5);
+
+// base (calm)
+this.base.mesh.position.x =
+  Math.sin(this.time * 0.05) * 0.05 * motion;
+
+// mid (emerges)
+this.mid.mesh.position.x =
+  Math.sin(this.time * 0.2) * 0.3 * motion;
+
+// energy (explodes)
+this.energy.mesh.position.x =
+  Math.sin(this.time * 0.6) * 0.8 * motion;
+
+
+// ----------------------
+// 🎬 DEPTH STORY (NO ZOOM)
+// ----------------------
+
+this.base.mesh.position.z = -8 + a2 * 1;
+this.mid.mesh.position.z  = -6 + a3 * 2;
+this.energy.mesh.position.z = -4 + a4 * 3;
+
+// subtle scale only
+const scale = 1 + a3 * 0.2 + a4 * 0.3;
+
+this.base.mesh.scale.setScalar(scale);
+this.mid.mesh.scale.setScalar(scale * 1.1 * (1 + bass * 0.3));
+this.energy.mesh.scale.setScalar(scale * 1.2 * (1 + bass * 0.6));
 
 }
 
-// CLEANUP
+
+// ------------------------------------------------
+// 🧹 CLEANUP
+// ------------------------------------------------
 destroy(){
 
 this.container.remove(this.base.mesh);
