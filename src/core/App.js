@@ -31,10 +31,12 @@ this.renderer = new Renderer();
 this.scene = this.renderer.scene;
 this.camera = this.renderer.camera;
 
+
 // ---------- GUI ----------
 this.gui = new GUI();
 this.gui.title("Hero Core");
 this.guiHidden = false;
+
 
 // ---------- CINEMATIC ----------
 this.cinematic = {
@@ -46,6 +48,7 @@ this.cinematic = {
 
 this.setupCinematicGUI();
 
+
 // ---------- ENV ----------
 this.world = new ShaderWorld(this.scene);
 this.stars = new Starfield(this.scene);
@@ -56,12 +59,15 @@ this.portal = new GlassPortal(
   this.renderer.renderTarget.texture
 );
 
+
 // ---------- ENGINE ----------
 this.scroll = new ScrollController();
 
+
 // ---------- AUDIO ----------
 this.audio = new AudioManager();
-window.audio = this.audio; // debug access
+window.audio = this.audio;
+
 
 // ---------- THEMES ----------
 this.themeManager = new ThemeManager(
@@ -70,26 +76,32 @@ this.themeManager = new ThemeManager(
 );
 
 this.themeManager.register("movies", MoviesTheme);
+this.themeManager.register("space", SpaceTheme);   // 🔥 Theme 2
 this.themeManager.register("images", ImageTheme);
-this.themeManager.register("space", SpaceTheme);
 this.themeManager.register("seasons", SeasonsTheme);
 
+// start cinematic
 this.themeManager.activate("movies");
+
 
 // ---------- PARTICLES ----------
 this.setupParticles();
+
 
 // ---------- INPUT ----------
 this.isBoosting = false;
 this.intensity = 0;
 
+
 // ---------- PARALLAX ----------
 this.mouse = { x: 0, y: 0 };
 this.parallax = { x: 0, y: 0 };
 
+
 // ---------- FLIGHT ----------
 this.mouseVel = { x: 0, y: 0 };
 this.flight = { x: 0, y: 0, z: 0 };
+
 
 // ---------- SETUP ----------
 this.setupInput();
@@ -97,9 +109,11 @@ this.setupMouse();
 this.setupThemeSwitching();
 this.setupGuiToggle();
 
+
 // ---------- STATS ----------
 this.stats = new Stats();
 document.body.appendChild(this.stats.dom);
+
 
 // ---------- LOOP ----------
 this.loop = new Loop(
@@ -112,7 +126,9 @@ this.loop.start();
 }
 
 
-// ---------- GUI ----------
+// ------------------------------------------------
+// 🎛️ GUI
+// ------------------------------------------------
 setupCinematicGUI(){
 
 const f = this.gui.addFolder("🎬 Cinematic");
@@ -127,22 +143,24 @@ f.open();
 }
 
 
-// ---------- GUI TOGGLE ----------
+// ------------------------------------------------
+// 🧰 GUI TOGGLE
+// ------------------------------------------------
 setupGuiToggle(){
 
 window.addEventListener("keydown",(e)=>{
-
   if(e.code === "KeyG"){
     this.guiHidden = !this.guiHidden;
     this.gui.domElement.style.display = this.guiHidden ? "none" : "block";
   }
-
 });
 
 }
 
 
-// ---------- PARTICLES ----------
+// ------------------------------------------------
+// ✨ PARTICLES
+// ------------------------------------------------
 setupParticles(){
 
 const geo = createParticleField(6000);
@@ -156,7 +174,9 @@ this.scene.add(this.points);
 }
 
 
-// ---------- INPUT ----------
+// ------------------------------------------------
+// 🖱️ INPUT
+// ------------------------------------------------
 setupInput(){
 
 const canvas = this.renderer.renderer.domElement;
@@ -168,7 +188,9 @@ window.addEventListener("pointercancel", () => this.isBoosting = false);
 }
 
 
-// ---------- MOUSE ----------
+// ------------------------------------------------
+// 🖱️ MOUSE
+// ------------------------------------------------
 setupMouse(){
 
 window.addEventListener("pointermove",(e)=>{
@@ -190,7 +212,9 @@ window.addEventListener("pointermove",(e)=>{
 }
 
 
-// ---------- THEME SWITCH ----------
+// ------------------------------------------------
+// 🎬 THEME SWITCH
+// ------------------------------------------------
 setupThemeSwitching(){
 
 window.addEventListener("keydown",(e)=>{
@@ -198,8 +222,8 @@ window.addEventListener("keydown",(e)=>{
   if(e.repeat) return;
 
   if(e.code==="Digit1") this.themeManager.activate("movies");
-  if(e.code==="Digit2") this.themeManager.activate("images");
-  if(e.code==="Digit3") this.themeManager.activate("space");
+  if(e.code==="Digit2") this.themeManager.activate("space"); // 🔥 Fibonacci Space
+  if(e.code==="Digit3") this.themeManager.activate("images");
   if(e.code==="Digit4") this.themeManager.activate("seasons");
 
 });
@@ -207,7 +231,9 @@ window.addEventListener("keydown",(e)=>{
 }
 
 
-// ---------- ENV ----------
+// ------------------------------------------------
+// 🌍 ENV
+// ------------------------------------------------
 updateEnvironment(){
 
 const theme = this.themeManager.activeTheme;
@@ -228,7 +254,9 @@ if(this.stage?.mesh){
 }
 
 
-// ---------- CAMERA ----------
+// ------------------------------------------------
+// 🎥 CAMERA
+// ------------------------------------------------
 updateCamera(){
 
 const t = performance.now() * 0.001;
@@ -237,22 +265,24 @@ const t = performance.now() * 0.001;
 this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
 this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
 
-// 🎬 FLIGHT MODE
+
+// ---------- FLIGHT ----------
 if(this.isBoosting){
   this.flight.x += this.mouseVel.x * 0.5;
   this.flight.y += this.mouseVel.y * 0.5;
   this.flight.z -= this.cinematic.flightSpeed;
 }
 
-// damping (now visible)
+// damping
 this.flight.x *= this.cinematic.flightDamping;
 this.flight.y *= this.cinematic.flightDamping;
 this.flight.z *= 0.96;
 
+
+// ---------- BASE CAMERA ----------
 const px = this.parallax.x * this.cinematic.parallaxStrength;
 const py = this.parallax.y * this.cinematic.parallaxStrength;
 
-// camera motion
 this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px + this.flight.x;
 this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py + this.flight.y;
 this.camera.position.z = 5 + this.flight.z;
@@ -262,12 +292,13 @@ this.camera.lookAt(0,0,-4);
 }
 
 
-// ---------- STATE ----------
+// ------------------------------------------------
+// 🧠 STATE
+// ------------------------------------------------
 buildState(time){
 
 const p = this.scroll.getProgress();
 
-// stronger cinematic intensity
 const boostedIntensity =
   this.intensity * (1 + this.cinematic.masterBoost * 2);
 
@@ -282,7 +313,9 @@ return {
 }
 
 
-// ---------- UPDATE ----------
+// ------------------------------------------------
+// 🔄 UPDATE
+// ------------------------------------------------
 update(){
 
 this.stats.begin();
@@ -306,7 +339,7 @@ const state = this.buildState(time);
 // camera
 this.updateCamera();
 
-// theme (safe)
+// theme
 try{
   this.themeManager.update(state);
 }catch(e){

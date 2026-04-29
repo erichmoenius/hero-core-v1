@@ -5,14 +5,17 @@ export class FibonacciSystem {
 constructor(scene){
 
 this.scene = scene;
+
 this.group = new THREE.Group();
+this.group.name = "FibonacciSystem";
 this.scene.add(this.group);
 
 this.time = 0;
 
 // ---------------- CONFIG ----------------
 
-this.N = 800; // bewusst reduziert (Performance)
+// balanced for performance
+this.N = 400;
 this.R = 2.8;
 
 this.GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
@@ -150,11 +153,8 @@ for(let i = 0; i < this.N; i++){
 
   const hue = (i * 0.618033) % 1;
 
-  const mat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color().setHSL(hue, 0.8, 0.6),
-    emissive: new THREE.Color().setHSL(hue, 0.8, 0.2),
-    roughness: 0.3,
-    metalness: 0.6
+  const mat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color().setHSL(hue, 0.8, 0.6)
   });
 
   const mesh = new THREE.Mesh(geo, mat);
@@ -201,8 +201,6 @@ setMouse(x, y){
 this.mouse.set(x, y);
 }
 
-
-// optional trigger
 triggerMorph(){
 this.holdTimer = this.HOLD_TIME;
 }
@@ -212,12 +210,15 @@ this.holdTimer = this.HOLD_TIME;
 // 🔄 UPDATE
 // ------------------------------------------------
 
-update(delta = 0.016){
+update(delta = 0.016, audio = null){
 
 this.time += delta;
 
 // smooth mouse
 this.mouseSmooth.lerp(this.mouse, 0.08);
+
+// 🎧 audio (optional)
+const energy = audio?.energy || 0;
 
 
 // ---------------- MORPH ----------------
@@ -228,7 +229,6 @@ if(this.morphProgress < 1){
 
   const t = this.morphProgress;
 
-  // cubic ease
   const ease = t < 0.5
     ? 4 * t * t * t
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -255,12 +255,17 @@ if(this.morphProgress < 1){
 
 // ---------------- ROTATION ----------------
 
-this.group.rotation.y += 0.002 + this.mouseSmooth.x * 0.02;
+this.group.rotation.y += 0.002 + this.mouseSmooth.x * 0.02 + energy * 0.05;
 this.group.rotation.x += this.mouseSmooth.y * 0.01;
 
 
-// subtle breathing scale
-const s = 1 + Math.sin(this.time * 1.2) * 0.03;
+// ---------------- SCALE (breathing + audio) ----------------
+
+const s =
+  1 +
+  Math.sin(this.time * 1.2) * 0.03 +
+  energy * 0.2;
+
 this.group.scale.setScalar(s);
 
 }

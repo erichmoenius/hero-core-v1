@@ -1,12 +1,23 @@
 import * as THREE from "three";
+import { FibonacciSystem } from "../systems/FibonacciSystem.js";
 
 export class SpaceTheme {
 
 constructor(container){
 
+// ✅ FIX: set container FIRST
 this.container = container;
+
+// core
 this.time = 0;
 this.velocity = 0;
+
+// ---------------- FIBONACCI ----------------
+this.fibonacci = new FibonacciSystem(this.container);
+
+// slight depth offset (feels more cinematic)
+this.fibonacci.group.position.z = -2;
+
 
 // ---------------- STAR LAYERS ----------------
 // echte Tiefe, KEINE Flächen
@@ -18,7 +29,9 @@ this.near = this.createLayer(600,  15, 0.07, 0xffaa55);
 }
 
 
-// ---------------- CREATE LAYER ----------------
+// ------------------------------------------------
+// ⭐ CREATE LAYER
+// ------------------------------------------------
 
 createLayer(count, depth, size, color){
 
@@ -32,7 +45,7 @@ for(let i = 0; i < count; i++){
   positions[i3]     = (Math.random() - 0.5) * 60;
   positions[i3 + 1] = (Math.random() - 0.5) * 60;
 
-  // 🔥 symmetrische Tiefe (wichtig!)
+  // symmetrische Tiefe
   positions[i3 + 2] = (Math.random() - 0.5) * depth;
 }
 
@@ -63,7 +76,17 @@ return {
 }
 
 
-// ---------------- UPDATE ----------------
+// ------------------------------------------------
+// 🔄 UPDATE
+// ------------------------------------------------
+getEnvironment(){
+  return {
+    world: true,
+    stars: false,   // use your own star system instead
+    portal: false,  // 🔥 CRITICAL: prevents WebGL feedback loop
+    stage: true
+  };
+}
 
 update(state){
 
@@ -73,27 +96,31 @@ const p = state.progress ?? 0;
 const i = state.intensity ?? 0;
 
 
+// ---------------- FIBONACCI ----------------
+
+this.fibonacci.setMouse(
+  state.parallax?.x || 0,
+  state.parallax?.y || 0
+);
+
+this.fibonacci.update(0.016, state.audio);
+
+
 // ------------------------------------------------
-// 🚀 VELOCITY SYSTEM (FIXED)
+// 🚀 VELOCITY SYSTEM
 // ------------------------------------------------
 
-// nur vorwärts / rückwärts – KEIN flip glitch
-const targetSpeed = (p - 0.5) * 10;
+const targetSpeed = (p - 0.5) * 3;
 
-// smooth accel
 this.velocity += (targetSpeed - this.velocity) * 0.05;
-
-// damping (stabil)
 this.velocity *= 0.98;
-
-// boost
 this.velocity += i * 0.5;
 
 const forward = this.velocity;
 
 
 // ------------------------------------------------
-// 🌌 PARALLAX (echte Tiefe)
+// 🌌 PARALLAX
 // ------------------------------------------------
 
 this.updateLayer(this.far,  forward * 0.2);
@@ -102,14 +129,14 @@ this.updateLayer(this.near, forward * 1.4);
 
 
 // ------------------------------------------------
-// 🌫️ DEPTH FOG (subtle, kein Overlay)
+// 🌫️ DEPTH FOG (balanced for Fibonacci visibility)
 // ------------------------------------------------
 
 const fog = 0.85 + Math.sin(this.time * 0.3) * 0.05;
 
-this.far.points.material.opacity  = 0.25 * fog;
-this.mid.points.material.opacity  = 0.6  * fog;
-this.near.points.material.opacity = 1.0  * fog;
+this.far.points.material.opacity  = 0.15 * fog;
+this.mid.points.material.opacity  = 0.4  * fog;
+this.near.points.material.opacity = 0.8  * fog;
 
 
 // ------------------------------------------------
@@ -122,7 +149,9 @@ this.near.points.material.size = this.near.baseSize * pulse;
 }
 
 
-// ---------------- LAYER UPDATE ----------------
+// ------------------------------------------------
+// 🔁 LAYER UPDATE
+// ------------------------------------------------
 
 updateLayer(layer, speed){
 
@@ -133,12 +162,11 @@ for(let i = 0; i < pos.count; i++){
 
   let z = pos.getZ(i);
 
-  // kleine Variation → natürlicher
   const variance = 0.7 + Math.sin(i * 12.9898) * 0.3;
 
   z += speed * 0.02 * variance;
 
-  // 🔥 TRUE INFINITE SPACE
+  // infinite loop
   if(z > depth * 0.5) z -= depth;
   if(z < -depth * 0.5) z += depth;
 
@@ -150,9 +178,14 @@ pos.needsUpdate = true;
 }
 
 
-// ---------------- CLEANUP ----------------
+// ------------------------------------------------
+// 🧹 CLEANUP
+// ------------------------------------------------
 
 destroy(){
+
+// ✅ important
+this.fibonacci?.destroy();
 
 [this.far, this.mid, this.near].forEach(layer => {
 
