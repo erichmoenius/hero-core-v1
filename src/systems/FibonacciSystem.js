@@ -13,8 +13,6 @@ this.scene.add(this.group);
 this.time = 0;
 
 // ---------------- CONFIG ----------------
-
-// balanced for performance
 this.N = 400;
 this.R = 2.8;
 
@@ -26,17 +24,14 @@ this.holdTimer = 0;
 this.HOLD_TIME = 4;
 
 // ---------------- INTERACTION ----------------
-
 this.mouse = new THREE.Vector2();
 this.mouseSmooth = new THREE.Vector2();
 
 // ---------------- DATA ----------------
-
 this.meshes = [];
 this.targets = [];
 
 // ---------------- INIT ----------------
-
 this.init();
 
 }
@@ -45,19 +40,15 @@ this.init();
 // ------------------------------------------------
 // 🧱 INIT
 // ------------------------------------------------
-
 init(){
-
 this.createTargets();
 this.createParticles();
-
 }
 
 
 // ------------------------------------------------
 // 🌀 SHAPES
 // ------------------------------------------------
-
 makeSphere(i){
 
 const t = i / (this.N - 1);
@@ -102,7 +93,6 @@ const v = new THREE.Vector3(
 );
 
 const m = Math.max(Math.abs(v.x), Math.abs(v.y), Math.abs(v.z));
-
 return v.multiplyScalar(this.R / m);
 
 }
@@ -124,7 +114,6 @@ return new THREE.Vector3(
 // ------------------------------------------------
 // 🎯 TARGETS
 // ------------------------------------------------
-
 createTargets(){
 
 const shapes = [
@@ -144,7 +133,6 @@ this.targets = shapes.map(fn =>
 // ------------------------------------------------
 // ✨ PARTICLES
 // ------------------------------------------------
-
 createParticles(){
 
 const geo = new THREE.SphereGeometry(0.04, 8, 8);
@@ -154,7 +142,9 @@ for(let i = 0; i < this.N; i++){
   const hue = (i * 0.618033) % 1;
 
   const mat = new THREE.MeshBasicMaterial({
-    color: new THREE.Color().setHSL(hue, 0.8, 0.6)
+    color: new THREE.Color().setHSL(hue, 0.8, 0.6),
+    transparent: true,
+    opacity: 0.9
   });
 
   const mesh = new THREE.Mesh(geo, mat);
@@ -177,17 +167,14 @@ for(let i = 0; i < this.N; i++){
 // ------------------------------------------------
 // 🔁 MORPH
 // ------------------------------------------------
-
 startMorph(){
 
 this.shapeIndex = (this.shapeIndex + 1) % this.targets.length;
 this.morphProgress = 0;
 
 this.meshes.forEach((m, i)=>{
-
   m.userData.from.copy(m.position);
   m.userData.to.copy(this.targets[this.shapeIndex][i]);
-
 });
 
 }
@@ -196,7 +183,6 @@ this.meshes.forEach((m, i)=>{
 // ------------------------------------------------
 // 🎮 INTERACTION
 // ------------------------------------------------
-
 setMouse(x, y){
 this.mouse.set(x, y);
 }
@@ -209,7 +195,6 @@ this.holdTimer = this.HOLD_TIME;
 // ------------------------------------------------
 // 🔄 UPDATE
 // ------------------------------------------------
-
 update(delta = 0.016, audio = null){
 
 this.time += delta;
@@ -217,7 +202,7 @@ this.time += delta;
 // smooth mouse
 this.mouseSmooth.lerp(this.mouse, 0.08);
 
-// 🎧 audio (optional)
+// 🎧 audio
 const energy = audio?.energy || 0;
 
 
@@ -225,7 +210,8 @@ const energy = audio?.energy || 0;
 
 if(this.morphProgress < 1){
 
-  this.morphProgress += 0.01;
+  // 🔥 audio-driven morph speed
+  this.morphProgress += 0.01 + energy * 0.06;
 
   const t = this.morphProgress;
 
@@ -245,7 +231,10 @@ if(this.morphProgress < 1){
 
   this.holdTimer += delta;
 
-  if(this.holdTimer >= this.HOLD_TIME){
+  // 🔥 dynamic hold (audio shortens pause)
+  const dynamicHold = this.HOLD_TIME * (1 - energy * 0.7);
+
+  if(this.holdTimer >= dynamicHold){
     this.holdTimer = 0;
     this.startMorph();
   }
@@ -268,13 +257,27 @@ const s =
 
 this.group.scale.setScalar(s);
 
+
+// ---------------- OPACITY PULSE ----------------
+
+const opacityPulse = 0.6 + energy * 0.8;
+
+this.meshes.forEach(m=>{
+  m.material.opacity = opacityPulse;
+});
+
+
+// ---------------- DEPTH DRIFT ----------------
+
+this.group.position.z =
+  -2 + Math.sin(this.time * 0.5) * 0.3;
+
 }
 
 
 // ------------------------------------------------
 // 🧹 CLEANUP
 // ------------------------------------------------
-
 destroy(){
 
 this.meshes.forEach(m=>{

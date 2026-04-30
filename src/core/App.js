@@ -49,6 +49,14 @@ this.cinematic = {
 this.setupCinematicGUI();
 
 
+// ---------- AUDIO ----------
+this.audio = new AudioManager();
+window.audio = this.audio;
+
+// 🔥 NEW: global audio GUI
+this.setupAudioGUI();
+
+
 // ---------- ENV ----------
 this.world = new ShaderWorld(this.scene);
 this.stars = new Starfield(this.scene);
@@ -64,11 +72,6 @@ this.portal = new GlassPortal(
 this.scroll = new ScrollController();
 
 
-// ---------- AUDIO ----------
-this.audio = new AudioManager();
-window.audio = this.audio;
-
-
 // ---------- THEMES ----------
 this.themeManager = new ThemeManager(
   this.stage.getContent(),
@@ -76,11 +79,10 @@ this.themeManager = new ThemeManager(
 );
 
 this.themeManager.register("movies", MoviesTheme);
-this.themeManager.register("space", SpaceTheme);   // 🔥 Theme 2
+this.themeManager.register("space", SpaceTheme);
 this.themeManager.register("images", ImageTheme);
 this.themeManager.register("seasons", SeasonsTheme);
 
-// start cinematic
 this.themeManager.activate("movies");
 
 
@@ -127,7 +129,7 @@ this.loop.start();
 
 
 // ------------------------------------------------
-// 🎛️ GUI
+// 🎛️ CINEMATIC GUI
 // ------------------------------------------------
 setupCinematicGUI(){
 
@@ -139,6 +141,61 @@ f.add(this.cinematic, "flightSpeed", 0, 0.2, 0.001);
 f.add(this.cinematic, "flightDamping", 0.7, 0.99, 0.001);
 
 f.open();
+
+}
+
+
+// ------------------------------------------------
+// 🎧 AUDIO GUI (GLOBAL)
+// ------------------------------------------------
+setupAudioGUI(){
+
+const f = this.gui.addFolder("🎧 Audio");
+
+// load
+f.add({ load: () => this.openAudioFile() }, "load");
+
+// controls
+f.add({ play: () => this.audio.play() }, "play");
+f.add({ pause: () => this.audio.pause() }, "pause");
+f.add({ resume: () => this.audio.resume() }, "resume");
+
+// sliders
+f.add(this.audio.settings, "masterGain", 0, 3, 0.01).name("volume");
+f.add(this.audio.settings, "smoothing", 0.01, 0.2, 0.001);
+f.add(this.audio.settings, "compression", 0.2, 1.0, 0.01);
+
+f.open();
+
+}
+
+
+// ------------------------------------------------
+// 📂 AUDIO FILE INPUT
+// ------------------------------------------------
+openAudioFile(){
+
+if(!this.fileInput){
+
+  this.fileInput = document.createElement("input");
+  this.fileInput.type = "file";
+  this.fileInput.accept = "audio/*";
+  this.fileInput.style.display = "none";
+
+  this.fileInput.onchange = async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+
+    await this.audio.load(file);
+    await this.audio.play();
+
+    this.fileInput.value = "";
+  };
+
+  document.body.appendChild(this.fileInput);
+}
+
+this.fileInput.click();
 
 }
 
@@ -222,7 +279,7 @@ window.addEventListener("keydown",(e)=>{
   if(e.repeat) return;
 
   if(e.code==="Digit1") this.themeManager.activate("movies");
-  if(e.code==="Digit2") this.themeManager.activate("space"); // 🔥 Fibonacci Space
+  if(e.code==="Digit2") this.themeManager.activate("space");
   if(e.code==="Digit3") this.themeManager.activate("images");
   if(e.code==="Digit4") this.themeManager.activate("seasons");
 
@@ -261,25 +318,19 @@ updateCamera(){
 
 const t = performance.now() * 0.001;
 
-// smooth parallax
 this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
 this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
 
-
-// ---------- FLIGHT ----------
 if(this.isBoosting){
   this.flight.x += this.mouseVel.x * 0.5;
   this.flight.y += this.mouseVel.y * 0.5;
   this.flight.z -= this.cinematic.flightSpeed;
 }
 
-// damping
 this.flight.x *= this.cinematic.flightDamping;
 this.flight.y *= this.cinematic.flightDamping;
 this.flight.z *= 0.96;
 
-
-// ---------- BASE CAMERA ----------
 const px = this.parallax.x * this.cinematic.parallaxStrength;
 const py = this.parallax.y * this.cinematic.parallaxStrength;
 
@@ -322,38 +373,28 @@ this.stats.begin();
 
 const time = performance.now() * 0.001;
 
-// scroll
 this.scroll.updateScroll();
-
-// audio
 this.audio.update();
 
-// intensity
 const target = this.isBoosting ? 1 : 0;
 this.intensity += (target - this.intensity) * 0.08;
 this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
-// state
 const state = this.buildState(time);
 
-// camera
 this.updateCamera();
 
-// theme
 try{
   this.themeManager.update(state);
 }catch(e){
   console.error("Theme crash:", e);
 }
 
-// env
 this.updateEnvironment();
 
-// systems
 this.world.update();
 this.stars.update();
 
-// particles
 this.points.rotation.y += 0.0003 + this.intensity * 0.001;
 
 if(this.material?.uniforms?.uTime){

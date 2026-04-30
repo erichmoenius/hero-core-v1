@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { loadMovieTexture } from "../movieLoader.js";
 
+
 // ------------------------------------------------
 // 🎬 CINEMATIC HELPER
 // ------------------------------------------------
@@ -8,6 +9,7 @@ function smoothstep(a, b, x){
   const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1);
   return t * t * (3 - 2 * t);
 }
+
 
 export class MoviesTheme {
 
@@ -17,6 +19,7 @@ this.container = container;
 this.gui = gui;
 
 this.time = 0;
+
 
 // ---------- SETTINGS ----------
 this.settings = {
@@ -28,23 +31,10 @@ this.settings = {
   audioStrength: 0.8
 };
 
-// ---------- AUDIO INPUT ----------
-this.audioInput = document.createElement("input");
-this.audioInput.type = "file";
-this.audioInput.accept = "audio/*";
-this.audioInput.style.display = "none";
-document.body.appendChild(this.audioInput);
-
-this.audioInput.onchange = async (e)=>{
-  const f = e.target.files[0];
-  if(!f || !window.audio) return;
-
-  await window.audio.load(f);
-  await window.audio.play();
-};
 
 // ---------- GUI ----------
 this.initGUI();
+
 
 // ---------- LAYERS ----------
 this.base   = this.create("/mov/base.mp4",   14, -8, this.settings.baseOpacity);
@@ -67,17 +57,10 @@ this.folder.add(this.settings,"energyOpacity",0,1,0.01);
 
 this.folder.add(this.settings,"motionStrength",0,2,0.01);
 this.folder.add(this.settings,"boostStrength",0,2,0.01);
-this.folder.add(this.settings,"audioStrength",0,2,0.01);
 
-// 🎧 AUDIO CONTROLS
-const a = this.folder.addFolder("🎧 Audio");
+// ✅ stays (visual control only)
+this.folder.add(this.settings,"audioStrength",0,3,0.01);
 
-a.add({load:()=>this.audioInput.click()},"load");
-a.add({play:()=>window.audio?.play()},"play");
-a.add({pause:()=>window.audio?.pause()},"pause");
-a.add({resume:()=>window.audio?.resume()},"resume");
-
-a.open();
 this.folder.open();
 
 }
@@ -108,6 +91,7 @@ mesh.position.z = z;
 this.container.add(mesh);
 
 return { mesh, mat };
+
 }
 
 
@@ -124,15 +108,18 @@ const audio = state.audio || {};
 
 const s = this.settings;
 
-// 🎧 AUDIO
+
+// 🎧 AUDIO (clean input)
 const energy = Math.pow(audio.energy || 0, 0.6) * s.audioStrength;
 const bass   = (audio.bass || 0) * s.audioStrength;
+
 
 // 🎬 NARRATIVE PHASES
 const a1 = smoothstep(0.0, 0.25, p);
 const a2 = smoothstep(0.25, 0.5, p);
 const a3 = smoothstep(0.5, 0.75, p);
 const a4 = smoothstep(0.75, 1.0, p);
+
 
 // 🎬 BOOST
 const boost = (i + energy * 1.5) * s.boostStrength;
@@ -151,9 +138,10 @@ const midTarget =
 const energyTarget =
   s.energyOpacity * (a3 + a4 * 1.5 + energy * 2);
 
-// smooth
-this.base.mat.opacity += (baseTarget - this.base.mat.opacity) * 0.08;
-this.mid.mat.opacity += (midTarget - this.mid.mat.opacity) * 0.08;
+
+// smooth transitions
+this.base.mat.opacity   += (baseTarget - this.base.mat.opacity) * 0.08;
+this.mid.mat.opacity    += (midTarget - this.mid.mat.opacity) * 0.08;
 this.energy.mat.opacity += (energyTarget - this.energy.mat.opacity) * 0.1;
 
 
@@ -165,13 +153,16 @@ const motion =
   s.motionStrength *
   (0.2 + a2 * 0.5 + a3 * 1.0 + a4 * 1.5);
 
+
 // base (calm)
 this.base.mesh.position.x =
   Math.sin(this.time * 0.05) * 0.05 * motion;
 
+
 // mid (emerges)
 this.mid.mesh.position.x =
   Math.sin(this.time * 0.2) * 0.3 * motion;
+
 
 // energy (explodes)
 this.energy.mesh.position.x =
@@ -182,9 +173,10 @@ this.energy.mesh.position.x =
 // 🎬 DEPTH STORY (NO ZOOM)
 // ----------------------
 
-this.base.mesh.position.z = -8 + a2 * 1;
-this.mid.mesh.position.z  = -6 + a3 * 2;
+this.base.mesh.position.z   = -8 + a2 * 1;
+this.mid.mesh.position.z    = -6 + a3 * 2;
 this.energy.mesh.position.z = -4 + a4 * 3;
+
 
 // subtle scale only
 const scale = 1 + a3 * 0.2 + a4 * 0.3;
@@ -214,6 +206,7 @@ this.mid.mat.dispose();
 this.energy.mat.dispose();
 
 this.folder?.destroy();
+
 }
 
 }

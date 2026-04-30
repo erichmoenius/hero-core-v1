@@ -5,23 +5,17 @@ export class SpaceTheme {
 
 constructor(container){
 
-// ✅ FIX: set container FIRST
 this.container = container;
 
-// core
 this.time = 0;
 this.velocity = 0;
 
 // ---------------- FIBONACCI ----------------
 this.fibonacci = new FibonacciSystem(this.container);
-
-// slight depth offset (feels more cinematic)
 this.fibonacci.group.position.z = -2;
 
 
 // ---------------- STAR LAYERS ----------------
-// echte Tiefe, KEINE Flächen
-
 this.far  = this.createLayer(1500, 60, 0.02, 0x6688ff);
 this.mid  = this.createLayer(1000, 30, 0.04, 0xffffff);
 this.near = this.createLayer(600,  15, 0.07, 0xffaa55);
@@ -30,9 +24,35 @@ this.near = this.createLayer(600,  15, 0.07, 0xffaa55);
 
 
 // ------------------------------------------------
+// 🌍 ENV
+// ------------------------------------------------
+getEnvironment(){
+  return {
+    world: true,
+    stars: false,
+    portal: false,
+    stage: true
+  };
+}
+
+
+// ------------------------------------------------
+// 🎥 CAMERA (THEME-SPECIFIC)
+// ------------------------------------------------
+updateCamera(camera){
+
+const follow = 0.12;
+
+// subtle attraction to center / structure
+camera.position.x += (0 - camera.position.x) * follow;
+camera.position.y += (0 - camera.position.y) * follow;
+
+}
+
+
+// ------------------------------------------------
 // ⭐ CREATE LAYER
 // ------------------------------------------------
-
 createLayer(count, depth, size, color){
 
 const geometry = new THREE.BufferGeometry();
@@ -44,8 +64,6 @@ for(let i = 0; i < count; i++){
 
   positions[i3]     = (Math.random() - 0.5) * 60;
   positions[i3 + 1] = (Math.random() - 0.5) * 60;
-
-  // symmetrische Tiefe
   positions[i3 + 2] = (Math.random() - 0.5) * depth;
 }
 
@@ -64,7 +82,6 @@ const material = new THREE.PointsMaterial({
 });
 
 const points = new THREE.Points(geometry, material);
-
 this.container.add(points);
 
 return {
@@ -79,31 +96,35 @@ return {
 // ------------------------------------------------
 // 🔄 UPDATE
 // ------------------------------------------------
-getEnvironment(){
-  return {
-    world: true,
-    stars: false,   // use your own star system instead
-    portal: false,  // 🔥 CRITICAL: prevents WebGL feedback loop
-    stage: true
-  };
-}
-
 update(state){
 
 this.time += 0.016;
 
 const p = state.progress ?? 0;
 const i = state.intensity ?? 0;
+const audio = state.audio || {};
+
+
+// ---------------- AUDIO ----------------
+const energy = audio.energy || 0;
 
 
 // ---------------- FIBONACCI ----------------
 
+// mouse interaction
 this.fibonacci.setMouse(
   state.parallax?.x || 0,
   state.parallax?.y || 0
 );
 
-this.fibonacci.update(0.016, state.audio);
+// 🔥 audio-driven morph speed
+const delta = 0.01 + energy * 0.08;
+this.fibonacci.update(delta, audio);
+
+
+// 🔥 subtle audio scale pulse
+const pulse = 1 + energy * 0.4;
+this.fibonacci.group.scale.setScalar(pulse);
 
 
 // ------------------------------------------------
@@ -129,22 +150,22 @@ this.updateLayer(this.near, forward * 1.4);
 
 
 // ------------------------------------------------
-// 🌫️ DEPTH FOG (balanced for Fibonacci visibility)
+// 🌫️ DEPTH FOG (LESS NOISE, MORE FOCUS)
 // ------------------------------------------------
 
 const fog = 0.85 + Math.sin(this.time * 0.3) * 0.05;
 
-this.far.points.material.opacity  = 0.15 * fog;
-this.mid.points.material.opacity  = 0.4  * fog;
-this.near.points.material.opacity = 0.8  * fog;
+this.far.points.material.opacity  = 0.08 * fog;
+this.mid.points.material.opacity  = 0.25 * fog;
+this.near.points.material.opacity = 0.6  * fog;
 
 
 // ------------------------------------------------
 // ✨ LIGHT PULSE
 // ------------------------------------------------
 
-const pulse = 1 + Math.sin(this.time * 2.0) * 0.03;
-this.near.points.material.size = this.near.baseSize * pulse;
+const starPulse = 1 + Math.sin(this.time * 2.0) * 0.03;
+this.near.points.material.size = this.near.baseSize * starPulse;
 
 }
 
@@ -152,7 +173,6 @@ this.near.points.material.size = this.near.baseSize * pulse;
 // ------------------------------------------------
 // 🔁 LAYER UPDATE
 // ------------------------------------------------
-
 updateLayer(layer, speed){
 
 const pos = layer.points.geometry.attributes.position;
@@ -166,7 +186,6 @@ for(let i = 0; i < pos.count; i++){
 
   z += speed * 0.02 * variance;
 
-  // infinite loop
   if(z > depth * 0.5) z -= depth;
   if(z < -depth * 0.5) z += depth;
 
@@ -181,10 +200,8 @@ pos.needsUpdate = true;
 // ------------------------------------------------
 // 🧹 CLEANUP
 // ------------------------------------------------
-
 destroy(){
 
-// ✅ important
 this.fibonacci?.destroy();
 
 [this.far, this.mid, this.near].forEach(layer => {
