@@ -1,136 +1,165 @@
 export default class AudioHandler {
 
-  constructor() {
-    this.ctx = null;
+  constructor(context) {
+
+    this.ctx = context;
+
     this.buffer = null;
     this.source = null;
 
     this.analyser = null;
     this.gainNode = null;
+
     this.data = null;
 
     this.startTime = 0;
     this.pauseOffset = 0;
+
+    this.isPlaying = false;
   }
 
-  async initContext() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    }
+  // ------------------------------------------------
+  // 🔊 INIT NODES
+  // ------------------------------------------------
+  initNodes(){
 
-    if (this.ctx.state === "suspended") {
-      await this.ctx.resume();
-    }
+    if(this.analyser) return;
+
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 1024;
+
+    this.gainNode = this.ctx.createGain();
+
+    this.analyser.connect(this.gainNode);
+    this.gainNode.connect(this.ctx.destination);
+
+    this.data = new Uint8Array(
+      this.analyser.frequencyBinCount
+    );
   }
 
-  async load(fileOrUrl) {
+  // ------------------------------------------------
+  // 📂 LOAD
+  // ------------------------------------------------
+  async load(fileOrUrl){
 
-    await this.initContext();
     this.stop(true);
+
+    this.initNodes();
 
     let arrayBuffer;
 
-    if (fileOrUrl instanceof File) {
+    if(fileOrUrl instanceof File){
+
       arrayBuffer = await fileOrUrl.arrayBuffer();
-    } else {
+
+    }else{
+
       const res = await fetch(fileOrUrl);
       arrayBuffer = await res.arrayBuffer();
     }
 
-    this.buffer = await this.ctx.decodeAudioData(arrayBuffer);
-
-    if (!this.analyser) {
-      this.analyser = this.ctx.createAnalyser();
-      this.analyser.fftSize = 512;
-
-      this.gainNode = this.ctx.createGain();
-      this.data = new Uint8Array(this.analyser.frequencyBinCount);
-
-      this.analyser.connect(this.gainNode);
-      this.gainNode.connect(this.ctx.destination);
-    }
+    this.buffer =
+      await this.ctx.decodeAudioData(arrayBuffer);
 
     this.pauseOffset = 0;
   }
 
-  buildSource(offset = 0) {
+  // ------------------------------------------------
+  // ▶️ BUILD SOURCE
+  // ------------------------------------------------
+  buildSource(offset = 0){
 
-    if (!this.buffer) return;
+    if(!this.buffer) return;
 
-    // 🔥 FIX: stop previous source
-    if (this.source) {
-      try { this.source.stop(); } catch {}
-      this.source.disconnect();
-      this.source = null;
-    }
+    this.destroySource();
 
     this.source = this.ctx.createBufferSource();
+
     this.source.buffer = this.buffer;
     this.source.loop = true;
 
     this.source.connect(this.analyser);
 
-    this.startTime = this.ctx.currentTime - offset;
+    this.startTime =
+      this.ctx.currentTime - offset;
+
     this.source.start(0, offset);
+
+    this.isPlaying = true;
   }
 
-  async play() {
-    if (!this.buffer) return;
-    await this.initContext();
+  // ------------------------------------------------
+  // ▶️ PLAY
+  // ------------------------------------------------
+  async play(){
+
+    if(!this.buffer) return;
+
+    if(this.ctx.state === "suspended"){
+      await this.ctx.resume();
+    }
+
     this.buildSource(this.pauseOffset);
   }
 
-  pause() {
-    if (!this.source) return;
+  // ------------------------------------------------
+  // ⏸️ PAUSE
+  // ------------------------------------------------
+  pause(){
 
-    this.pauseOffset = this.ctx.currentTime - this.startTime;
+    if(!this.source) return;
 
-    try { this.source.stop(); } catch {}
-    this.source.disconnect();
-    this.source = null;
+    this.pauseOffset =
+      this.ctx.currentTime - this.startTime;
+
+    this.destroySource();
+
+    this.isPlaying = false;
   }
 
-  stop(silent = false) {
-
-    if (this.source) {
-      try { this.source.stop(); } catch {}
-      this.source.disconnect();
-      this.source = null;
-    }
+  // ------------------------------------------------
+  // ⏹️ STOP
+  // ------------------------------------------------
+  stop(silent = false){
 
     this.pauseOffset = 0;
 
-    if (!silent) console.log("Audio stopped");
+    this.destroySource();
+
+    this.isPlaying = false;
+
+    if(!silent){
+      console.log("🎧 File stopped");
+    }
   }
 
+  // ------------------------------------------------
+  // 🧹 DESTROY SOURCE
+  // ------------------------------------------------
+  destroySource(){
+
+    if(!this.source) return;
+
+    try{
+      this.source.stop();
+    }catch{}
+
+    try{
+      this.source.disconnect();
+    }catch{}
+
+    this.source = null;
+  }
+
+  // ------------------------------------------------
+  // 📊 UPDATE
+  // ------------------------------------------------
   update(){
-    if(!this.analyser) return;
+
+    if(!this.analyser || !this.data) return;
+
     this.analyser.getByteFrequencyData(this.data);
   }
 
-  getEnergy(){
-    if(!this.data) return 0;
-    return this.data.reduce((a,b)=>a+b,0)/this.data.length/255;
-  }
-
-  getBass(){
-    if(!this.data) return 0;
-    let sum=0;
-    for(let i=0;i<15;i++) sum+=this.data[i];
-    return sum/15/255;
-  }
-
-  getMid(){
-    if(!this.data) return 0;
-    let sum=0;
-    for(let i=20;i<80;i++) sum+=this.data[i];
-    return sum/60/255;
-  }
-
-  getHigh(){
-    if(!this.data) return 0;
-    let sum=0;
-    for(let i=80;i<200;i++) sum+=this.data[i];
-    return sum/120/255;
-  }
 }
