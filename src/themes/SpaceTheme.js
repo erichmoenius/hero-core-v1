@@ -46,24 +46,39 @@ this.fibonacci.group.position.z = -2;
 // ------------------------------------------------
 
 this.far = this.createLayer(
+
   1500,
+
   60,
+
   0.02,
+
   0x6688ff
+
 );
 
 this.mid = this.createLayer(
+
   1000,
+
   30,
+
   0.04,
+
   0xffffff
+
 );
 
 this.near = this.createLayer(
+
   600,
+
   15,
+
   0.07,
+
   0xffaa55
+
 );
 
 
@@ -117,9 +132,11 @@ const py = state.parallax?.y || 0;
 // ------------------------------------------------
 
 this.cameraDrift.x +=
+
   ((px * 0.6) - this.cameraDrift.x) * follow;
 
 this.cameraDrift.y +=
+
   ((py * 0.4) - this.cameraDrift.y) * follow;
 
 
@@ -128,9 +145,11 @@ this.cameraDrift.y +=
 // ------------------------------------------------
 
 camera.position.x +=
+
   (this.cameraDrift.x - camera.position.x) * 0.08;
 
 camera.position.y +=
+
   (-this.cameraDrift.y - camera.position.y) * 0.08;
 
 
@@ -139,6 +158,7 @@ camera.position.y +=
 // ------------------------------------------------
 
 camera.position.z =
+
   5 + this.zoom;
 
 }
@@ -154,20 +174,25 @@ const geometry = new THREE.BufferGeometry();
 
 const positions = new Float32Array(count * 3);
 
+
 for(let i = 0; i < count; i++){
 
   const i3 = i * 3;
 
   positions[i3] =
+
     (Math.random() - 0.5) * 60;
 
   positions[i3 + 1] =
+
     (Math.random() - 0.5) * 60;
 
   positions[i3 + 2] =
+
     (Math.random() - 0.5) * depth;
 
 }
+
 
 geometry.setAttribute(
 
@@ -176,6 +201,7 @@ geometry.setAttribute(
   new THREE.BufferAttribute(positions, 3)
 
 );
+
 
 const material = new THREE.PointsMaterial({
 
@@ -193,12 +219,18 @@ const material = new THREE.PointsMaterial({
 
 });
 
+
 const points = new THREE.Points(
+
   geometry,
+
   material
+
 );
 
+
 this.group.add(points);
+
 
 return {
 
@@ -221,13 +253,17 @@ update(state){
 
 this.time += 0.016;
 
+
 const p =
+
   state.progress ?? 0;
 
 const intensity =
+
   state.intensity ?? 0;
 
 const audio =
+
   state.audio || {};
 
 
@@ -236,19 +272,37 @@ const audio =
 // ------------------------------------------------
 
 const wheel =
+
   state.wheel?.delta || 0;
 
+
 this.zoomVelocity +=
+
   wheel * 0.35;
+
+
+// ------------------------------------------------
+// 🌊 ZOOM DAMPING
+// ------------------------------------------------
 
 this.zoomVelocity *= 0.9;
 
+
+// ------------------------------------------------
+// 🌌 APPLY ZOOM
+// ------------------------------------------------
+
 this.zoom +=
+
   this.zoomVelocity;
 
 
-// subtle inertia breathing
+// ------------------------------------------------
+// 🌫️ BREATHING
+// ------------------------------------------------
+
 this.zoom +=
+
   Math.sin(this.time * 0.3) * 0.003;
 
 
@@ -257,10 +311,15 @@ this.zoom +=
 // ------------------------------------------------
 
 this.zoom =
+
   THREE.MathUtils.clamp(
+
     this.zoom,
+
     -30,
+
     6
+
   );
 
 
@@ -269,10 +328,15 @@ this.zoom =
 // ------------------------------------------------
 
 const depthFactor =
+
   THREE.MathUtils.clamp(
+
     Math.abs(this.zoom) / 30,
+
     0,
+
     1
+
   );
 
 
@@ -281,15 +345,19 @@ const depthFactor =
 // ------------------------------------------------
 
 const energy =
+
   Math.pow(audio.energy || 0, 0.65);
 
 const bass =
+
   audio.bass || 0;
 
 const mid =
+
   audio.mid || 0;
 
 const high =
+
   audio.high || 0;
 
 
@@ -318,6 +386,7 @@ const delta =
 
   bass * 0.04;
 
+
 this.fibonacci.update(delta, audio);
 
 
@@ -333,8 +402,11 @@ const pulse =
 
   bass * 0.6;
 
+
 this.fibonacci.group.scale.setScalar(
+
   pulse
+
 );
 
 
@@ -343,21 +415,25 @@ this.fibonacci.group.scale.setScalar(
 // ------------------------------------------------
 
 this.fibonacci.group.rotation.y +=
+
   0.0015 + bass * 0.03;
 
 this.fibonacci.group.rotation.x +=
+
   mid * 0.01;
 
 
 this.worldRotation +=
+
   0.0005 + energy * 0.002;
 
 
 this.group.rotation.z =
+
   Math.sin(this.time * 0.15) * 0.03;
 
-
 this.group.rotation.y =
+
   this.worldRotation;
 
 
@@ -366,17 +442,23 @@ this.group.rotation.y =
 // ------------------------------------------------
 
 const targetSpeed =
+
   (p - 0.5) * 3;
 
+
 this.velocity +=
+
   (targetSpeed - this.velocity) * 0.05;
 
 this.velocity *= 0.985;
 
 this.velocity +=
+
   intensity * 0.35;
 
+
 const forward =
+
   this.velocity;
 
 
@@ -385,6 +467,7 @@ const forward =
 // ------------------------------------------------
 
 const depthSpeed =
+
   1 + depthFactor * 4;
 
 
@@ -393,18 +476,27 @@ const depthSpeed =
 // ------------------------------------------------
 
 this.updateLayer(
+
   this.far,
+
   forward * 0.2 * depthSpeed
+
 );
 
 this.updateLayer(
+
   this.mid,
+
   forward * 0.6 * depthSpeed
+
 );
 
 this.updateLayer(
+
   this.near,
+
   forward * 1.5 * depthSpeed
+
 );
 
 
@@ -422,14 +514,17 @@ const fog =
 
 
 this.far.points.material.opacity =
+
   0.04 * fog;
 
 
 this.mid.points.material.opacity =
+
   (0.14 + energy * 0.05) * fog;
 
 
 this.near.points.material.opacity =
+
   (0.35 + energy * 0.25) * fog;
 
 
@@ -447,20 +542,26 @@ const starPulse =
 
 
 this.near.points.material.size =
+
   this.near.baseSize * starPulse;
 
 
 this.mid.points.material.size =
+
   this.mid.baseSize *
+
   (1 + high * 0.08);
 
 
 this.far.points.material.size =
+
   this.far.baseSize *
+
   (1 + depthFactor * 0.4);
 
 
 this.near.points.material.size *=
+
   1 + depthFactor * 0.6;
 
 
@@ -471,6 +572,7 @@ this.near.points.material.size *=
 if(energy > 0.65){
 
   this.near.points.material.opacity +=
+
     energy * 0.15;
 
 }
@@ -494,6 +596,7 @@ this.fibonacci.group.position.z =
 // ------------------------------------------------
 
 this.group.position.z =
+
   this.zoom * 0.4;
 
 }
@@ -506,14 +609,18 @@ this.group.position.z =
 updateLayer(layer, speed){
 
 const pos =
+
   layer.points.geometry.attributes.position;
 
 const depth =
+
   layer.depth;
+
 
 for(let i = 0; i < pos.count; i++){
 
   let z =
+
     pos.getZ(i);
 
   const variance =
@@ -522,20 +629,29 @@ for(let i = 0; i < pos.count; i++){
 
     Math.sin(i * 12.9898) * 0.3;
 
+
   z +=
+
     speed * 0.02 * variance;
 
+
   if(z > depth * 0.5){
+
     z -= depth;
+
   }
 
   if(z < -depth * 0.5){
+
     z += depth;
+
   }
+
 
   pos.setZ(i, z);
 
 }
+
 
 pos.needsUpdate = true;
 
@@ -559,6 +675,7 @@ this.fibonacci?.destroy();
   layer.points.material.dispose();
 
 });
+
 
 this.container.remove(this.group);
 

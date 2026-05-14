@@ -23,6 +23,8 @@ import { createParticleMaterial } from "../particles/ParticleShader.js";
 
 import { AudioManager } from "../audio/AudioManager.js";
 
+import { MouseTrailSystem } from "../systems/MouseTrailSystem.js";
+
 
 export class App {
 
@@ -151,6 +153,19 @@ this.themeManager.activate("space");
 // ------------------------------------------------
 
 this.setupParticles();
+
+
+// ------------------------------------------------
+// 🖱️ MOUSE TRAIL
+// ------------------------------------------------
+
+this.mouseTrail = new MouseTrailSystem(
+  document.body
+);
+
+this.mouseTrail.setStyle("space");
+
+this.mouseTrail.enable();
 
 
 // ------------------------------------------------
@@ -926,6 +941,104 @@ try{
 
 }
 
+// ------------------------------------------------
+// 🎨 ACTIVE THEME TRAIL STYLE
+// ------------------------------------------------
+
+
+// ------------------------------------------------
+// 🌌 SPACE THEME
+// ------------------------------------------------
+
+if(theme instanceof SpaceTheme){
+
+  this.mouseTrail.enable();
+
+  this.mouseTrail.setStyle("space");
+
+  this.mouseTrail.settings.opacity = 0.28;
+
+  this.mouseTrail.settings.maxParticles = 70;
+
+}
+
+
+// ------------------------------------------------
+// 🎬 MOVIES THEME
+// ------------------------------------------------
+
+else if(theme instanceof MoviesTheme){
+
+  this.mouseTrail.enable();
+
+  this.mouseTrail.setStyle("space");
+
+  this.mouseTrail.settings.opacity = 0.08;
+
+  this.mouseTrail.settings.maxParticles = 30;
+
+}
+
+
+// ------------------------------------------------
+// 🖼️ IMAGE THEME
+// ------------------------------------------------
+
+else if(theme instanceof ImageTheme){
+
+  this.mouseTrail.enable();
+
+  this.mouseTrail.setStyle("space");
+
+  this.mouseTrail.settings.opacity = 0.05;
+
+  this.mouseTrail.settings.maxParticles = 20;
+
+}
+
+
+// ------------------------------------------------
+// 🍂 SEASONS THEME
+// ------------------------------------------------
+
+else if(theme instanceof SeasonsTheme){
+
+  this.mouseTrail.enable();
+
+  this.mouseTrail.setStyle("space");
+
+  this.mouseTrail.settings.opacity = 0.12;
+
+  this.mouseTrail.settings.maxParticles = 40;
+
+}
+
+
+// ------------------------------------------------
+// ❌ FALLBACK
+// ------------------------------------------------
+
+else{
+
+  this.mouseTrail.disable();
+
+}
+
+
+// ------------------------------------------------
+// 🖱️ UPDATE TRAIL
+// ------------------------------------------------
+
+this.mouseTrail.update(
+
+  this.mouse,
+
+  state.audio,
+
+  this.time
+
+);
+
 
 // ------------------------------------------------
 // 🌍 ENVIRONMENT
@@ -953,9 +1066,11 @@ this.points.rotation.y +=
 
   this.intensity * 0.001;
 
+
 this.points.rotation.x =
 
   Math.sin(this.time * 0.1) * 0.03;
+
 
 if(this.material?.uniforms?.uTime){
 
