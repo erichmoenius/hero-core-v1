@@ -160,7 +160,9 @@ this.setupParticles();
 // ------------------------------------------------
 
 this.mouseTrail = new MouseTrailSystem(
-  document.body
+
+document.getElementById("hero-root")
+
 );
 
 this.mouseTrail.setStyle("space");

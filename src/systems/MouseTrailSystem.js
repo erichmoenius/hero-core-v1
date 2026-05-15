@@ -20,23 +20,23 @@ this.style = "space";
 
 this.settings = {
 
-  maxParticles: 100,
+  maxParticles: 60,
 
-  spawnThreshold: 0.4,
+  spawnThreshold: 0.45,
 
-  drag: 0.965,
+  drag: 0.968,
 
-  inertia: 0.08,
+  inertia: 0.075,
 
-  elasticDamping: 0.76,
+  elasticDamping: 0.78,
 
-  turbulence: 0.012,
+  turbulence: 0.008,
 
-  fadeAlpha: 0.03,
+  fadeAlpha: 0.01,
 
-  opacity: 0.5,
+  opacity: 0.18,
 
-  lift: 0.006
+  lift: 0.004
 
 };
 
@@ -46,6 +46,11 @@ this.settings = {
 // ------------------------------------------------
 
 this.canvas = document.createElement("canvas");
+
+
+// ------------------------------------------------
+// 🌌 IMPORTANT
+// ------------------------------------------------
 
 this.canvas.style.position = "absolute";
 
@@ -59,10 +64,25 @@ this.canvas.style.height = "100%";
 
 this.canvas.style.pointerEvents = "none";
 
-this.canvas.style.zIndex = "5";
+this.canvas.style.zIndex = "2";
+
+this.canvas.style.mixBlendMode = "normal";
+
+
+// ------------------------------------------------
+// 🌌 CONTAINER SAFETY
+// ------------------------------------------------
+
+const computed = getComputedStyle(this.container);
+
+if(computed.position === "static"){
+
+  this.container.style.position = "relative";
+
+}
+
 
 this.container.appendChild(this.canvas);
-
 
 this.ctx = this.canvas.getContext("2d");
 
@@ -76,9 +96,9 @@ this.particles = [];
 
 this.ghost = {
 
-  x: window.innerWidth * 0.5,
+  x: 0,
 
-  y: window.innerHeight * 0.5
+  y: 0
 
 };
 
@@ -148,9 +168,20 @@ this.style = style;
 
 resize(){
 
-this.width = this.canvas.width = window.innerWidth;
+const rect = this.container.getBoundingClientRect();
 
-this.height = this.canvas.height = window.innerHeight;
+this.width = this.canvas.width = rect.width;
+
+this.height = this.canvas.height = rect.height;
+
+
+// ------------------------------------------------
+// 🌌 INITIAL POSITION
+// ------------------------------------------------
+
+this.ghost.x = this.width * 0.5;
+
+this.ghost.y = this.height * 0.5;
 
 }
 
@@ -165,13 +196,15 @@ if(!this.enabled) return;
 
 
 // ------------------------------------------------
-// 🖱️ NORMALIZED → PIXELS
+// 🖱️ NORMALIZED → LOCAL PIXELS
 // ------------------------------------------------
 
 const px =
+
   (mouse.x * 0.5 + 0.5) * this.width;
 
 const py =
+
   (mouse.y * 0.5 + 0.5) * this.height;
 
 
@@ -185,39 +218,47 @@ const dy = py - this.ghost.y;
 
 
 this.ghostVelocity.x +=
+
   dx * this.settings.inertia;
 
 this.ghostVelocity.y +=
+
   dy * this.settings.inertia;
 
 
 this.ghostVelocity.x *=
+
   this.settings.elasticDamping;
 
 this.ghostVelocity.y *=
+
   this.settings.elasticDamping;
 
 
 this.ghost.x +=
+
   this.ghostVelocity.x;
 
 this.ghost.y +=
+
   this.ghostVelocity.y;
 
 
 const speed = Math.sqrt(
 
-  this.ghostVelocity.x * this.ghostVelocity.x +
-  this.ghostVelocity.y * this.ghostVelocity.y
+  this.ghostVelocity.x ** 2 +
+
+  this.ghostVelocity.y ** 2
 
 );
 
 
 // ------------------------------------------------
-// 🎧 AUDIO BOOST
+// 🎧 AUDIO
 // ------------------------------------------------
 
 const energy =
+
   audio.energy || 0;
 
 
@@ -245,15 +286,10 @@ if(speed > this.settings.spawnThreshold){
 
 
 // ------------------------------------------------
-// 🌑 FADE
+// 🌑 SOFT FADE
 // ------------------------------------------------
 
-this.ctx.globalCompositeOperation = "source-over";
-
-this.ctx.fillStyle =
-  `rgba(5,8,20,${this.settings.fadeAlpha})`;
-
-this.ctx.fillRect(
+this.ctx.clearRect(
   0,
   0,
   this.width,
@@ -271,10 +307,16 @@ for(let i = this.particles.length - 1; i >= 0; i--){
 
 
   p.vx +=
-    Math.sin(time + p.seed) * this.settings.turbulence;
+
+    Math.sin(time + p.seed) *
+
+    this.settings.turbulence;
 
   p.vy +=
-    Math.cos(time + p.seed) * this.settings.turbulence;
+
+    Math.cos(time + p.seed) *
+
+    this.settings.turbulence;
 
 
   p.vy -= this.settings.lift;
@@ -308,7 +350,7 @@ for(let i = this.particles.length - 1; i >= 0; i--){
 
 
 // ------------------------------------------------
-// 🌟 GHOST CORE
+// 🌟 GHOST
 // ------------------------------------------------
 
 this.drawGhost(energy);
@@ -317,7 +359,7 @@ this.drawGhost(energy);
 
 
 // ------------------------------------------------
-// ✨ SPAWN PARTICLE
+// ✨ SPAWN
 // ------------------------------------------------
 
 spawn(x, y, vx, vy, energy){
@@ -329,9 +371,14 @@ if(this.particles.length >= this.settings.maxParticles){
 }
 
 
-const angle = Math.random() * Math.PI * 2;
+const angle =
 
-const speed = 0.2 + Math.random() * 0.5;
+  Math.random() * Math.PI * 2;
+
+
+const speed =
+
+  0.12 + Math.random() * 0.25;
 
 
 this.particles.push({
@@ -340,15 +387,15 @@ this.particles.push({
 
   y,
 
-  vx: vx * 0.06 + Math.cos(angle) * speed,
+  vx: vx * 0.04 + Math.cos(angle) * speed,
 
-  vy: vy * 0.06 + Math.sin(angle) * speed,
+  vy: vy * 0.04 + Math.sin(angle) * speed,
 
-  radius: 4 + Math.random() * 8,
+  radius: 2 + Math.random() * 5,
 
   life: 1,
 
-  decay: 0.008 + Math.random() * 0.008,
+  decay: 0.01 + Math.random() * 0.01,
 
   energy,
 
@@ -366,11 +413,17 @@ this.particles.push({
 drawParticle(p){
 
 const alpha =
-  p.life * this.settings.opacity;
+
+  p.life *
+
+  this.settings.opacity;
 
 
 const size =
-  p.radius * (0.4 + p.life * 0.6);
+
+  p.radius *
+
+  (0.4 + p.life * 0.6);
 
 
 const ctx = this.ctx;
@@ -382,42 +435,61 @@ ctx.globalCompositeOperation = "lighter";
 const g = ctx.createRadialGradient(
 
   p.x,
+
   p.y,
+
   0,
 
   p.x,
+
   p.y,
+
   size * 2
 
 );
 
 
 g.addColorStop(
+
   0,
+
   `rgba(160,210,255,${alpha})`
+
 );
 
 
 g.addColorStop(
+
   0.5,
-  `rgba(90,140,255,${alpha * 0.2})`
+
+  `rgba(90,140,255,${alpha * 0.12})`
+
 );
 
 
 g.addColorStop(
+
   1,
+
   `rgba(0,0,0,0)`
+
 );
 
 
 ctx.beginPath();
 
 ctx.arc(
+
   p.x,
+
   p.y,
+
   size * 2,
+
   0,
+
   Math.PI * 2
+
 );
 
 ctx.fillStyle = g;
@@ -445,61 +517,64 @@ ctx.globalCompositeOperation = "lighter";
 const glow = ctx.createRadialGradient(
 
   this.ghost.x,
+
   this.ghost.y,
+
   0,
 
   this.ghost.x,
+
   this.ghost.y,
-  24
+
+  16
 
 );
 
 
 glow.addColorStop(
+
   0,
-  `rgba(140,190,255,${0.06 + energy * 0.08})`
+
+  `rgba(140,190,255,${0.03 + energy * 0.03})`
+
 );
 
 
 glow.addColorStop(
+
   0.5,
-  `rgba(90,140,255,0.02)`
+
+  `rgba(90,140,255,0.01)`
+
 );
 
 
 glow.addColorStop(
+
   1,
+
   `rgba(0,0,0,0)`
+
 );
 
 
 ctx.beginPath();
 
 ctx.arc(
+
   this.ghost.x,
+
   this.ghost.y,
-  24,
+
+  16,
+
   0,
+
   Math.PI * 2
+
 );
 
 ctx.fillStyle = glow;
-
-ctx.fill();
-
-
-ctx.beginPath();
-
-ctx.arc(
-  this.ghost.x,
-  this.ghost.y,
-  1.5,
-  0,
-  Math.PI * 2
-);
-
-ctx.fillStyle =
-  "rgba(220,235,255,0.5)";
 
 ctx.fill();
 
@@ -516,15 +591,20 @@ ctx.globalCompositeOperation = "source-over";
 destroy(){
 
 window.removeEventListener(
+
   "resize",
+
   this.resize
+
 );
 
 
 if(this.canvas?.parentNode){
 
   this.canvas.parentNode.removeChild(
+
     this.canvas
+
   );
 
 }
