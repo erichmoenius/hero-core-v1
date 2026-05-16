@@ -1,4 +1,4 @@
-import { MouseTrailSystem } from "./MouseTrailSystem.js";
+import { MouseTrailSystem } from "./MouseTrail.js";
 
 import { FibonacciPresence } from "./FibonacciPresence.js";
 

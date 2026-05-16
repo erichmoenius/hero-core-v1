@@ -1,4 +1,4 @@
-export class MouseTrailSystem {
+export class MouseTrail {
 
 constructor(container){
 

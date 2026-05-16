@@ -23,7 +23,7 @@ import { createParticleMaterial } from "../particles/ParticleShader.js";
 
 import { AudioManager } from "../audio/AudioManager.js";
 
-import { MouseTrailSystem } from "../systems/MouseTrailSystem.js";
+import { MouseTrail } from "../interactions/MouseTrail.js";
 
 
 export class App {
@@ -159,7 +159,7 @@ this.setupParticles();
 // 🖱️ MOUSE TRAIL
 // ------------------------------------------------
 
-this.mouseTrail = new MouseTrailSystem(
+this.mouseTrail = new MouseTrail(
 
 document.getElementById("hero-root")
 
