@@ -20,7 +20,7 @@ this.style = "space";
 
 this.settings = {
 
-  maxParticles: 60,
+  maxParticles: 90,
 
   spawnThreshold: 0.45,
 
@@ -32,9 +32,9 @@ this.settings = {
 
   turbulence: 0.008,
 
-  fadeAlpha: 0.01,
+  fadeAlpha: 0.006,
 
-  opacity: 0.18,
+  opacity: 0.50,
 
   lift: 0.004
 

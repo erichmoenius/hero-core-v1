@@ -1,212 +1,221 @@
-import { MouseTrailSystem } from "./MouseTrail.js";
-
+import { MouseTrail } from "./MouseTrail.js";
 import { FibonacciPresence } from "./FibonacciPresence.js";
-
 import { GravityField } from "./GravityField.js";
-
 
 export class InteractionManager {
 
-constructor(container, gui = null){
+  constructor(container, gui = null){
 
-this.container = container;
+    this.container = container;
+    this.gui = gui;
 
-this.gui = gui;
+    // ------------------------------------------------
+    // ⚙️ STATE
+    // ------------------------------------------------
 
+    this.mode = "off";
 
-// ------------------------------------------------
-// ⚙️ STATE
-// ------------------------------------------------
+    this.activeInteraction = null;
 
-this.mode = "off";
+    // ------------------------------------------------
+    // 🧩 INTERACTIONS
+    // ------------------------------------------------
 
-this.activeSystem = null;
+    this.interactions = {
 
+      off: null,
 
-// ------------------------------------------------
-// 🧩 SYSTEMS
-// ------------------------------------------------
+      trail:
+        new MouseTrail(
+          this.container
+        ),
 
-this.systems = {
+      fibonacci:
+        new FibonacciPresence(
+          this.container
+        ),
 
-  off: null,
+      gravity:
+        new GravityField(
+          this.container
+        )
 
-  trail:
-    new MouseTrailSystem(
-      this.container
-    ),
+    };
 
-  fibonacci:
-    new FibonacciPresence(
-      this.container
-    ),
+    // ------------------------------------------------
+    // 🛑 SAFE STARTUP
+    // ------------------------------------------------
 
-  gravity:
-    new GravityField(
-      this.container
-    )
+    Object.values(this.interactions).forEach(
+      interaction => {
 
-};
+        interaction?.disable?.();
 
+      }
+    );
 
-// ------------------------------------------------
-// 🎛️ GUI
-// ------------------------------------------------
+    // ------------------------------------------------
+    // 🎛️ GUI SETTINGS
+    // ------------------------------------------------
 
-this.settings = {
+    this.settings = {
 
-  mode: "off"
+      mode: "off"
 
-};
+    };
 
-if(this.gui){
+    // ------------------------------------------------
+    // 🎛️ GUI
+    // ------------------------------------------------
 
-  this.setupGUI();
+    if(this.gui){
 
-}
+      this.setupGUI();
 
-}
-
-
-// ------------------------------------------------
-// 🎛️ GUI
-// ------------------------------------------------
-
-setupGUI(){
-
-const folder =
-  this.gui.addFolder(
-    "🖱️ Interaction"
-  );
-
-folder.add(
-
-  this.settings,
-
-  "mode",
-
-  [
-    "off",
-    "trail",
-    "fibonacci",
-    "gravity"
-  ]
-
-).onChange((value)=>{
-
-  this.setMode(value);
-
-});
-
-folder.open();
-
-}
-
-
-// ------------------------------------------------
-// 🔄 SET MODE
-// ------------------------------------------------
-
-setMode(mode = "off"){
-
-if(this.mode === mode) return;
-
-
-// ------------------------------------------------
-// ⛔ DISABLE OLD
-// ------------------------------------------------
-
-if(this.activeSystem){
-
-  this.activeSystem.disable();
-
-}
-
-
-// ------------------------------------------------
-// 🎯 UPDATE MODE
-// ------------------------------------------------
-
-this.mode = mode;
-
-this.settings.mode = mode;
-
-
-// ------------------------------------------------
-// 🌌 ACTIVATE
-// ------------------------------------------------
-
-this.activeSystem =
-  this.systems[mode] || null;
-
-if(this.activeSystem){
-
-  this.activeSystem.enable();
-
-}
-
-
-// ------------------------------------------------
-// 📝 DEBUG
-// ------------------------------------------------
-
-console.log(
-  `🎛️ Interaction Mode: ${mode}`
-);
-
-}
-
-
-// ------------------------------------------------
-// 🔄 UPDATE
-// ------------------------------------------------
-
-update(mouse, audio, time){
-
-if(!this.activeSystem) return;
-
-this.activeSystem.update(
-  mouse,
-  audio,
-  time
-);
-
-}
-
-
-// ------------------------------------------------
-// 🎨 STYLE
-// ------------------------------------------------
-
-setStyle(style){
-
-if(!this.activeSystem) return;
-
-if(this.activeSystem.setStyle){
-
-  this.activeSystem.setStyle(style);
-
-}
-
-}
-
-
-// ------------------------------------------------
-// 🧹 DESTROY
-// ------------------------------------------------
-
-destroy(){
-
-Object.values(this.systems).forEach(system => {
-
-  if(system?.destroy){
-
-    system.destroy();
+    }
 
   }
 
-});
+  // ------------------------------------------------
+  // 🎛️ GUI
+  // ------------------------------------------------
 
-}
+  setupGUI(){
+
+    const folder =
+      this.gui.addFolder(
+        "🖱️ Interactions"
+      );
+
+    folder.add(
+
+      this.settings,
+
+      "mode",
+
+      {
+
+        Off: "off",
+
+        Trail: "trail",
+
+        Fibonacci: "fibonacci",
+
+        Gravity: "gravity"
+
+      }
+
+    ).onChange((value)=>{
+
+      this.setMode(value);
+
+    });
+
+    folder.open();
+
+  }
+
+  // ------------------------------------------------
+  // 🔄 SET MODE
+  // ------------------------------------------------
+
+  setMode(mode = "off"){
+
+    if(this.mode === mode) return;
+
+    // ------------------------------------------------
+    // ⛔ DISABLE CURRENT
+    // ------------------------------------------------
+
+    if(this.activeInteraction){
+
+      this.activeInteraction.disable();
+
+    }
+
+    // ------------------------------------------------
+    // 🎯 UPDATE MODE
+    // ------------------------------------------------
+
+    this.mode = mode;
+
+    this.settings.mode = mode;
+
+    // ------------------------------------------------
+    // 🌌 ACTIVATE NEW
+    // ------------------------------------------------
+
+    this.activeInteraction =
+      this.interactions[mode] || null;
+
+    if(this.activeInteraction){
+
+      this.activeInteraction.enable();
+
+    }
+
+    // ------------------------------------------------
+    // 📝 DEBUG
+    // ------------------------------------------------
+
+    console.log(
+
+      `🎛️ Interaction Mode: ${mode}`
+
+    );
+
+  }
+
+  // ------------------------------------------------
+  // 🔄 UPDATE
+  // ------------------------------------------------
+
+  update(mouse, audio, time){
+
+    if(!this.activeInteraction) return;
+
+    this.activeInteraction.update(
+
+      mouse,
+
+      audio,
+
+      time
+
+    );
+
+  }
+
+  // ------------------------------------------------
+  // 🎨 STYLE
+  // ------------------------------------------------
+
+  setStyle(style){
+
+    if(!this.activeInteraction) return;
+
+    if(this.activeInteraction.setStyle){
+
+      this.activeInteraction.setStyle(style);
+
+    }
+
+  }
+
+  // ------------------------------------------------
+  // 🧹 DESTROY
+  // ------------------------------------------------
+
+  destroy(){
+
+    Object.values(this.interactions).forEach(
+      interaction => {
+
+        interaction?.destroy?.();
+
+      }
+    );
+
+  }
 
 }
