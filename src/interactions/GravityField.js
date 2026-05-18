@@ -196,25 +196,40 @@ this.style = style;
 // ------------------------------------------------
 // 📐 RESIZE
 // ------------------------------------------------
-
 resize(){
 
-const rect =
-  this.container.getBoundingClientRect();
+  const rect =
+    this.container.getBoundingClientRect();
 
-this.width =
-  this.canvas.width =
-    rect.width;
+  const dpr =
+    window.devicePixelRatio || 1;
 
-this.height =
+  this.width  = rect.width;
+  this.height = rect.height;
+
+  this.canvas.width  =
+    this.width * dpr;
+
   this.canvas.height =
-    rect.height;
+    this.height * dpr;
 
-this.ghost.x =
-  this.width * 0.5;
+  this.canvas.style.width =
+    `${this.width}px`;
 
-this.ghost.y =
-  this.height * 0.5;
+  this.canvas.style.height =
+    `${this.height}px`;
+
+  this.ctx.setTransform(
+    1,0,0,1,0,0
+  );
+
+  this.ctx.scale(dpr, dpr);
+
+  this.ghost.x =
+    this.width * 0.5;
+
+  this.ghost.y =
+    this.height * 0.5;
 
 }
 

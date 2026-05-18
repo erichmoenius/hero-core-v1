@@ -1,9 +1,10 @@
+import * as THREE from "three";
+
 export class MouseTrail {
 
 constructor(container){
 
 this.container = container;
-
 
 // ------------------------------------------------
 // ⚙️ STATE
@@ -13,18 +14,17 @@ this.enabled = false;
 
 this.style = "space";
 
-
 // ------------------------------------------------
 // 🎨 CONFIG
 // ------------------------------------------------
 
 this.settings = {
 
-  maxParticles: 90,
+  maxParticles: 120,
 
-  spawnThreshold: 0.45,
+  spawnThreshold: 0.35,
 
-  drag: 0.968,
+  drag: 0.965,
 
   inertia: 0.075,
 
@@ -32,27 +32,31 @@ this.settings = {
 
   turbulence: 0.008,
 
-  fadeAlpha: 0.006,
+  opacity: 0.5,
 
-  opacity: 0.50,
+  lift: 0.004,
 
-  lift: 0.004
+  ghostSize: 18,
+
+  breatheSpeed: 1.8,
+
+  breatheAmount: 0.15,
+
+  velocityStretch: 1.8,
+
+  idlePulse: 0.025
 
 };
-
 
 // ------------------------------------------------
 // 🖼️ CANVAS
 // ------------------------------------------------
 
-this.canvas = document.createElement("canvas");
+this.canvas =
+  document.createElement("canvas");
 
-
-// ------------------------------------------------
-// 🌌 IMPORTANT
-// ------------------------------------------------
-
-this.canvas.style.position = "absolute";
+this.canvas.style.position =
+  "absolute";
 
 this.canvas.style.top = "0";
 
@@ -62,37 +66,40 @@ this.canvas.style.width = "100%";
 
 this.canvas.style.height = "100%";
 
-this.canvas.style.pointerEvents = "none";
+this.canvas.style.pointerEvents =
+  "none";
 
 this.canvas.style.zIndex = "2";
 
-this.canvas.style.mixBlendMode = "normal";
-
+this.canvas.style.mixBlendMode =
+  "normal";
 
 // ------------------------------------------------
 // 🌌 CONTAINER SAFETY
 // ------------------------------------------------
 
-const computed = getComputedStyle(this.container);
+const computed =
+  getComputedStyle(this.container);
 
 if(computed.position === "static"){
 
-  this.container.style.position = "relative";
+  this.container.style.position =
+    "relative";
 
 }
 
+this.container.appendChild(
+  this.canvas
+);
 
-this.container.appendChild(this.canvas);
-
-this.ctx = this.canvas.getContext("2d");
-
+this.ctx =
+  this.canvas.getContext("2d");
 
 // ------------------------------------------------
 // 📦 DATA
 // ------------------------------------------------
 
 this.particles = [];
-
 
 this.ghost = {
 
@@ -102,7 +109,6 @@ this.ghost = {
 
 };
 
-
 this.ghostVelocity = {
 
   x: 0,
@@ -111,19 +117,21 @@ this.ghostVelocity = {
 
 };
 
-
 // ------------------------------------------------
 // 📐 SIZE
 // ------------------------------------------------
 
-this.resize = this.resize.bind(this);
+this.resize =
+  this.resize.bind(this);
 
-window.addEventListener("resize", this.resize);
+window.addEventListener(
+  "resize",
+  this.resize
+);
 
 this.resize();
 
 }
-
 
 // ------------------------------------------------
 // 🎛️ ENABLE
@@ -133,10 +141,10 @@ enable(){
 
 this.enabled = true;
 
-this.canvas.style.display = "block";
+this.canvas.style.display =
+  "block";
 
 }
-
 
 // ------------------------------------------------
 // ⛔ DISABLE
@@ -146,10 +154,10 @@ disable(){
 
 this.enabled = false;
 
-this.canvas.style.display = "none";
+this.canvas.style.display =
+  "none";
 
 }
-
 
 // ------------------------------------------------
 // 🎨 STYLE
@@ -161,30 +169,30 @@ this.style = style;
 
 }
 
-
 // ------------------------------------------------
 // 📐 RESIZE
 // ------------------------------------------------
 
 resize(){
 
-const rect = this.container.getBoundingClientRect();
+const rect =
+  this.container.getBoundingClientRect();
 
-this.width = this.canvas.width = rect.width;
+this.width =
+  this.canvas.width =
+    rect.width;
 
-this.height = this.canvas.height = rect.height;
+this.height =
+  this.canvas.height =
+    rect.height;
 
+this.ghost.x =
+  this.width * 0.5;
 
-// ------------------------------------------------
-// 🌌 INITIAL POSITION
-// ------------------------------------------------
-
-this.ghost.x = this.width * 0.5;
-
-this.ghost.y = this.height * 0.5;
+this.ghost.y =
+  this.height * 0.5;
 
 }
-
 
 // ------------------------------------------------
 // 🔄 UPDATE
@@ -194,28 +202,29 @@ update(mouse, audio = {}, time = 0){
 
 if(!this.enabled) return;
 
-
 // ------------------------------------------------
-// 🖱️ NORMALIZED → LOCAL PIXELS
+// 🖱️ NORMALIZED → PIXELS
 // ------------------------------------------------
 
 const px =
 
-  (mouse.x * 0.5 + 0.5) * this.width;
+  (mouse.x * 0.5 + 0.5) *
+  this.width;
 
 const py =
 
-  (mouse.y * 0.5 + 0.5) * this.height;
-
+  (mouse.y * 0.5 + 0.5) *
+  this.height;
 
 // ------------------------------------------------
 // 🌌 GHOST INERTIA
 // ------------------------------------------------
 
-const dx = px - this.ghost.x;
+const dx =
+  px - this.ghost.x;
 
-const dy = py - this.ghost.y;
-
+const dy =
+  py - this.ghost.y;
 
 this.ghostVelocity.x +=
 
@@ -225,7 +234,6 @@ this.ghostVelocity.y +=
 
   dy * this.settings.inertia;
 
-
 this.ghostVelocity.x *=
 
   this.settings.elasticDamping;
@@ -234,15 +242,15 @@ this.ghostVelocity.y *=
 
   this.settings.elasticDamping;
 
-
 this.ghost.x +=
-
   this.ghostVelocity.x;
 
 this.ghost.y +=
-
   this.ghostVelocity.y;
 
+// ------------------------------------------------
+// ⚡ SPEED
+// ------------------------------------------------
 
 const speed = Math.sqrt(
 
@@ -252,15 +260,23 @@ const speed = Math.sqrt(
 
 );
 
-
 // ------------------------------------------------
 // 🎧 AUDIO
 // ------------------------------------------------
 
 const energy =
-
   audio.energy || 0;
 
+// ------------------------------------------------
+// 🌫️ CINEMATIC FADE
+// ------------------------------------------------
+
+this.ctx.clearRect(
+  0,
+  0,
+  this.width,
+  this.height
+);
 
 // ------------------------------------------------
 // ✨ SPAWN
@@ -284,56 +300,64 @@ if(speed > this.settings.spawnThreshold){
 
 }
 
-
-// ------------------------------------------------
-// 🌑 SOFT FADE
-// ------------------------------------------------
-
-this.ctx.clearRect(
-  0,
-  0,
-  this.width,
-  this.height
-);
-
-
 // ------------------------------------------------
 // ✨ PARTICLES
 // ------------------------------------------------
 
-for(let i = this.particles.length - 1; i >= 0; i--){
+for(
 
-  const p = this.particles[i];
+  let i =
+    this.particles.length - 1;
 
+  i >= 0;
+
+  i--
+
+){
+
+  const p =
+    this.particles[i];
+
+  // turbulence
 
   p.vx +=
 
-    Math.sin(time + p.seed) *
+    Math.sin(
+      time + p.seed
+    ) *
 
     this.settings.turbulence;
 
   p.vy +=
 
-    Math.cos(time + p.seed) *
+    Math.cos(
+      time + p.seed
+    ) *
 
     this.settings.turbulence;
 
+  // lift
 
-  p.vy -= this.settings.lift;
+  p.vy -=
+    this.settings.lift;
 
+  // drag
 
-  p.vx *= this.settings.drag;
+  p.vx *=
+    this.settings.drag;
 
-  p.vy *= this.settings.drag;
+  p.vy *=
+    this.settings.drag;
 
+  // movement
 
   p.x += p.vx;
 
   p.y += p.vy;
 
+  // life
 
   p.life -= p.decay;
-
 
   if(p.life <= 0){
 
@@ -343,20 +367,24 @@ for(let i = this.particles.length - 1; i >= 0; i--){
 
   }
 
-
-  this.drawParticle(p);
+  this.drawParticle(
+    p,
+    time
+  );
 
 }
-
 
 // ------------------------------------------------
 // 🌟 GHOST
 // ------------------------------------------------
 
-this.drawGhost(energy);
+this.drawGhost(
+  energy,
+  time,
+  speed
+);
 
 }
-
 
 // ------------------------------------------------
 // ✨ SPAWN
@@ -364,22 +392,26 @@ this.drawGhost(energy);
 
 spawn(x, y, vx, vy, energy){
 
-if(this.particles.length >= this.settings.maxParticles){
+if(
+
+  this.particles.length >=
+  this.settings.maxParticles
+
+){
 
   this.particles.shift();
 
 }
 
-
 const angle =
 
-  Math.random() * Math.PI * 2;
-
+  Math.random() *
+  Math.PI * 2;
 
 const speed =
 
-  0.12 + Math.random() * 0.25;
-
+  0.12 +
+  Math.random() * 0.25;
 
 this.particles.push({
 
@@ -387,85 +419,139 @@ this.particles.push({
 
   y,
 
-  vx: vx * 0.04 + Math.cos(angle) * speed,
+  vx:
 
-  vy: vy * 0.04 + Math.sin(angle) * speed,
+    vx * 0.04 +
 
-  radius: 2 + Math.random() * 5,
+    Math.cos(angle) * speed,
+
+  vy:
+
+    vy * 0.04 +
+
+    Math.sin(angle) * speed,
+
+  radius:
+    2 + Math.random() * 6,
 
   life: 1,
 
-  decay: 0.01 + Math.random() * 0.01,
+  decay:
+    0.008 +
+    Math.random() * 0.008,
 
   energy,
 
-  seed: Math.random() * 1000
+  seed:
+    Math.random() * 1000
 
 });
 
 }
 
+// ------------------------------------------------
+// ✨ DRAW PARTICLE
+// ------------------------------------------------
+
+drawParticle(p, time){
+
+const ctx = this.ctx;
 
 // ------------------------------------------------
-// 🌟 DRAW PARTICLE
+// 🌬️ VELOCITY STRETCH
 // ------------------------------------------------
 
-drawParticle(p){
+const velocity = Math.sqrt(
+
+  p.vx ** 2 +
+  p.vy ** 2
+
+);
+
+const stretch =
+
+  1 +
+
+  velocity *
+
+  this.settings.velocityStretch;
+
+// ------------------------------------------------
+// 💓 BREATHING
+// ------------------------------------------------
+
+const breathe =
+
+  1 +
+
+  Math.sin(
+
+    time *
+
+    this.settings.breatheSpeed +
+
+    p.seed
+
+  ) *
+
+  this.settings.breatheAmount;
+
+// ------------------------------------------------
+// ✨ FINAL VALUES
+// ------------------------------------------------
 
 const alpha =
 
   p.life *
 
-  this.settings.opacity;
+  this.settings.opacity *
 
+  breathe;
 
 const size =
 
   p.radius *
 
-  (0.4 + p.life * 0.6);
+  stretch *
 
+  breathe;
 
-const ctx = this.ctx;
+// ------------------------------------------------
+// 🌌 DRAW
+// ------------------------------------------------
 
+ctx.globalCompositeOperation =
+  "lighter";
 
-ctx.globalCompositeOperation = "lighter";
+const g =
+  ctx.createRadialGradient(
 
+    p.x,
+    p.y,
+    0,
 
-const g = ctx.createRadialGradient(
+    p.x,
+    p.y,
 
-  p.x,
+    size * 2
 
-  p.y,
-
-  0,
-
-  p.x,
-
-  p.y,
-
-  size * 2
-
-);
-
-
-g.addColorStop(
-
-  0,
-
-  `rgba(160,210,255,${alpha})`
-
-);
-
+  );
 
 g.addColorStop(
 
-  0.5,
+  0,
 
-  `rgba(90,140,255,${alpha * 0.12})`
+  `rgba(180,220,255,${alpha})`
 
 );
 
+g.addColorStop(
+
+  0.4,
+
+  `rgba(100,150,255,${alpha * 0.18})`
+
+);
 
 g.addColorStop(
 
@@ -475,19 +561,16 @@ g.addColorStop(
 
 );
 
-
 ctx.beginPath();
 
 ctx.arc(
 
   p.x,
-
   p.y,
 
   size * 2,
 
   0,
-
   Math.PI * 2
 
 );
@@ -496,58 +579,88 @@ ctx.fillStyle = g;
 
 ctx.fill();
 
-
-ctx.globalCompositeOperation = "source-over";
+ctx.globalCompositeOperation =
+  "source-over";
 
 }
 
+// ------------------------------------------------
+// 🌟 DRAW GHOST
+// ------------------------------------------------
+
+drawGhost(energy = 0, time = 0, speed = 0){
+
+const ctx =
+  this.ctx;
 
 // ------------------------------------------------
-// 🌌 DRAW GHOST
+// 💓 IDLE BREATH
 // ------------------------------------------------
 
-drawGhost(energy = 0){
+const idlePulse =
 
-const ctx = this.ctx;
+  1 +
 
+  Math.sin(
 
-ctx.globalCompositeOperation = "lighter";
+    time *
 
+    1.5
 
-const glow = ctx.createRadialGradient(
+  ) *
 
-  this.ghost.x,
+  this.settings.idlePulse;
 
-  this.ghost.y,
+// ------------------------------------------------
+// 🌌 GLOW SIZE
+// ------------------------------------------------
 
-  0,
+const size =
 
-  this.ghost.x,
+  this.settings.ghostSize *
 
-  this.ghost.y,
+  idlePulse *
 
-  16
+  (1 + speed * 0.02);
 
-);
+// ------------------------------------------------
+// ✨ DRAW
+// ------------------------------------------------
 
+ctx.globalCompositeOperation =
+  "lighter";
+
+const glow =
+  ctx.createRadialGradient(
+
+    this.ghost.x,
+    this.ghost.y,
+    0,
+
+    this.ghost.x,
+    this.ghost.y,
+
+    size
+
+  );
 
 glow.addColorStop(
 
   0,
 
-  `rgba(140,190,255,${0.03 + energy * 0.03})`
+  `rgba(160,210,255,${
+    0.04 + energy * 0.04
+  })`
 
 );
-
 
 glow.addColorStop(
 
   0.5,
 
-  `rgba(90,140,255,0.01)`
+  `rgba(90,140,255,0.015)`
 
 );
-
 
 glow.addColorStop(
 
@@ -557,19 +670,16 @@ glow.addColorStop(
 
 );
 
-
 ctx.beginPath();
 
 ctx.arc(
 
   this.ghost.x,
-
   this.ghost.y,
 
-  16,
+  size,
 
   0,
-
   Math.PI * 2
 
 );
@@ -578,11 +688,10 @@ ctx.fillStyle = glow;
 
 ctx.fill();
 
-
-ctx.globalCompositeOperation = "source-over";
+ctx.globalCompositeOperation =
+  "source-over";
 
 }
-
 
 // ------------------------------------------------
 // 🧹 CLEANUP
@@ -598,17 +707,13 @@ window.removeEventListener(
 
 );
 
-
 if(this.canvas?.parentNode){
 
   this.canvas.parentNode.removeChild(
-
     this.canvas
-
   );
 
 }
-
 
 this.particles = [];
 
