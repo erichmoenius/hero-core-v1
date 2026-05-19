@@ -8,18 +8,17 @@ this.type = "fibonacci";
 
 this.enabled = false;
 
-
 // ------------------------------------------------
 // ⚙️ CONFIG
 // ------------------------------------------------
 
 this.settings = {
 
-  points: 144,
+  points: 72,
 
-  scale: 4.2,
+  scale: 2.6,
 
-  scaleBoost: 1.8,
+  scaleBoost: 0.9,
 
   inertia: 0.07,
 
@@ -27,7 +26,7 @@ this.settings = {
 
   breathSpeed: 0.8,
 
-  breathAmplitude: 0.04,
+  breathAmplitude: 0.08,
 
   rotationSpeed: 0.001,
 
@@ -35,10 +34,9 @@ this.settings = {
 
   dissolveSpeed: 0.35,
 
-  opacity: 0.5
+  opacity: 0.72
 
 };
-
 
 // ------------------------------------------------
 // ⚙️ OVERRIDE
@@ -48,7 +46,6 @@ Object.assign(
   this.settings,
   options
 );
-
 
 // ------------------------------------------------
 // 🌀 CONSTANTS
@@ -63,7 +60,6 @@ this.TAU =
 this.GOLDEN_ANGLE =
   this.TAU / (this.PHI * this.PHI);
 
-
 // ------------------------------------------------
 // 🖼️ CANVAS
 // ------------------------------------------------
@@ -71,7 +67,8 @@ this.GOLDEN_ANGLE =
 this.canvas =
   document.createElement("canvas");
 
-this.canvas.style.position = "absolute";
+this.canvas.style.position =
+  "absolute";
 
 this.canvas.style.top = "0";
 
@@ -81,10 +78,10 @@ this.canvas.style.width = "100%";
 
 this.canvas.style.height = "100%";
 
-this.canvas.style.pointerEvents = "none";
+this.canvas.style.pointerEvents =
+  "none";
 
 this.canvas.style.zIndex = "2";
-
 
 // ------------------------------------------------
 // 🌌 CONTAINER SAFETY
@@ -107,7 +104,6 @@ this.container.appendChild(
 this.ctx =
   this.canvas.getContext("2d");
 
-
 // ------------------------------------------------
 // 📦 STATE
 // ------------------------------------------------
@@ -125,7 +121,6 @@ this.rotationOffset = 0;
 this.stillTimer = 0;
 
 this.audioBoost = 1;
-
 
 // ------------------------------------------------
 // 👻 GHOST
@@ -146,7 +141,6 @@ this.ghostVelocity = {
   y: 0
 
 };
-
 
 // ------------------------------------------------
 // 🌀 POINT DATA
@@ -171,7 +165,6 @@ for(let i = 0; i < this.settings.points; i++){
 
 }
 
-
 // ------------------------------------------------
 // 📐 RESIZE
 // ------------------------------------------------
@@ -188,7 +181,6 @@ this.resize();
 
 }
 
-
 // ------------------------------------------------
 // 🎛️ ENABLE
 // ------------------------------------------------
@@ -197,10 +189,10 @@ enable(){
 
 this.enabled = true;
 
-this.canvas.style.display = "block";
+this.canvas.style.display =
+  "block";
 
 }
-
 
 // ------------------------------------------------
 // ⛔ DISABLE
@@ -210,10 +202,10 @@ disable(){
 
 this.enabled = false;
 
-this.canvas.style.display = "none";
+this.canvas.style.display =
+  "none";
 
 }
-
 
 // ------------------------------------------------
 // 🎨 STYLE
@@ -225,47 +217,49 @@ this.style = style;
 
 }
 
-
 // ------------------------------------------------
 // 📐 RESIZE
 // ------------------------------------------------
+
 resize(){
 
-  const rect =
-    this.container.getBoundingClientRect();
+const rect =
+  this.container.getBoundingClientRect();
 
-  const dpr =
-    window.devicePixelRatio || 1;
+const dpr =
+  window.devicePixelRatio || 1;
 
-  this.width  = rect.width;
-  this.height = rect.height;
+this.width =
+  rect.width;
 
-  this.canvas.width  =
-    this.width * dpr;
+this.height =
+  rect.height;
 
-  this.canvas.height =
-    this.height * dpr;
+this.canvas.width =
+  this.width * dpr;
 
-  this.canvas.style.width =
-    `${this.width}px`;
+this.canvas.height =
+  this.height * dpr;
 
-  this.canvas.style.height =
-    `${this.height}px`;
+this.canvas.style.width =
+  `${this.width}px`;
 
-  this.ctx.setTransform(
-    1,0,0,1,0,0
-  );
+this.canvas.style.height =
+  `${this.height}px`;
 
-  this.ctx.scale(dpr, dpr);
+this.ctx.setTransform(
+  1,0,0,1,0,0
+);
 
-  this.ghost.x =
-    this.width * 0.5;
+this.ctx.scale(dpr, dpr);
 
-  this.ghost.y =
-    this.height * 0.5;
+this.ghost.x =
+  this.width * 0.5;
+
+this.ghost.y =
+  this.height * 0.5;
 
 }
-
 
 // ------------------------------------------------
 // 🔄 UPDATE
@@ -274,7 +268,6 @@ resize(){
 update(mouse, audio = {}, time = 0){
 
 if(!this.enabled) return;
-
 
 // ------------------------------------------------
 // 🧹 CLEAR
@@ -286,7 +279,6 @@ this.ctx.clearRect(
   this.width,
   this.height
 );
-
 
 // ------------------------------------------------
 // 🎧 AUDIO
@@ -303,17 +295,17 @@ const targetAudio =
 this.audioBoost +=
   (targetAudio - this.audioBoost) * 0.06;
 
-
 // ------------------------------------------------
 // 🖱️ PIXEL POSITION
 // ------------------------------------------------
 
 const px =
-  (mouse.x * 0.5 + 0.5) * this.width;
+  (mouse.x * 0.5 + 0.5) *
+  this.width;
 
 const py =
-  (mouse.y * 0.5 + 0.5) * this.height;
-
+  (mouse.y * 0.5 + 0.5) *
+  this.height;
 
 // ------------------------------------------------
 // 👻 GHOST INERTIA
@@ -350,7 +342,6 @@ const speed = Math.sqrt(
 
 );
 
-
 // ------------------------------------------------
 // 🌌 PRESENCE
 // ------------------------------------------------
@@ -362,7 +353,6 @@ const targetPresence =
 
 this.presence +=
   (targetPresence - this.presence) * 0.035;
-
 
 // ------------------------------------------------
 // ⏳ STILLNESS
@@ -378,7 +368,6 @@ if(speed < 0.3){
 
 }
 
-
 // ------------------------------------------------
 // 🫁 BREATH
 // ------------------------------------------------
@@ -390,7 +379,7 @@ this.breathPhase +=
     this.presence * 2
   ) * 0.016;
 
-const breathe =
+const breathing =
 
   1 +
 
@@ -403,7 +392,6 @@ const breathe =
 
   this.audioBoost;
 
-
 // ------------------------------------------------
 // 🌀 ROTATION
 // ------------------------------------------------
@@ -412,9 +400,10 @@ this.rotationOffset +=
 
   (
     this.settings.rotationSpeed +
-    this.presence * 0.006
-  );
+    this.presence * 0.012
+  ) *
 
+  this.audioBoost;
 
 // ------------------------------------------------
 // 🌫️ DISSOLVE
@@ -442,7 +431,6 @@ const dissolve =
 
     : 1;
 
-
 // ------------------------------------------------
 // 📏 SCALE
 // ------------------------------------------------
@@ -455,8 +443,7 @@ const scale =
     this.settings.scaleBoost
   ) *
 
-  breathe;
-
+  breathing;
 
 // ------------------------------------------------
 // ✨ DRAW
@@ -465,8 +452,7 @@ const scale =
 const ctx = this.ctx;
 
 ctx.globalCompositeOperation =
-  "lighter";
-
+  "screen";
 
 // ------------------------------------------------
 // 🌀 POINTS
@@ -505,8 +491,8 @@ for(let i = 0; i < this.settings.points; i++){
   const radius =
 
     (
-      0.8 +
-      t * 2.8
+      0.4 +
+      t * 1.4
     ) *
 
     (
@@ -514,50 +500,56 @@ for(let i = 0; i < this.settings.points; i++){
       this.presence * 0.5
     );
 
-
 // ------------------------------------------------
-// 🌌 GLOW
+// ❄️ ICE BLUE GLOW
 // ------------------------------------------------
 
-  const glow =
-    ctx.createRadialGradient(
-      x,
-      y,
-      0,
-      x,
-      y,
-      radius * 4
-    );
+  ctx.globalCompositeOperation =
+  "screen";
 
-  glow.addColorStop(
-    0,
-    `rgba(180,210,255,${alpha * 0.3})`
-  );
-
-  glow.addColorStop(
-    0.5,
-    `rgba(90,140,255,${alpha * 0.08})`
-  );
-
-  glow.addColorStop(
-    1,
-    `rgba(0,0,0,0)`
-  );
-
-  ctx.beginPath();
-
-  ctx.arc(
+const glow =
+  ctx.createRadialGradient(
     x,
     y,
-    radius * 4,
     0,
-    this.TAU
+    x,
+    y,
+    radius * 2
   );
 
-  ctx.fillStyle = glow;
+glow.addColorStop(
+  0,
+  `rgba(200,245,255,${alpha * 1.6})`
+);
 
-  ctx.fill();
+glow.addColorStop(
+  0.25,
+  `rgba(140,220,255,${alpha * 0.8})`
+);
 
+glow.addColorStop(
+  0.6,
+  `rgba(80,160,255,${alpha * 0.12})`
+);
+
+glow.addColorStop(
+  1,
+  `rgba(0,0,0,0)`
+);
+
+ctx.beginPath();
+
+ctx.arc(
+  x,
+  y,
+  radius * 2.5,
+  0,
+  this.TAU
+);
+
+ctx.fillStyle = glow;
+
+ctx.fill();
 
 // ------------------------------------------------
 // 🌟 CORE
@@ -574,12 +566,11 @@ for(let i = 0; i < this.settings.points; i++){
   );
 
   ctx.fillStyle =
-    `rgba(220,235,255,${alpha})`;
+    `rgba(180,235,255,${alpha})`;
 
   ctx.fill();
 
 }
-
 
 // ------------------------------------------------
 // 🌌 CENTER CORE
@@ -597,12 +588,12 @@ const core =
 
 core.addColorStop(
   0,
-  `rgba(220,235,255,${0.18 * dissolve})`
+  `rgba(220,245,255,${0.18 * dissolve})`
 );
 
 core.addColorStop(
   0.4,
-  `rgba(90,140,255,${0.08 * dissolve})`
+  `rgba(120,190,255,${0.08 * dissolve})`
 );
 
 core.addColorStop(
@@ -628,7 +619,6 @@ ctx.globalCompositeOperation =
   "source-over";
 
 }
-
 
 // ------------------------------------------------
 // 🌀 POINT
@@ -680,7 +670,6 @@ return {
 
 }
 
-
 // ------------------------------------------------
 // 🎛️ GUI
 // ------------------------------------------------
@@ -725,7 +714,6 @@ folder.add(
 ).listen();
 
 }
-
 
 // ------------------------------------------------
 // 🧹 DESTROY

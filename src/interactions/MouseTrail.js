@@ -178,13 +178,26 @@ resize(){
 const rect =
   this.container.getBoundingClientRect();
 
-this.width =
-  this.canvas.width =
-    rect.width;
+const dpr =
+  window.devicePixelRatio || 1;
 
-this.height =
-  this.canvas.height =
-    rect.height;
+this.width = rect.width;
+this.height = rect.height;
+
+this.canvas.width =
+  rect.width * dpr;
+
+this.canvas.height =
+  rect.height * dpr;
+
+this.ctx.setTransform(
+  dpr,
+  0,
+  0,
+  dpr,
+  0,
+  0
+);
 
 this.ghost.x =
   this.width * 0.5;
@@ -207,12 +220,10 @@ if(!this.enabled) return;
 // ------------------------------------------------
 
 const px =
-
   (mouse.x * 0.5 + 0.5) *
   this.width;
 
 const py =
-
   (mouse.y * 0.5 + 0.5) *
   this.height;
 
