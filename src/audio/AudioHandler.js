@@ -43,27 +43,53 @@ export default class AudioHandler {
   // ------------------------------------------------
   async load(fileOrUrl){
 
-    this.stop(true);
+  this.stop(true);
 
-    this.initNodes();
+  this.initNodes();
 
-    let arrayBuffer;
+  let arrayBuffer;
 
-    if(fileOrUrl instanceof File){
+  // ------------------------------------------------
+  // 📂 FILE OBJECT
+  // ------------------------------------------------
 
-      arrayBuffer = await fileOrUrl.arrayBuffer();
+  if(
 
-    }else{
+    fileOrUrl &&
 
-      const res = await fetch(fileOrUrl);
-      arrayBuffer = await res.arrayBuffer();
-    }
+    typeof fileOrUrl.arrayBuffer ===
+    "function"
 
-    this.buffer =
-      await this.ctx.decodeAudioData(arrayBuffer);
+  ){
 
-    this.pauseOffset = 0;
+    arrayBuffer =
+      await fileOrUrl.arrayBuffer();
+
   }
+
+  // ------------------------------------------------
+  // 🌐 URL
+  // ------------------------------------------------
+
+  else{
+
+    const res =
+      await fetch(fileOrUrl);
+
+    arrayBuffer =
+      await res.arrayBuffer();
+
+  }
+
+  this.buffer =
+
+    await this.ctx.decodeAudioData(
+      arrayBuffer
+    );
+
+  this.pauseOffset = 0;
+
+}
 
   // ------------------------------------------------
   // ▶️ BUILD SOURCE

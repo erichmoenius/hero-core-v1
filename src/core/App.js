@@ -456,65 +456,73 @@ export class App {
 
   openAudioFile(){
 
-    if(!this.fileInput){
+  // ------------------------------------------------
+  // 📂 CREATE FRESH INPUT
+  // ------------------------------------------------
 
-      this.fileInput =
-        document.createElement(
-          "input"
-        );
+  const input =
+    document.createElement("input");
 
-      this.fileInput.type = "file";
+  input.type = "file";
 
-      this.fileInput.accept =
-        "audio/*";
+  input.accept = "audio/*";
 
-      this.fileInput.style.display =
-        "none";
+  input.style.display = "none";
 
-      this.fileInput.onchange =
-        async (e)=>{
+  // ------------------------------------------------
+  // 📂 FILE SELECT
+  // ------------------------------------------------
 
-          const file =
-            e.target.files?.[0];
+  input.onchange = async (e) => {
 
-          if(!file) return;
+    const file =
+      e.target.files?.[0];
 
-          try{
+    if(!file) return;
 
-            await this.audio.load(file);
+    try{
 
-            this.audio.play();
+      // ------------------------------------------------
+      // 🛑 FULL AUDIO RESET
+      // ------------------------------------------------
 
-            console.log(
-              "🎵 Loaded:",
-              file.name
-            );
+      this.audio.stop();
 
-          }catch(err){
+      // ------------------------------------------------
+      // 🎧 LOAD
+      // ------------------------------------------------
 
-            console.error(
+      await this.audio.load(file);
 
-              "Audio load failed:",
+      this.audio.play();
 
-              err
+      console.log(
+        "🎵 Loaded:",
+        file.name
+      );
 
-            );
+    }catch(err){
 
-          }
-
-          this.fileInput.value = "";
-
-        };
-
-      document.body.appendChild(
-        this.fileInput
+      console.error(
+        "Audio load failed:",
+        err
       );
 
     }
 
-    this.fileInput.click();
+    // ------------------------------------------------
+    // 🧹 CLEANUP
+    // ------------------------------------------------
 
-  }
+    input.remove();
+
+  };
+
+  document.body.appendChild(input);
+
+  input.click();
+
+}
 
   // ------------------------------------------------
   // 🧰 GUI TOGGLE
