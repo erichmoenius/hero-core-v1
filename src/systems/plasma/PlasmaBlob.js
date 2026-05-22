@@ -166,7 +166,7 @@ void main(){
   ct=clamp(ct,0.0,1.0);
 
   vec3 base=spectrum(ct);
-  base*=(0.85+uEnergy*0.7);
+  base*=(0.5+uEnergy*2.5);
 
   vec3 N=normalize(vNormal);
   vec3 V=normalize(-vWorldPos);
@@ -174,7 +174,7 @@ void main(){
   vec3 L1=normalize(vec3(3,4,5)-vWorldPos);
   float d1=max(dot(N,L1),0.0);
   vec3 H1=normalize(V+L1);
-  float sp=pow(max(dot(N,H1),0.0),32.0+uHigh*64.0);
+  float sp=pow(max(dot(N,H1),0.0),32.0+uHigh*180.0);
   vec3 col=base*vec3(0.75,0.82,1.0)*d1*2.2+vec3(1.0)*sp*(0.25+uHigh*0.5);
 
   col+=base*vec3(0.12,0.25,0.80)*max(dot(N,normalize(vec3(-4,-2,2)-vWorldPos)),0.0)*0.7;
@@ -205,18 +205,45 @@ void main(){
 
 const AURA_FRAG = /* glsl */`
 uniform float uTime;
+uniform float uAuraOpacity;
 uniform float uBass;
 uniform float uEnergy;
 uniform float uKickDecay;
 varying vec3 vNormal;
 void main(){
+
   vec3 V=normalize(vec3(0,0,1));
-  float fr=pow(1.0-max(dot(vNormal,V),0.0),1.8);
-  float pulse=sin(uTime*1.3)*0.5+0.5;
-  float a=fr*(0.06+uBass*0.14+uKickDecay*0.12+uEnergy*0.06+pulse*0.03);
-  vec3 col=mix(vec3(0.06,0.42,0.95),vec3(0.62,0.05,0.88),fr);
-  col+=vec3(0.95,0.08,0.08)*uBass*0.35;
-  gl_FragColor=vec4(clamp(col,0.0,1.0),clamp(a,0.0,1.0));
+
+  float fr=pow(
+    1.0-max(dot(vNormal,V),0.0),
+    1.8
+  );
+
+  float pulse=
+    sin(uTime*1.3)*0.5+0.5;
+
+  float a=
+    fr*(
+      0.18 +
+      uKickDecay*0.12 +
+      uEnergy*0.08 +
+      pulse*0.03
+    );
+
+  vec3 col=mix(
+    vec3(0.05,0.18,0.42),
+    vec3(0.25,0.05,0.35),
+    fr
+  );
+
+  col += vec3(0.95,0.08,0.08)
+    *uKickDecay
+    *0.05;
+
+  gl_FragColor=vec4(
+    clamp(col,0.0,1.0),
+    clamp(a*uAuraOpacity,0.0,1.0)
+  );
 }
 `;
 
@@ -234,7 +261,7 @@ export class PlasmaBlob {
     this.cfg = {
       scale:      1.0,
       opacity:    1.0,
-      auraOpacity:1.0,
+      auraOpacity:0.35,
       n1Amp:  0.60,
       n1Freq: 1.80,
       n2Amp:  0.35,
@@ -288,11 +315,12 @@ export class PlasmaBlob {
       vertexShader:   AURA_VERT,
       fragmentShader: AURA_FRAG,
       uniforms: {
-        uTime:      this._U.uTime,
-        uBass:      this._U.uBass,
-        uEnergy:    this._U.uEnergy,
+        uTime: this._U.uTime,
+        uBass: this._U.uBass,
+        uEnergy: this._U.uEnergy,
         uKickDecay: this._U.uKickDecay,
-      },
+        uAuraOpacity: { value: 1.0 }
+    },
       transparent: true,
       depthWrite:  false,
       side:        THREE.BackSide,
@@ -362,6 +390,7 @@ export class PlasmaBlob {
     if(audio.kick) this._kickDecay=1.0;
     this._kickDecay*=0.88;
     U.uKickDecay.value=this._kickDecay;
+    
 
     U.uN1Amp.value =cfg.n1Amp;
     U.uN1Freq.value=cfg.n1Freq;
