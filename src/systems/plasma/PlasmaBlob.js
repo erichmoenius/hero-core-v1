@@ -204,45 +204,42 @@ void main(){
 `;
 
 const AURA_FRAG = /* glsl */`
-uniform float uTime;
+
 uniform float uAuraOpacity;
-uniform float uBass;
-uniform float uEnergy;
-uniform float uKickDecay;
+
 varying vec3 vNormal;
+
 void main(){
 
-  vec3 V=normalize(vec3(0,0,1));
+  vec3 V = normalize(vec3(0,0,1));
 
-  float fr=pow(
-    1.0-max(dot(vNormal,V),0.0),
-    1.8
-  );
-
-  float pulse=
-    sin(uTime*1.3)*0.5+0.5;
-
-  float a=
-    fr*(
-      0.18 +
-      uKickDecay*0.12 +
-      uEnergy*0.08 +
-      pulse*0.03
+  float fresnel =
+    pow(
+      1.0 - max(dot(vNormal,V),0.0),
+      3.2
     );
 
-  vec3 col=mix(
-    vec3(0.05,0.18,0.42),
-    vec3(0.25,0.05,0.35),
-    fr
+  vec3 col = vec3(
+    0.18,
+    0.10,
+    0.42
   );
 
-  col += vec3(0.95,0.08,0.08)
-    *uKickDecay
-    *0.05;
+  gl_FragColor = vec4(
 
-  gl_FragColor=vec4(
-    clamp(col,0.0,1.0),
-    clamp(a*uAuraOpacity,0.0,1.0)
+    col * 1.8,
+
+    pow(
+      fresnel,
+      0.55
+    ) *
+
+    smoothstep(
+      0.0,
+      0.35,
+      uAuraOpacity
+    )
+
   );
 }
 `;
@@ -315,12 +312,12 @@ export class PlasmaBlob {
       vertexShader:   AURA_VERT,
       fragmentShader: AURA_FRAG,
       uniforms: {
-        uTime: this._U.uTime,
-        uBass: this._U.uBass,
-        uEnergy: this._U.uEnergy,
-        uKickDecay: this._U.uKickDecay,
-        uAuraOpacity: { value: 1.0 }
-    },
+
+  uAuraOpacity: {
+    value: this.cfg.auraOpacity
+  }
+
+},
       transparent: true,
       depthWrite:  false,
       side:        THREE.BackSide,
@@ -390,6 +387,8 @@ export class PlasmaBlob {
     if(audio.kick) this._kickDecay=1.0;
     this._kickDecay*=0.88;
     U.uKickDecay.value=this._kickDecay;
+    this._auraMat.uniforms.uAuraOpacity.value =
+  cfg.auraOpacity;
     
 
     U.uN1Amp.value =cfg.n1Amp;
@@ -418,7 +417,7 @@ export class PlasmaBlob {
   addGUI(folder){
     const c=this.cfg;
     folder.add(c,"opacity",    0,1,   0.01).name("Opacity");
-    folder.add(c,"auraOpacity",0,3,   0.01).name("Aura");
+    folder.add(c,"auraOpacity",0,1,0.01).name("Aura");
     folder.add(c,"scale",      0.2,8, 0.01).name("Size");
 
     const fN=folder.addFolder("Noise");
