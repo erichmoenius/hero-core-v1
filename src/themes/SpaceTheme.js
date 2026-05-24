@@ -40,7 +40,7 @@ this.fibonacci = new FibonacciSystem(
   this.group
 );
 
-this.fibonacci.group.position.z = -2;
+this.fibonacci.group.position.z = -12;
 
 // ------------------------------------------------
 // 🫧 PLASMA BLOB
@@ -50,9 +50,9 @@ this.plasmaBlob =
   new PlasmaBlob(this.container);
 
 this.plasmaBlob.setPosition(
-  0,
-  0,
-  -12
+  -1.8,
+  0.4,
+  -6.5
 );
 
 this.plasmaBlob.applyPreset(
@@ -416,23 +416,30 @@ const pulse =
 
   bass * 0.6;
 
+const fibBaseScale = 3.0;
+
+const fibAudioScale =
+
+  energy * 0.35 +
+
+  bass * 0.25;
+
 this.fibonacci.group.scale.setScalar(
-  pulse
+
+  fibBaseScale +
+
+  fibAudioScale
+
 );
 
 // ------------------------------------------------
 // 🌀 ROTATION FEEL
 // ------------------------------------------------
 
-this.fibonacci.group.rotation.y +=
-
-  0.0015 +
-
-  bass * 0.03;
-
 this.fibonacci.group.rotation.x +=
 
-  mid * 0.01;
+  mid * 0.0015;
+
 
 // ------------------------------------------------
 // 🌌 WORLD ROTATION
@@ -450,7 +457,7 @@ this.group.rotation.z =
     this.time * 0.15
   ) * 0.03;
 
-this.group.rotation.y =
+// this.group.rotation.y =
   this.worldRotation;
 
 // ------------------------------------------------
@@ -478,11 +485,11 @@ const driftY =
 
 this.plasmaBlob.setPosition(
 
-  0,
+  -1.6,
 
-  driftY,
+  driftY + 0.3,
 
-  -12
+  -6.5
 
 );
 
@@ -625,13 +632,15 @@ if(energy > 0.65){
 
 this.fibonacci.group.position.z =
 
-  -2 +
+  -12 +
 
   Math.sin(
-    this.time * 0.4
-  ) * 0.15 +
 
-  energy * 0.25;
+    this.time * 0.15
+
+  ) * 0.05 +
+
+  energy * 0.08;
 
 // ------------------------------------------------
 // 🌌 SPACE DRIFT
