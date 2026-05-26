@@ -109,6 +109,12 @@ this.worldRotation = 0;
 this.cameraDrift =
   new THREE.Vector2();
 
+this.delayedEnergy = 0;
+
+this.mouseField = new THREE.Vector2();
+
+this.mouseVelocity = new THREE.Vector2();
+
 }
 
 // ------------------------------------------------
@@ -366,6 +372,18 @@ const energy =
     0.65
   );
 
+this.delayedEnergy =
+
+  THREE.MathUtils.lerp(
+
+    this.delayedEnergy,
+
+    energy,
+
+    0.03
+
+  );
+
 const bass =
   audio.bass || 0;
 
@@ -379,11 +397,63 @@ const high =
 // 🌀 FIBONACCI INTERACTION
 // ------------------------------------------------
 
+const targetMouseX =
+  state.parallax?.x || 0;
+
+const targetMouseY =
+  state.parallax?.y || 0;
+
+
+// ------------------------------------------------
+// 🌌 INTERACTION INERTIA
+// ------------------------------------------------
+
+this.mouseVelocity.x +=
+
+  (
+
+    targetMouseX -
+
+    this.mouseField.x
+
+  ) * 0.015;
+
+this.mouseVelocity.y +=
+
+  (
+
+    targetMouseY -
+
+    this.mouseField.y
+
+  ) * 0.015;
+
+
+// ------------------------------------------------
+// 🌀 DAMPING
+// ------------------------------------------------
+
+this.mouseVelocity.multiplyScalar(0.965);
+
+
+// ------------------------------------------------
+// 🌠 APPLY
+// ------------------------------------------------
+
+this.mouseField.add(
+  this.mouseVelocity
+);
+
+
+// ------------------------------------------------
+// 🖱️ FIBONACCI FIELD INPUT
+// ------------------------------------------------
+
 this.fibonacci.setMouse(
 
-  state.parallax?.x || 0,
+  this.mouseField.x,
 
-  state.parallax?.y || 0
+  this.mouseField.y
 
 );
 
@@ -395,7 +465,7 @@ const delta =
 
   0.008 +
 
-  energy * 0.08 +
+  this.delayedEnergy * 0.08 +
 
   bass * 0.04;
 
@@ -408,19 +478,12 @@ this.fibonacci.update(
 // 🔥 SCALE PULSE
 // ------------------------------------------------
 
-const pulse =
-
-  1 +
-
-  energy * 0.45 +
-
-  bass * 0.6;
 
 const fibBaseScale = 3.0;
 
 const fibAudioScale =
 
-  energy * 0.35 +
+  this.delayedEnergy * 0.35 +
 
   bass * 0.25;
 
@@ -436,26 +499,21 @@ this.fibonacci.group.scale.setScalar(
 // 🌀 ROTATION FEEL
 // ------------------------------------------------
 
-this.fibonacci.group.rotation.x +=
+this.fibonacci.group.rotation.y +=
 
-  mid * 0.0015;
+  0.00012 +
+
+  this.delayedEnergy * 0.0015;
 
 
 // ------------------------------------------------
 // 🌌 WORLD ROTATION
 // ------------------------------------------------
 
-this.worldRotation +=
-
-  0.0005 +
-
-  energy * 0.002;
-
-this.group.rotation.z =
-
-  Math.sin(
-    this.time * 0.15
-  ) * 0.03;
+// this.group.rotation.z =
+//   Math.sin(
+//     this.time * 0.15
+//   ) * 0.03;
 
 // this.group.rotation.y =
   this.worldRotation;
@@ -476,8 +534,20 @@ this.plasmaBlob.update(
 const driftY =
 
   Math.sin(
-    this.time * 0.18
-  ) * 0.12;
+
+    this.time * 0.22
+
+  ) *
+
+  (
+
+    0.18 +
+
+    this.delayedEnergy * 0.25
+
+  ) +
+
+  this.mouseField.y * 0.08;
 
 // ------------------------------------------------
 // 🌌 STABLE POSITION
@@ -568,8 +638,8 @@ this.mid.points.material.opacity =
 this.near.points.material.opacity =
 
   (
-    0.35 +
-    energy * 0.25
+    0.18 +
+    energy * 0.12
   ) * fog;
 
 // ------------------------------------------------
@@ -630,17 +700,81 @@ if(energy > 0.65){
 // 🌠 CINEMATIC DEPTH BREATHING
 // ------------------------------------------------
 
-this.fibonacci.group.position.z =
+const blobPos =
+  this.plasmaBlob._mesh.position;
 
-  -12 +
+
+// ------------------------------------------------
+// 🌀 ORBITAL RELATIONSHIP
+// ------------------------------------------------
+
+const orbitRadius =
+
+  2.8 +
+
+  this.delayedEnergy * 0.8;
+
+const orbitSpeed =
+
+  0.04 +
+
+  this.delayedEnergy * 0.08;
+
+const orbitX =
+
+  Math.cos(
+    this.time * orbitSpeed
+  ) * orbitRadius;
+
+const orbitY =
 
   Math.sin(
+    this.time * orbitSpeed * 0.7
+  ) * 0.8;
 
-    this.time * 0.15
 
-  ) * 0.05 +
+// ------------------------------------------------
+// 🌌 CINEMATIC FOLLOW
+// ------------------------------------------------
 
-  energy * 0.08;
+this.fibonacci.group.position.x +=
+
+  (
+
+    blobPos.x +
+
+    orbitX -
+
+    this.fibonacci.group.position.x
+
+  ) * 0.012;
+
+this.fibonacci.group.position.y +=
+
+  (
+
+    blobPos.y +
+
+    orbitY -
+
+    this.fibonacci.group.position.y
+
+  ) * 0.01;
+
+
+// ------------------------------------------------
+// 🌠 DEPTH
+// ------------------------------------------------
+
+this.fibonacci.group.position.z =
+
+  -11.5 +
+
+  Math.sin(
+    this.time * 0.12
+  ) * 0.12 +
+
+  this.delayedEnergy * 0.25;
 
 // ------------------------------------------------
 // 🌌 SPACE DRIFT
