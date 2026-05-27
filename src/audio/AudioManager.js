@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import AudioHandler from "./AudioHandler.js";
 
 export class AudioManager {
@@ -38,6 +39,20 @@ this.mode = "file";
 
 this._ready = false;
 
+this.freqData = null;
+
+this.adaptive = {
+
+  energyMax: 0.25,
+
+  bassMax: 0.20,
+
+  midMax: 0.20,
+
+  highMax: 0.20
+
+};
+
 this.state = {
 
   energy: 0,
@@ -69,31 +84,43 @@ this.settings = {
 
 }
 
-
 // ------------------------------------------------
 // 🎧 FILE MODE
 // ------------------------------------------------
 async switchToFile(){
 
-this.stopLive();
+  // ------------------------------------------------
+  // 🛑 FULL LIVE RESET
+  // ------------------------------------------------
 
-this.mode = "file";
+  this.stopLive();
 
-this._ready = true;
+  // ------------------------------------------------
+  // 🎧 FILE MODE
+  // ------------------------------------------------
 
-console.log("🎧 FILE MODE");
+  this.mode = "file";
+
+  this._ready = true;
+
+  console.log("🎧 FILE MODE");
 
 }
-
 
 // ------------------------------------------------
 // 🎤 LIVE MODE
 // ------------------------------------------------
 async switchToLive(){
 
-await this.stopFile();
+  this.stopLive();
 
-this.mode = "live";
+  await this.stopFile();
+
+  this.handler.pauseOffset = 0;
+
+  this.handler.buffer = null;
+
+  this.mode = "live";
 
 try{
 
@@ -108,9 +135,12 @@ try{
     );
 
   this.liveAnalyser =
-    this.context.createAnalyser();
 
-  this.liveAnalyser.fftSize = 1024;
+  this.context.createAnalyser();
+
+  this.liveAnalyser.fftSize = 2048;
+
+  this.liveAnalyser.smoothingTimeConstant = 0.85;
 
   this.liveSource.connect(this.liveAnalyser);
 
@@ -181,6 +211,8 @@ async stopFile(){
 
 this.handler.stop(true);
 
+this.handler.buffer = null;
+
 }
 
 
@@ -189,32 +221,61 @@ this.handler.stop(true);
 // ------------------------------------------------
 stopLive(){
 
-if(this.stream){
+  // ------------------------------------------------
+  // 🎤 STOP STREAM TRACKS
+  // ------------------------------------------------
 
-  this.stream
-    .getTracks()
-    .forEach(t => t.stop());
+  if(this.stream){
 
-  this.stream = null;
-}
+    this.stream
+      .getTracks()
+      .forEach(track => {
 
-if(this.liveSource){
+        track.stop();
 
-  try{
-    this.liveSource.disconnect();
-  }catch{}
+      });
 
-  this.liveSource = null;
-}
+    this.stream = null;
 
-if(this.liveAnalyser){
+  }
 
-  try{
-    this.liveAnalyser.disconnect();
-  }catch{}
+  // ------------------------------------------------
+  // 🎤 DISCONNECT SOURCE
+  // ------------------------------------------------
 
-  this.liveAnalyser = null;
-}
+  if(this.liveSource){
+
+    try{
+
+      this.liveSource.disconnect();
+
+    }catch{}
+
+    this.liveSource = null;
+
+  }
+
+  // ------------------------------------------------
+  // 🎤 DISCONNECT ANALYSER
+  // ------------------------------------------------
+
+  if(this.liveAnalyser){
+
+    try{
+
+      this.liveAnalyser.disconnect();
+
+    }catch{}
+
+    this.liveAnalyser = null;
+
+  }
+
+  // ------------------------------------------------
+  // 🧹 CLEAR FFT BUFFER
+  // ------------------------------------------------
+
+  this.freqData = null;
 
 }
 
@@ -247,19 +308,87 @@ const analyser =
 
 if(!analyser) return;
 
+if(
+
+  !this.freqData ||
+
+  this.freqData.length !==
+
+  analyser.frequencyBinCount
+
+){
+
+  this.freqData =
+
+    new Uint8Array(
+
+      analyser.frequencyBinCount
+
+    );
+
+}
+
+analyser.getByteFrequencyData(
+  this.freqData
+);
+
+const energyRaw =
+
+  this._getEnergy();
+
 const energy =
-  this._getEnergy(analyser);
+
+  this._normalize(
+
+    energyRaw,
+
+    "energyMax"
+
+  );
+
+const bassRaw =
+
+  this._getRange(
+    0.0,
+    0.08
+  );
 
 const bass =
-  this._getRange(analyser, 0.0, 0.08);
+
+  this._normalize(
+    bassRaw,
+    "bassMax"
+  );
+
+const midRaw =
+
+  this._getRange(
+    0.08,
+    0.35
+  );
 
 const mid =
-  this._getRange(analyser, 0.08, 0.35);
+
+  this._normalize(
+    midRaw,
+    "midMax"
+  );
+
+const highRaw =
+
+  this._getRange(
+    0.35,
+    1.0
+  );
 
 const high =
-  this._getRange(analyser, 0.35, 1.0);
 
+  this._normalize(
+    highRaw,
+    "highMax"
+  );
 
+ 
 // ------------------------------------------------
 // 🔥 SMOOTH
 // ------------------------------------------------
@@ -296,46 +425,77 @@ this.state.snare =
 // ------------------------------------------------
 // 📊 ANALYSIS
 // ------------------------------------------------
-_getEnergy(analyser){
+_getEnergy(){
 
-const data =
-  new Uint8Array(analyser.frequencyBinCount);
+  const data = this.freqData;
 
-analyser.getByteFrequencyData(data);
+  let sum = 0;
 
-let sum = 0;
+  for(let i=0;i<data.length;i++){
 
-for(let i=0;i<data.length;i++){
-  sum += data[i];
-}
+    sum += data[i];
 
-return (sum / data.length) / 255;
+  }
 
-}
-
-
-_getRange(analyser, start, end){
-
-const data =
-  new Uint8Array(analyser.frequencyBinCount);
-
-analyser.getByteFrequencyData(data);
-
-const len = data.length;
-
-const s = Math.floor(len * start);
-const e = Math.floor(len * end);
-
-let sum = 0;
-
-for(let i=s;i<e;i++){
-  sum += data[i];
-}
-
-return (sum / (e - s)) / 255;
+  return (sum / data.length) / 255;
 
 }
 
+_getRange(start, end){
+
+  const data = this.freqData;
+
+  const len = data.length;
+
+  const s = Math.floor(len * start);
+
+  const e = Math.floor(len * end);
+
+  let sum = 0;
+
+  for(let i=s;i<e;i++){
+
+    sum += data[i];
+
+  }
+
+  return (sum / (e - s)) / 255;
+
+}
+
+_normalize(value, key){
+
+  // ------------------------------------------------
+  // 🌊 ADAPTIVE MAX
+  // ------------------------------------------------
+
+  this.adaptive[key] =
+
+    Math.max(
+
+      value,
+
+      this.adaptive[key] * 0.995
+
+    );
+
+  // ------------------------------------------------
+  // ⚡ NORMALIZE
+  // ------------------------------------------------
+
+  return THREE.MathUtils.clamp(
+
+    value /
+
+    (this.adaptive[key] + 0.0001),
+
+    0,
+
+    1
+
+  );
+
+}
 
 _smooth(prev, next){
 

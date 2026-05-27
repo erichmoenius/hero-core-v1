@@ -23,10 +23,11 @@ export default class AudioHandler {
   // ------------------------------------------------
   initNodes(){
 
-    if(this.analyser) return;
-
     this.analyser = this.ctx.createAnalyser();
-    this.analyser.fftSize = 1024;
+
+    this.analyser.fftSize = 2048;
+
+    this.analyser.smoothingTimeConstant = 0.85;
 
     this.gainNode = this.ctx.createGain();
 

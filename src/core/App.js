@@ -429,6 +429,58 @@ export class App {
     }, "resume");
 
     // ------------------------------------------------
+// 🎤 LIVE INPUT
+// ------------------------------------------------
+
+f.add({
+
+  live: async () => {
+
+    try{
+
+      await this.audio.switchToLive();
+
+      console.log(
+        "🎤 Live input active"
+      );
+
+    }catch(err){
+
+      console.error(err);
+
+    }
+
+  }
+
+}, "live");
+
+// ------------------------------------------------
+// 🎧 FILE MODE
+// ------------------------------------------------
+
+f.add({
+
+  file: async () => {
+
+    try{
+
+      await this.audio.switchToFile();
+
+      console.log(
+        "🎧 File mode active"
+      );
+
+    }catch(err){
+
+      console.error(err);
+
+    }
+
+  }
+
+}, "file");
+
+    // ------------------------------------------------
     // 🎚️ AUDIO SETTINGS
     // ------------------------------------------------
 
