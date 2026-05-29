@@ -162,7 +162,11 @@ void main(){
   float cN=colorNoise(vWorldPos*(uN3Freq+uMid*1.5)+t*0.25);
 
   float ct=vN1*0.35+vN2*0.25+cN*0.40;
-  ct+=uBass*0.08-uHigh*0.06+uKickDecay*0.10;
+  ct +=
+    uBass * 0.25 +
+    uHigh * 0.15 +
+    uEnergy * 0.35 +
+    uKickDecay * 0.30;
   ct=clamp(ct,0.0,1.0);
 
   vec3 base=spectrum(ct);
@@ -405,8 +409,21 @@ export class PlasmaBlob {
     this._aura.rotation.y-=0.0008;
     this._aura.rotation.x+=0.0004;
 
-    this._mesh.scale.setScalar(cfg.scale);
-    this._aura.scale.setScalar(cfg.scale*1.15);
+    const pulse =
+
+  1 +
+
+  energy * 0.48 +
+
+  bass * 0.008;
+
+this._mesh.scale.setScalar(
+  cfg.scale * pulse
+);
+
+this._aura.scale.setScalar(
+  cfg.scale * 1.15 * pulse
+);
 
     // floating
     this._mesh.position.y=Math.sin(time*0.4)*0.08;

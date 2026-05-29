@@ -1,519 +1,426 @@
-import * as THREE from "three";
-import AudioHandler from "./AudioHandler.js";
+// src/audio/AudioManager.js
 
-export class AudioManager {
+export default class AudioManager {
 
-constructor(){
+  constructor() {
 
-// ------------------------------------------------
-// 🔥 ONE CONTEXT ONLY
-// ------------------------------------------------
+    // ------------------------------------------------
+    // CORE
+    // ------------------------------------------------
 
-this.context =
-  new (window.AudioContext ||
-   window.webkitAudioContext)();
+    this.audioContext = null;
 
+    this.analyser = null;
+    this.dataArray = null;
 
-// ------------------------------------------------
-// 🎧 FILE HANDLER
-// ------------------------------------------------
+    this.source = null;
+    this.stream = null;
 
-this.handler =
-  new AudioHandler(this.context);
+    // ------------------------------------------------
+    // DEVICES
+    // ------------------------------------------------
 
+    this.selectedDeviceId = null;
+    this.devices = [];
 
-// ------------------------------------------------
-// 🎤 LIVE
-// ------------------------------------------------
+    // ------------------------------------------------
+    // SETTINGS
+    // ------------------------------------------------
 
-this.stream = null;
-this.liveSource = null;
-this.liveAnalyser = null;
-
-
-// ------------------------------------------------
-// ⚙️ STATE
-// ------------------------------------------------
-
-this.mode = "file";
-
-this._ready = false;
-
-this.freqData = null;
-
-this.adaptive = {
-
-  energyMax: 0.25,
-
-  bassMax: 0.20,
-
-  midMax: 0.20,
-
-  highMax: 0.20
-
-};
-
-this.state = {
-
-  energy: 0,
-  bass: 0,
-  mid: 0,
-  high: 0,
-
-  // 🔥 beat events
-  beat: false,
-  kick: false,
-  snare: false
-};
-
-
-// ------------------------------------------------
-// ⚙️ SETTINGS
-// ------------------------------------------------
-
-this.settings = {
-
-  enabled: true,
-
-  smoothing: 0.82,
-
-  beatThreshold: 0.24,
-  kickThreshold: 0.32,
-  snareThreshold: 0.20
-};
-
-}
-
-// ------------------------------------------------
-// 🎧 FILE MODE
-// ------------------------------------------------
-async switchToFile(){
+    this.fftSize = 2048;
+    this.smoothing = 0.85;
+  }
 
   // ------------------------------------------------
-  // 🛑 FULL LIVE RESET
+  // INIT
   // ------------------------------------------------
 
-  this.stopLive();
+  async init() {
+
+    try {
+
+      // --------------------------------------------
+      // AUDIO CONTEXT
+      // --------------------------------------------
+
+      if (!this.audioContext) {
+
+        this.audioContext =
+          new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      // --------------------------------------------
+      // RESUME CONTEXT
+      // --------------------------------------------
+
+      if (this.audioContext.state === "suspended") {
+
+        await this.audioContext.resume();
+      }
+
+      // --------------------------------------------
+      // ANALYSER
+      // --------------------------------------------
+
+      this.analyser = this.audioContext.createAnalyser();
+
+      this.analyser.fftSize = this.fftSize;
+
+      this.analyser.smoothingTimeConstant =
+        this.smoothing;
+
+      this.dataArray = new Uint8Array(
+        this.analyser.frequencyBinCount
+      );
+
+      // --------------------------------------------
+      // GET DEVICES
+      // --------------------------------------------
+
+      await this.getAudioDevices();
+
+      console.log("DEVICES FOUND:", this.devices.length);
+
+      // --------------------------------------------
+// AUTO SELECT VOICEMEETER
+// --------------------------------------------
+
+this.autoSelectVoicemeeter();
+
+console.log(
+  "DEVICES FOUND:",
+  this.devices.length
+);
+
+      // --------------------------------------------
+      // START LIVE INPUT
+      // --------------------------------------------
+
+      await this.startLiveInput();
+
+      console.log("🎧 AudioManager initialized.");
+
+    } catch (error) {
+
+      console.error(
+        "❌ AudioManager init failed:",
+        error
+      );
+    }
+  }
 
   // ------------------------------------------------
-  // 🎧 FILE MODE
+  // GET AUDIO DEVICES
   // ------------------------------------------------
 
-  this.mode = "file";
+  async getAudioDevices() {
 
-  this._ready = true;
+    try {
 
-  console.log("🎧 FILE MODE");
+      const devices =
+        await navigator.mediaDevices.enumerateDevices();
 
-}
+      this.devices = devices.filter(
+        d => d.kind === "audioinput"
+      );
 
-// ------------------------------------------------
-// 🎤 LIVE MODE
-// ------------------------------------------------
-async switchToLive(){
+      console.log("🎧 AUDIO INPUT DEVICES:");
+      console.table(this.devices);
 
-  this.stopLive();
+      this.devices.forEach(device => {
 
-  await this.stopFile();
-
-  this.handler.pauseOffset = 0;
-
-  this.handler.buffer = null;
-
-  this.mode = "live";
-
-try{
-
-  this.stream =
-    await navigator.mediaDevices.getUserMedia({
-      audio: true
-    });
-
-  this.liveSource =
-    this.context.createMediaStreamSource(
-      this.stream
-    );
-
-  this.liveAnalyser =
-
-  this.context.createAnalyser();
-
-  this.liveAnalyser.fftSize = 2048;
-
-  this.liveAnalyser.smoothingTimeConstant = 0.85;
-
-  this.liveSource.connect(this.liveAnalyser);
-
-  this._ready = true;
-
-  console.log("🎤 LIVE MODE");
-
-}catch(e){
-
-  console.error(e);
-}
-
-}
-
-
-// ------------------------------------------------
-// 📂 LOAD FILE
-// ------------------------------------------------
-async load(file){
-
-await this.switchToFile();
-
-await this.handler.load(file);
-
-}
-
-
-// ------------------------------------------------
-// ▶️ PLAY
-// ------------------------------------------------
-play(){
-
-if(this.mode !== "file") return;
-
-this.handler.play();
-
-}
-
-
-// ------------------------------------------------
-// ⏸️ PAUSE
-// ------------------------------------------------
-pause(){
-
-if(this.mode !== "file") return;
-
-this.handler.pause();
-
-}
-
-
-// ------------------------------------------------
-// 🔁 RESUME
-// ------------------------------------------------
-resume(){
-
-if(this.mode !== "file") return;
-
-this.handler.play();
-
-}
-
-
-// ------------------------------------------------
-// ⏹️ STOP FILE
-// ------------------------------------------------
-async stopFile(){
-
-this.handler.stop(true);
-
-this.handler.buffer = null;
-
-}
-
-
-// ------------------------------------------------
-// ⏹️ STOP LIVE
-// ------------------------------------------------
-stopLive(){
-
-  // ------------------------------------------------
-  // 🎤 STOP STREAM TRACKS
-  // ------------------------------------------------
-
-  if(this.stream){
-
-    this.stream
-      .getTracks()
-      .forEach(track => {
-
-        track.stop();
+        console.log(device.label);
 
       });
 
-    this.stream = null;
+      return this.devices;
 
+    } catch (error) {
+
+      console.error(
+        "❌ Failed to get audio devices:",
+        error
+      );
+
+      return [];
+    }
   }
 
   // ------------------------------------------------
-  // 🎤 DISCONNECT SOURCE
+  // AUTO SELECT VOICEMEETER
   // ------------------------------------------------
 
-  if(this.liveSource){
+  autoSelectVoicemeeter() {
 
-    try{
+    const priorities = [
 
-      this.liveSource.disconnect();
+      "out b1",
+      "voicemeeter output",
+      "aux output",
+      "voicemeeter"
 
-    }catch{}
+    ];
 
-    this.liveSource = null;
+    let found = null;
 
+    for (const priority of priorities) {
+
+      found = this.devices.find(device =>
+
+        device.label
+          .toLowerCase()
+          .includes(priority)
+
+      );
+
+      if (found) break;
+    }
+
+    if (found) {
+
+      this.selectedDeviceId = found.deviceId;
+
+      console.log("✅ Selected Audio Device:");
+      console.log(found.label);
+
+    } else {
+
+      console.warn(
+        "⚠ No Voicemeeter device found."
+      );
+    }
   }
 
   // ------------------------------------------------
-  // 🎤 DISCONNECT ANALYSER
+  // SET DEVICE MANUALLY
   // ------------------------------------------------
 
-  if(this.liveAnalyser){
+  setDevice(deviceId) {
 
-    try{
+    this.selectedDeviceId = deviceId;
 
-      this.liveAnalyser.disconnect();
-
-    }catch{}
-
-    this.liveAnalyser = null;
-
+    console.log("🎧 Device manually set:");
+    console.log(deviceId);
   }
 
   // ------------------------------------------------
-  // 🧹 CLEAR FFT BUFFER
+  // START LIVE INPUT
   // ------------------------------------------------
 
-  this.freqData = null;
+  async startLiveInput() {
 
-}
+    try {
 
+      // --------------------------------------------
+      // STOP OLD STREAM
+      // --------------------------------------------
 
-// ------------------------------------------------
-// ⏹️ STOP ALL
-// ------------------------------------------------
-stop(){
+      this.stopLiveInput();
 
-this.stopFile();
+      // --------------------------------------------
+      // RESUME CONTEXT
+      // --------------------------------------------
 
-this.stopLive();
+      if (
+        this.audioContext &&
+        this.audioContext.state === "suspended"
+      ) {
 
-this._ready = false;
+        await this.audioContext.resume();
+      }
 
-}
+      // --------------------------------------------
+      // GET USER MEDIA
+      // --------------------------------------------
 
+      this.stream =
+        await navigator.mediaDevices.getUserMedia({
 
-// ------------------------------------------------
-// 🔄 UPDATE
-// ------------------------------------------------
-update(){
+          audio: {
 
-if(!this.settings.enabled) return;
+            deviceId: this.selectedDeviceId
+              ? { exact: this.selectedDeviceId }
+              : undefined,
 
-const analyser =
-  this.mode === "file"
-    ? this.handler.analyser
-    : this.liveAnalyser;
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
 
-if(!analyser) return;
+          }
 
-if(
+        });
 
-  !this.freqData ||
+      // --------------------------------------------
+      // CREATE SOURCE
+      // --------------------------------------------
 
-  this.freqData.length !==
+      this.source =
+        this.audioContext.createMediaStreamSource(
+          this.stream
+        );
 
-  analyser.frequencyBinCount
+      // --------------------------------------------
+      // CONNECT TO ANALYSER
+      // --------------------------------------------
 
-){
+      this.source.connect(this.analyser);
 
-  this.freqData =
-
-    new Uint8Array(
-
-      analyser.frequencyBinCount
-
-    );
-
-}
-
-analyser.getByteFrequencyData(
-  this.freqData
+      console.log(
+  "TRACK SETTINGS:",
+  this.stream.getAudioTracks()[0].getSettings()
 );
 
-const energyRaw =
-
-  this._getEnergy();
-
-const energy =
-
-  this._normalize(
-
-    energyRaw,
-
-    "energyMax"
-
-  );
-
-const bassRaw =
-
-  this._getRange(
-    0.0,
-    0.08
-  );
-
-const bass =
-
-  this._normalize(
-    bassRaw,
-    "bassMax"
-  );
-
-const midRaw =
-
-  this._getRange(
-    0.08,
-    0.35
-  );
-
-const mid =
-
-  this._normalize(
-    midRaw,
-    "midMax"
-  );
-
-const highRaw =
-
-  this._getRange(
-    0.35,
-    1.0
-  );
-
-const high =
-
-  this._normalize(
-    highRaw,
-    "highMax"
-  );
-
- 
-// ------------------------------------------------
-// 🔥 SMOOTH
-// ------------------------------------------------
-
-this.state.energy =
-  this._smooth(this.state.energy, energy);
-
-this.state.bass =
-  this._smooth(this.state.bass, bass);
-
-this.state.mid =
-  this._smooth(this.state.mid, mid);
-
-this.state.high =
-  this._smooth(this.state.high, high);
-
-
-// ------------------------------------------------
-// ⚡ EVENT BEATS
-// ------------------------------------------------
-
-this.state.beat =
-  bass > this.settings.beatThreshold;
-
-this.state.kick =
-  bass > this.settings.kickThreshold;
-
-this.state.snare =
-  mid > this.settings.snareThreshold;
-
-}
-
-
-// ------------------------------------------------
-// 📊 ANALYSIS
-// ------------------------------------------------
-_getEnergy(){
-
-  const data = this.freqData;
-
-  let sum = 0;
-
-  for(let i=0;i<data.length;i++){
-
-    sum += data[i];
-
-  }
-
-  return (sum / data.length) / 255;
-
-}
-
-_getRange(start, end){
-
-  const data = this.freqData;
-
-  const len = data.length;
-
-  const s = Math.floor(len * start);
-
-  const e = Math.floor(len * end);
-
-  let sum = 0;
-
-  for(let i=s;i<e;i++){
-
-    sum += data[i];
-
-  }
-
-  return (sum / (e - s)) / 255;
-
-}
-
-_normalize(value, key){
-
-  // ------------------------------------------------
-  // 🌊 ADAPTIVE MAX
-  // ------------------------------------------------
-
-  this.adaptive[key] =
-
-    Math.max(
-
-      value,
-
-      this.adaptive[key] * 0.995
-
-    );
-
-  // ------------------------------------------------
-  // ⚡ NORMALIZE
-  // ------------------------------------------------
-
-  return THREE.MathUtils.clamp(
-
-    value /
-
-    (this.adaptive[key] + 0.0001),
-
-    0,
-
-    1
-
-  );
-
-}
-
-_smooth(prev, next){
-
-return (
-  prev * this.settings.smoothing +
-  next * (1 - this.settings.smoothing)
+console.log(
+  "TRACK LABEL:",
+  this.stream.getAudioTracks()[0].label
 );
 
-}
+      console.log("🎵 Live audio connected.");
 
+    } catch (error) {
 
-// ------------------------------------------------
-// 📦 STATE
-// ------------------------------------------------
-getState(){
+      console.error(
+        "❌ Live input failed:",
+        error
+      );
+    }
+  }
 
-return this.state;
+  // ------------------------------------------------
+  // STOP LIVE INPUT
+  // ------------------------------------------------
 
-}
+  stopLiveInput() {
 
+    try {
+
+      // --------------------------------------------
+      // DISCONNECT SOURCE
+      // --------------------------------------------
+
+      if (this.source) {
+
+        this.source.disconnect();
+        this.source = null;
+      }
+
+      // --------------------------------------------
+      // STOP TRACKS
+      // --------------------------------------------
+
+      if (this.stream) {
+
+        this.stream
+          .getTracks()
+          .forEach(track => {
+
+            track.stop();
+
+          });
+
+        this.stream = null;
+      }
+
+      console.log("🛑 Live input stopped.");
+
+    } catch (error) {
+
+      console.error(
+        "❌ Failed stopping stream:",
+        error
+      );
+    }
+  }
+
+  // ------------------------------------------------
+  // GET FREQUENCY DATA
+  // ------------------------------------------------
+
+  getFrequencyData() {
+
+    if (
+      !this.analyser ||
+      !this.dataArray
+    ) {
+
+      return null;
+    }
+
+    this.analyser.getByteFrequencyData(
+      this.dataArray
+    );
+
+    return this.dataArray;
+  }
+
+  // ------------------------------------------------
+  // GET AVERAGE ENERGY
+  // ------------------------------------------------
+
+  getAverageEnergy(start = 0, end = 64) {
+
+    if (!this.dataArray) return 0;
+
+    let sum = 0;
+
+    for (let i = start; i < end; i++) {
+
+      sum += this.dataArray[i];
+    }
+
+    return sum / (end - start) / 255;
+  }
+
+  // ------------------------------------------------
+  // GET STATE
+  // ------------------------------------------------
+
+  getState() {
+
+    // update FFT
+
+    this.getFrequencyData();
+
+    // bands
+
+    const bass =
+      this.getAverageEnergy(0, 16);
+
+    const mid =
+      this.getAverageEnergy(16, 64);
+
+    const high =
+      this.getAverageEnergy(64, 128);
+
+    // combined energy
+
+    const energy =
+      (bass + mid + high) / 3;
+
+    return {
+
+      bass,
+      mid,
+      high,
+      energy
+
+    };
+  }
+
+  // ------------------------------------------------
+  // DESTROY
+  // ------------------------------------------------
+
+  destroy() {
+
+    this.stopLiveInput();
+
+    if (this.audioContext) {
+
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+
+    console.log("🔥 AudioManager destroyed.");
+  }
 }

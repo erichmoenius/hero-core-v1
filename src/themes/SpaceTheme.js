@@ -380,7 +380,7 @@ this.delayedEnergy =
 
     energy,
 
-    0.03
+    0.12
 
   );
 
@@ -483,9 +483,9 @@ const fibBaseScale = 3.0;
 
 const fibAudioScale =
 
-  this.delayedEnergy * 0.35 +
+  this.delayedEnergy * 0.48 +
 
-  bass * 0.25;
+  bass * 0.7;
 
 this.fibonacci.group.scale.setScalar(
 
@@ -503,7 +503,7 @@ this.fibonacci.group.rotation.y +=
 
   0.00012 +
 
-  this.delayedEnergy * 0.0015;
+  this.delayedEnergy * 0.01;
 
 
 // ------------------------------------------------
@@ -689,7 +689,7 @@ this.near.points.material.size *=
 // 💥 ENERGY FLASH
 // ------------------------------------------------
 
-if(energy > 0.65){
+if(energy > 0.35){
 
   this.near.points.material.opacity +=
     energy * 0.15;

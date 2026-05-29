@@ -20,7 +20,7 @@ import { SpaceTheme } from "../themes/SpaceTheme.js";
 import { createParticleField } from "../particles/ParticleField.js";
 import { createParticleMaterial } from "../particles/ParticleShader.js";
 
-import { AudioManager } from "../audio/AudioManager.js";
+import AudioManager from "../audio/AudioManager.js";
 
 import { InteractionManager } from "../interactions/InteractionManager.js";
 
@@ -35,10 +35,7 @@ export class App {
     this.renderer = new Renderer();
 
     this.scene = this.renderer.scene;
-
     this.camera = this.renderer.camera;
-
-    // 🔥 portal disabled
 
     this.renderer.portal = null;
 
@@ -50,10 +47,188 @@ export class App {
 
     this.gui.title("Hero Core");
 
-    this.guiHidden = false;
+    // ------------------------------------------------
+    // 🎧 AUDIO
+    // ------------------------------------------------
+
+    this.audio = new AudioManager();
+
+  window.addEventListener(
+  "pointerdown",
+  async () => {
+
+    console.log("🎤 Initializing audio...");
+
+    await this.audio.init();
+
+  },
+  { once: true }
+);
+
+    window.audio = this.audio;
 
     // ------------------------------------------------
-    // 🎥 CINEMATIC SETTINGS
+    // 🔓 AUDIO UNLOCK
+    // ------------------------------------------------
+
+    window.addEventListener(
+
+      "pointerdown",
+
+      async () => {
+
+        try{
+
+          if(
+            this.audio.audioContext &&
+            this.audio.audioContext.state === "suspended"
+          ){
+
+            await this.audio.audioContext.resume();
+
+            console.log(
+              "🔓 AudioContext resumed"
+            );
+
+          }
+
+        }catch(err){
+
+          console.error(err);
+
+        }
+
+      },
+
+      { once: true }
+
+    );
+
+    // ------------------------------------------------
+    // 🌍 ENVIRONMENT
+    // ------------------------------------------------
+
+    this.world =
+      new ShaderWorld(this.scene);
+
+    this.stars =
+      new Starfield(this.scene);
+
+    this.stage =
+      new ThemeStage(this.scene);
+
+    // ------------------------------------------------
+    // 🧠 ENGINE
+    // ------------------------------------------------
+
+    this.scroll =
+      new ScrollController();
+
+    // ------------------------------------------------
+    // 🎨 THEMES
+    // ------------------------------------------------
+
+    this.themeManager =
+      new ThemeManager(
+
+        this.stage.getContent(),
+
+        this.gui
+
+      );
+
+    this.themeManager.register(
+      "movies",
+      MoviesTheme
+    );
+
+    this.themeManager.register(
+      "space",
+      SpaceTheme
+    );
+
+    this.themeManager.register(
+      "images",
+      ImageTheme
+    );
+
+    this.themeManager.register(
+      "seasons",
+      SeasonsTheme
+    );
+
+    // ------------------------------------------------
+    // 🚀 START THEME
+    // ------------------------------------------------
+
+    this.themeManager.activate(
+      "space"
+    );
+
+    // ------------------------------------------------
+    // ✨ PARTICLES
+    // ------------------------------------------------
+
+    this.setupParticles();
+
+    // ------------------------------------------------
+    // 🖱️ INTERACTION
+    // ------------------------------------------------
+
+    this.interactionManager =
+      new InteractionManager(
+
+        document.getElementById(
+          "hero-root"
+        ),
+
+        this.gui
+
+      );
+
+    this.interactionManager.setMode(
+      "trail"
+    );
+
+    // ------------------------------------------------
+    // 🖱️ INPUT
+    // ------------------------------------------------
+
+    this.isBoosting = false;
+
+    this.intensity = 0;
+
+    // ------------------------------------------------
+    // 🖱️ MOUSE
+    // ------------------------------------------------
+
+    this.mouse = {
+      x: 0,
+      y: 0
+    };
+
+    this.parallax = {
+      x: 0,
+      y: 0
+    };
+
+    this.mouseVel = {
+      x: 0,
+      y: 0
+    };
+
+    this.flight = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+
+    this.wheel = {
+      delta: 0
+    };
+
+    // ------------------------------------------------
+    // 🎬 CINEMATIC
     // ------------------------------------------------
 
     this.cinematic = {
@@ -70,189 +245,6 @@ export class App {
 
     };
 
-    this.setupCinematicGUI();
-
-    // ------------------------------------------------
-    // 🎧 AUDIO
-    // ------------------------------------------------
-
-    this.audio = new AudioManager();
-
-    window.audio = this.audio;
-
-    this.setupAudioGUI();
-
-    // ------------------------------------------------
-    // 🔓 AUDIO UNLOCK
-    // ------------------------------------------------
-
-    window.addEventListener(
-
-      "pointerdown",
-
-      () => {
-
-        this.audio.context?.resume?.();
-
-      },
-
-      { once: true }
-
-    );
-
-    // ------------------------------------------------
-    // 🌍 ENVIRONMENT
-    // ------------------------------------------------
-
-    this.world = new ShaderWorld(this.scene);
-
-    this.stars = new Starfield(this.scene);
-
-    this.stage = new ThemeStage(this.scene);
-
-    // ------------------------------------------------
-    // 🧠 ENGINE
-    // ------------------------------------------------
-
-    this.scroll = new ScrollController();
-
-    // ------------------------------------------------
-    // 🎨 THEMES
-    // ------------------------------------------------
-
-    this.themeManager = new ThemeManager(
-
-      this.stage.getContent(),
-
-      this.gui
-
-    );
-
-    this.themeManager.register(
-
-      "movies",
-
-      MoviesTheme
-
-    );
-
-    this.themeManager.register(
-
-      "space",
-
-      SpaceTheme
-
-    );
-
-    this.themeManager.register(
-
-      "images",
-
-      ImageTheme
-
-    );
-
-    this.themeManager.register(
-
-      "seasons",
-
-      SeasonsTheme
-
-    );
-
-    // 🔥 startup theme
-
-    this.themeManager.activate("space");
-
-    // ------------------------------------------------
-    // ✨ PARTICLES
-    // ------------------------------------------------
-
-    this.setupParticles();
-
-    // ------------------------------------------------
-    // 🖱️ INTERACTIONS
-    // ------------------------------------------------
-
-    this.interactionManager =
-      new InteractionManager(
-
-        document.getElementById(
-          "hero-root"
-        ),
-
-        this.gui
-
-      );
-
-    // ------------------------------------------------
-    // 🎛️ START MODE
-    // ------------------------------------------------
-
-    this.interactionManager.setMode(
-      "trail"
-    );
-
-    // ------------------------------------------------
-    // 🖱️ INPUT
-    // ------------------------------------------------
-
-    this.isBoosting = false;
-
-    this.intensity = 0;
-
-    // ------------------------------------------------
-    // 🖱️ PARALLAX
-    // ------------------------------------------------
-
-    this.mouse = {
-
-      x: 0,
-
-      y: 0
-
-    };
-
-    this.parallax = {
-
-      x: 0,
-
-      y: 0
-
-    };
-
-    // ------------------------------------------------
-    // 🚀 FLIGHT
-    // ------------------------------------------------
-
-    this.mouseVel = {
-
-      x: 0,
-
-      y: 0
-
-    };
-
-    this.flight = {
-
-      x: 0,
-
-      y: 0,
-
-      z: 0
-
-    };
-
-    // ------------------------------------------------
-    // 🖱️ WHEEL INPUT
-    // ------------------------------------------------
-
-    this.wheel = {
-
-      delta: 0
-
-    };
-
     // ------------------------------------------------
     // ⏱️ TIME
     // ------------------------------------------------
@@ -264,12 +256,9 @@ export class App {
     // ------------------------------------------------
 
     this.setupInput();
-
     this.setupMouse();
-
     this.setupThemeSwitching();
-
-    this.setupGuiToggle();
+    this.setupGui();
 
     // ------------------------------------------------
     // 📊 STATS
@@ -300,307 +289,95 @@ export class App {
   }
 
   // ------------------------------------------------
-  // 🎛️ CINEMATIC GUI
+  // 🎛️ GUI
   // ------------------------------------------------
 
-  setupCinematicGUI(){
+  setupGui(){
 
-    const f =
+    // ------------------------------------------------
+    // 🎬 CAMERA
+    // ------------------------------------------------
+
+    const cinematic =
       this.gui.addFolder(
         "🎬 Cinematic"
       );
 
-    f.add(
-
+    cinematic.add(
       this.cinematic,
-
       "parallaxStrength",
-
       0,
-
       1,
-
       0.01
-
     );
 
-    f.add(
-
+    cinematic.add(
       this.cinematic,
-
       "masterBoost",
-
       0,
-
-      2,
-
+      3,
       0.01
-
     );
-
-    f.add(
-
-      this.cinematic,
-
-      "flightSpeed",
-
-      0,
-
-      0.2,
-
-      0.001
-
-    );
-
-    f.add(
-
-      this.cinematic,
-
-      "flightDamping",
-
-      0.7,
-
-      0.99,
-
-      0.001
-
-    );
-
-    f.add(
-
-      this.cinematic,
-
-      "idleCameraMotion",
-
-      0,
-
-      1,
-
-      0.01
-
-    );
-
-    f.open();
-
-  }
 
   // ------------------------------------------------
-  // 🎧 AUDIO GUI
-  // ------------------------------------------------
-
-  setupAudioGUI(){
-
-    const f =
-      this.gui.addFolder(
-        "🎧 Audio"
-      );
-
-    // ------------------------------------------------
-    // 📂 LOAD TRACK
-    // ------------------------------------------------
-
-    f.add({
-
-      loadTrack: () =>
-        this.openAudioFile()
-
-    }, "loadTrack");
-
-    // ------------------------------------------------
-    // ⏸️ PAUSE
-    // ------------------------------------------------
-
-    f.add({
-
-      pause: () =>
-        this.audio.pause()
-
-    }, "pause");
-
-    // ------------------------------------------------
-    // ▶️ RESUME
-    // ------------------------------------------------
-
-    f.add({
-
-      resume: () =>
-        this.audio.play()
-
-    }, "resume");
-
-    // ------------------------------------------------
-// 🎤 LIVE INPUT
+// 🎧 AUDIO
 // ------------------------------------------------
 
-f.add({
+const audioFolder =
+  this.gui.addFolder(
+    "🎧 Audio"
+  );
 
-  live: async () => {
+audioFolder.add(
+  this.audio,
+  "smoothing",
+  0.01,
+  0.95,
+  0.01
+).onChange(value => {
 
-    try{
+  if(this.audio.analyser){
 
-      await this.audio.switchToLive();
-
-      console.log(
-        "🎤 Live input active"
-      );
-
-    }catch(err){
-
-      console.error(err);
-
-    }
+    this.audio.analyser
+      .smoothingTimeConstant = value;
 
   }
 
-}, "live");
+});
+
+audioFolder.open();
+
 
 // ------------------------------------------------
-// 🎧 FILE MODE
+// 💾 SETTINGS
 // ------------------------------------------------
 
-f.add({
+const saveFolder =
+  this.gui.addFolder(
+    "💾 Settings"
+  );
 
-  file: async () => {
+saveFolder.add({
 
-    try{
+  save: () => {
 
-      await this.audio.switchToFile();
-
-      console.log(
-        "🎧 File mode active"
-      );
-
-    }catch(err){
-
-      console.error(err);
-
-    }
+    this.saveGUISettings();
 
   }
 
-}, "file");
+}, "save");
 
-    // ------------------------------------------------
-    // 🎚️ AUDIO SETTINGS
-    // ------------------------------------------------
+saveFolder.add({
 
-    f.add(
+  load: () => {
 
-      this.audio.settings,
-
-      "smoothing",
-
-      0.01,
-
-      0.95,
-
-      0.01
-
-    );
-
-    f.open();
+    this.loadGUISettings();
 
   }
 
-  // ------------------------------------------------
-  // 📂 AUDIO FILE
-  // ------------------------------------------------
+}, "load");
 
-  openAudioFile(){
-
-  // ------------------------------------------------
-  // 📂 CREATE FRESH INPUT
-  // ------------------------------------------------
-
-  const input =
-    document.createElement("input");
-
-  input.type = "file";
-
-  input.accept = "audio/*";
-
-  input.style.display = "none";
-
-  // ------------------------------------------------
-  // 📂 FILE SELECT
-  // ------------------------------------------------
-
-  input.onchange = async (e) => {
-
-    const file =
-      e.target.files?.[0];
-
-    if(!file) return;
-
-    try{
-
-      // ------------------------------------------------
-      // 🛑 FULL AUDIO RESET
-      // ------------------------------------------------
-
-      this.audio.stop();
-
-      // ------------------------------------------------
-      // 🎧 LOAD
-      // ------------------------------------------------
-
-      await this.audio.load(file);
-
-      this.audio.play();
-
-      console.log(
-        "🎵 Loaded:",
-        file.name
-      );
-
-    }catch(err){
-
-      console.error(
-        "Audio load failed:",
-        err
-      );
-
-    }
-
-    // ------------------------------------------------
-    // 🧹 CLEANUP
-    // ------------------------------------------------
-
-    input.remove();
-
-  };
-
-  document.body.appendChild(input);
-
-  input.click();
-
-}
-
-  // ------------------------------------------------
-  // 🧰 GUI TOGGLE
-  // ------------------------------------------------
-
-  setupGuiToggle(){
-
-    window.addEventListener(
-
-      "keydown",
-
-      (e)=>{
-
-        if(e.code !== "KeyG") return;
-
-        this.guiHidden =
-          !this.guiHidden;
-
-        this.gui.domElement.style.display =
-          this.guiHidden
-            ? "none"
-            : "block";
-
-      }
-
-    );
+    audioFolder.open();
 
   }
 
@@ -664,18 +441,6 @@ f.add({
 
     );
 
-    window.addEventListener(
-
-      "pointercancel",
-
-      ()=>{
-
-        this.isBoosting = false;
-
-      }
-
-    );
-
   }
 
   // ------------------------------------------------
@@ -711,25 +476,7 @@ f.add({
           ny - this.mouse.y;
 
         this.mouse.x = nx;
-
         this.mouse.y = ny;
-
-      }
-
-    );
-
-    // ------------------------------------------------
-    // 🖱️ WHEEL
-    // ------------------------------------------------
-
-    window.addEventListener(
-
-      "wheel",
-
-      (e)=>{
-
-        this.wheel.delta +=
-          e.deltaY * 0.001;
 
       }
 
@@ -738,7 +485,7 @@ f.add({
   }
 
   // ------------------------------------------------
-  // 🎬 THEME SWITCH
+  // 🎬 THEME SWITCHING
   // ------------------------------------------------
 
   setupThemeSwitching(){
@@ -748,8 +495,6 @@ f.add({
       "keydown",
 
       (e)=>{
-
-        if(e.repeat) return;
 
         if(e.code === "Digit1"){
 
@@ -767,25 +512,91 @@ f.add({
 
         }
 
-        if(e.code === "Digit3"){
-
-          this.themeManager.activate(
-            "images"
-          );
-
-        }
-
-        if(e.code === "Digit4"){
-
-          this.themeManager.activate(
-            "seasons"
-          );
-
-        }
-
       }
 
     );
+
+  }
+
+  // ------------------------------------------------
+  // 🎥 CAMERA
+  // ------------------------------------------------
+
+  updateCamera(){
+
+    const t = this.time;
+
+    this.parallax.x +=
+      (
+        this.mouse.x -
+        this.parallax.x
+      ) * 0.08;
+
+    this.parallax.y +=
+      (
+        this.mouse.y -
+        this.parallax.y
+      ) * 0.08;
+
+    const px =
+      this.parallax.x *
+      this.cinematic.parallaxStrength;
+
+    const py =
+      this.parallax.y *
+      this.cinematic.parallaxStrength;
+
+    this.camera.position.x =
+      Math.sin(t * 0.3) * 0.2 + px;
+
+    this.camera.position.y =
+      Math.cos(t * 0.2) * 0.2 + py;
+
+    this.camera.position.z = 5;
+
+    this.camera.lookAt(
+      0,
+      0,
+      -4
+    );
+
+  }
+
+  // ------------------------------------------------
+  // 🧠 STATE
+  // ------------------------------------------------
+
+  buildState(){
+
+    const audio =
+      this.audio.getState();
+
+    // 🔥 DEBUG
+    console.log(audio);
+
+    return {
+
+      progress:
+        this.scroll.getProgress(),
+
+      intensity:
+        this.intensity,
+
+      time:
+        this.time,
+
+      parallax:
+        this.parallax,
+
+      flight:
+        this.flight,
+
+      wheel:
+        this.wheel,
+
+      audio
+
+    };
 
   }
 
@@ -806,34 +617,20 @@ f.add({
 
         : {};
 
-    // shader world
-
     this.world.setActive(
-
       env.world ?? true
-
     );
-
-    // stars
 
     if(this.stars?.points){
 
       this.stars.points.visible =
-
         env.stars ?? true;
 
     }
 
-    // portal OFF
-
-    this.renderer.portal = null;
-
-    // stage
-
     if(this.stage?.mesh){
 
       this.stage.mesh.visible =
-
         env.stage ?? true;
 
     }
@@ -841,156 +638,111 @@ f.add({
   }
 
   // ------------------------------------------------
-  // 🎥 CAMERA
-  // ------------------------------------------------
+// 💾 SAVE GUI
+// ------------------------------------------------
 
-  updateCamera(){
+saveGUISettings(){
 
-    const t = this.time;
+  const data =
+    this.gui.save();
 
-    // ------------------------------------------------
-    // 🖱️ SMOOTH PARALLAX
-    // ------------------------------------------------
+  localStorage.setItem(
 
-    this.parallax.x +=
+    "hero-core-gui",
 
-      (
-        this.mouse.x -
-        this.parallax.x
-      ) * 0.08;
+    JSON.stringify(data)
 
-    this.parallax.y +=
+  );
 
-      (
-        this.mouse.y -
-        this.parallax.y
-      ) * 0.08;
+  console.log(
+    "💾 GUI saved"
+  );
 
-    // ------------------------------------------------
-    // 🚀 BOOST FLIGHT
-    // ------------------------------------------------
+}
 
-    if(this.isBoosting){
 
-      this.flight.x +=
+// ------------------------------------------------
+// 📂 LOAD GUI
+// ------------------------------------------------
 
-        this.mouseVel.x * 0.5;
+loadGUISettings(){
 
-      this.flight.y +=
+  const raw =
 
-        this.mouseVel.y * 0.5;
-
-      this.flight.z -=
-
-        this.cinematic.flightSpeed;
-
-    }
-
-    // ------------------------------------------------
-    // 🌊 DAMPING
-    // ------------------------------------------------
-
-    this.flight.x *=
-
-      this.cinematic.flightDamping;
-
-    this.flight.y *=
-
-      this.cinematic.flightDamping;
-
-    this.flight.z *= 0.96;
-
-    // ------------------------------------------------
-    // 🎬 BASE CAMERA MOTION
-    // ------------------------------------------------
-
-    const px =
-
-      this.parallax.x *
-
-      this.cinematic.parallaxStrength;
-
-    const py =
-
-      this.parallax.y *
-
-      this.cinematic.parallaxStrength;
-
-    const idle =
-
-      this.cinematic.idleCameraMotion;
-
-    this.camera.position.x =
-
-      Math.sin(t * 0.3) * idle +
-
-      px +
-
-      this.flight.x;
-
-    this.camera.position.y =
-
-      Math.cos(t * 0.2) * idle +
-
-      py +
-
-      this.flight.y;
-
-    this.camera.position.z =
-
-      5 +
-
-      this.flight.z;
-
-    this.camera.lookAt(
-
-      0,
-
-      0,
-
-      -4
-
+    localStorage.getItem(
+      "hero-core-gui"
     );
 
-  }
+  if(!raw) return;
 
-  // ------------------------------------------------
-  // 🧠 STATE
-  // ------------------------------------------------
+  try{
 
-  buildState(){
+    const data =
+      JSON.parse(raw);
 
-    const p =
-      this.scroll.getProgress();
+    this.gui.load(data);
 
-    const boostedIntensity =
+    console.log(
+      "📂 GUI loaded"
+    );
 
-      this.intensity *
+  }catch(err){
 
-      (
-        1 +
-        this.cinematic.masterBoost * 2
-      );
-
-    return {
-
-      progress: p,
-
-      intensity: boostedIntensity,
-
-      time: this.time,
-
-      parallax: this.parallax,
-
-      flight: this.flight,
-
-      wheel: this.wheel,
-
-      audio: this.audio.getState()
-
-    };
+    console.error(err);
 
   }
+
+}
+
+// ------------------------------------------------
+// 💾 SAVE GUI
+// ------------------------------------------------
+
+saveGUISettings(){
+
+  const data =
+    this.gui.save();
+
+  localStorage.setItem(
+    "hero-core-gui",
+    JSON.stringify(data)
+  );
+
+  console.log("💾 GUI saved");
+
+}
+
+
+// ------------------------------------------------
+// 📂 LOAD GUI
+// ------------------------------------------------
+
+loadGUISettings(){
+
+  const raw =
+    localStorage.getItem(
+      "hero-core-gui"
+    );
+
+  if(!raw) return;
+
+  try{
+
+    const data =
+      JSON.parse(raw);
+
+    this.gui.load(data);
+
+    console.log("📂 GUI loaded");
+
+  }
+  catch(err){
+
+    console.error(err);
+
+  }
+
+}
 
   // ------------------------------------------------
   // 🔄 UPDATE
@@ -1013,33 +765,24 @@ f.add({
 
     this.scroll.updateScroll();
 
-    this.audio.update();
-
     // ------------------------------------------------
     // ⚡ INTENSITY
     // ------------------------------------------------
 
     const target =
-
       this.isBoosting ? 1 : 0;
 
     this.intensity +=
-
       (
         target -
         this.intensity
       ) * 0.08;
 
     this.intensity =
-
       THREE.MathUtils.clamp(
-
         this.intensity,
-
         0,
-
         1
-
       );
 
     // ------------------------------------------------
@@ -1056,26 +799,7 @@ f.add({
     this.updateCamera();
 
     // ------------------------------------------------
-    // 🎬 THEME CAMERA OVERRIDE
-    // ------------------------------------------------
-
-    const theme =
-      this.themeManager.activeTheme;
-
-    if(theme?.updateCamera){
-
-      theme.updateCamera(
-
-        this.camera,
-
-        state
-
-      );
-
-    }
-
-    // ------------------------------------------------
-    // 🎨 THEME UPDATE
+    // 🎨 THEMES
     // ------------------------------------------------
 
     try{
@@ -1087,17 +811,14 @@ f.add({
     }catch(err){
 
       console.error(
-
         "Theme crash:",
-
         err
-
       );
 
     }
 
     // ------------------------------------------------
-    // 🖱️ INTERACTIONS
+    // 🖱️ INTERACTION
     // ------------------------------------------------
 
     this.interactionManager.update(
@@ -1116,10 +837,6 @@ f.add({
 
     this.updateEnvironment();
 
-    // ------------------------------------------------
-    // 🌌 WORLD SYSTEMS
-    // ------------------------------------------------
-
     this.world.update();
 
     this.stars.update();
@@ -1129,24 +846,34 @@ f.add({
     // ------------------------------------------------
 
     this.points.rotation.y +=
-
       0.0003 +
-
       this.intensity * 0.001;
 
     this.points.rotation.x =
-
       Math.sin(this.time * 0.1) * 0.03;
 
-    if(this.material?.uniforms?.uTime){
+    if(
+      this.material?.uniforms?.uTime
+    ){
 
-      this.material.uniforms.uTime.value +=
-        0.01;
+      this.material.uniforms
+        .uTime.value += 0.01;
 
     }
 
     // ------------------------------------------------
-    // 🖱️ RESET WHEEL
+    // 🔥 AUDIO DEBUG VISUAL
+    // ------------------------------------------------
+
+    if(state.audio){
+
+      document.body.style.background =
+        `rgb(${state.audio.energy * 2550},0,0)`;
+
+    }
+
+    // ------------------------------------------------
+    // 🖱️ RESET
     // ------------------------------------------------
 
     this.wheel.delta = 0;
