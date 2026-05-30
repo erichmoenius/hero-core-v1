@@ -482,6 +482,19 @@ saveFolder.add({
 
     );
 
+    window.addEventListener(
+
+  "wheel",
+
+  (e)=>{
+
+    this.wheel.delta +=
+      e.deltaY * 0.001;
+
+  }
+
+);
+
   }
 
   // ------------------------------------------------

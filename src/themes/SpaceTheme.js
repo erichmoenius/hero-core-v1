@@ -305,7 +305,7 @@ const wheel =
   state.wheel?.delta || 0;
 
 this.zoomVelocity +=
-  wheel * 0.35;
+  wheel * 1.0;
 
 // ------------------------------------------------
 // 🌊 ZOOM DAMPING
