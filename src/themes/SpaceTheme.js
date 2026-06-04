@@ -16,6 +16,8 @@ this.time = 0;
 
 this.velocity = 0;
 
+this.kickPulse = 0;
+
 // ------------------------------------------------
 // 🌌 WORLD GROUP
 // ------------------------------------------------
@@ -65,12 +67,14 @@ this.plasmaBlob.applyPreset(
 
 if(this.gui){
 
-  this.plasmaBlob.addGUI(
+  this.plasmaFolder =
 
     this.gui.addFolder(
       "🫧 Plasma"
-    )
+    );
 
+  this.plasmaBlob.addGUI(
+    this.plasmaFolder
   );
 
 }
@@ -297,6 +301,23 @@ const intensity =
 const audio =
   state.audio || {};
 
+if(audio.kick){
+
+  this.kickPulse = 1;
+
+}
+
+this.kickPulse *= 0.92;
+
+if(audio.kick){
+
+  console.log(
+    "🥁 KICK",
+    this.kickPulse
+  );
+
+}
+
 // ------------------------------------------------
 // 🖱️ SPACE ZOOM INPUT
 // ------------------------------------------------
@@ -482,10 +503,9 @@ this.fibonacci.update(
 const fibBaseScale = 3.0;
 
 const fibAudioScale =
-
   this.delayedEnergy * 0.48 +
-
-  bass * 0.7;
+  bass * 0.7 +
+  this.kickPulse * 0.8;
 
 this.fibonacci.group.scale.setScalar(
 
@@ -845,6 +865,8 @@ pos.needsUpdate = true;
 // ------------------------------------------------
 
 destroy(){
+
+this.plasmaFolder?.destroy();
 
 this.fibonacci?.destroy();
 

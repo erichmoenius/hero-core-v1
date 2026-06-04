@@ -16,6 +16,9 @@ export default class AudioManager {
     this.source = null;
     this.stream = null;
 
+    this.prevBass = 0;
+    this.kickCooldown = 0;
+
     // ------------------------------------------------
     // DEVICES
     // ------------------------------------------------
@@ -397,12 +400,32 @@ console.log(
     const energy =
       (bass + mid + high) / 3;
 
+    // 🔥 cooldown timer
+this.kickCooldown =
+  Math.max(
+    0,
+    this.kickCooldown - 1
+  );
+
+const kick =
+  this.kickCooldown === 0 &&
+  bass > this.prevBass + 0.003;
+
+if(kick){
+
+  this.kickCooldown = 8;
+
+}
+
+this.prevBass = bass;  
+
     return {
 
       bass,
       mid,
       high,
-      energy
+      energy,
+      kick
 
     };
   }

@@ -28,7 +28,8 @@ export class ScrollController {
     const scrollTop = window.scrollY;
 
     const docHeight =
-      document.documentElement.scrollHeight - window.innerHeight;
+    document.body.scrollHeight -
+    window.innerHeight;
 
     this.progress = docHeight > 0
       ? scrollTop / docHeight

@@ -139,21 +139,37 @@ float colorNoise(vec3 p){
 }
 
 vec3 spectrum(float t){
+
   t=clamp(t,0.0,1.0);
-  vec3 c0=vec3(0.92,0.08,0.08);
-  vec3 c1=vec3(0.95,0.45,0.02);
-  vec3 c2=vec3(0.95,0.90,0.04);
-  vec3 c3=vec3(0.08,0.82,0.18);
-  vec3 c4=vec3(0.06,0.42,0.95);
-  vec3 c5=vec3(0.28,0.10,0.82);
-  vec3 c6=vec3(0.62,0.05,0.88);
+
+vec3 c0=vec3(0.95,0.20,0.12);
+
+vec3 c1=vec3(1.00,0.45,0.08);
+
+vec3 c2=vec3(1.00,0.65,0.18);
+
+vec3 c3=vec3(0.90,0.18,0.55);
+
+vec3 c4=vec3(0.28,0.18,0.85);
+
+vec3 c5=vec3(0.12,0.30,0.95);
+
+vec3 c6=vec3(0.65,0.08,0.88);
+
   float s=t*6.0; int i=int(s); float f=fract(s);
+
   if(i==0) return mix(c0,c1,f);
+
   else if(i==1) return mix(c1,c2,f);
+
   else if(i==2) return mix(c2,c3,f);
+
   else if(i==3) return mix(c3,c4,f);
+
   else if(i==4) return mix(c4,c5,f);
+
   return mix(c5,c6,f);
+
 }
 
 void main(){
@@ -161,16 +177,25 @@ void main(){
 
   float cN=colorNoise(vWorldPos*(uN3Freq+uMid*1.5)+t*0.25);
 
-  float ct=vN1*0.35+vN2*0.25+cN*0.40;
-  ct +=
-    uBass * 0.25 +
-    uHigh * 0.15 +
-    uEnergy * 0.35 +
-    uKickDecay * 0.30;
-  ct=clamp(ct,0.0,1.0);
+  float ct =
 
-  vec3 base=spectrum(ct);
-  base*=(0.5+uEnergy*2.5);
+    vN1 * 0.25 +
+    vN2 * 0.20 +
+    cN  * 0.30;
+
+ct +=
+
+    uBass      * 0.10 +
+    uMid       * 0.08 +
+    uHigh      * 0.05 +
+    uEnergy    * 0.15 +
+    uKickDecay * 0.20;
+
+ct = clamp(ct,0.0,1.0);
+
+vec3 base=spectrum(ct);
+
+base*=(0.8+uEnergy*0.8);
 
   vec3 N=normalize(vNormal);
   vec3 V=normalize(-vWorldPos);
@@ -409,20 +434,23 @@ export class PlasmaBlob {
     this._aura.rotation.y-=0.0008;
     this._aura.rotation.x+=0.0004;
 
-    const pulse =
+
+const pulse =
 
   1 +
 
-  energy * 0.48 +
+  bass * 0.18 +
 
-  bass * 0.008;
+  energy * 0.12 +
+
+  this._kickDecay * 0.18;
 
 this._mesh.scale.setScalar(
   cfg.scale * pulse
 );
 
 this._aura.scale.setScalar(
-  cfg.scale * 1.15 * pulse
+  cfg.scale * pulse * 1.15
 );
 
     // floating

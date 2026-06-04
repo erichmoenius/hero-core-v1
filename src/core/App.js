@@ -176,7 +176,7 @@ export class App {
     // ------------------------------------------------
 
     this.interactionManager =
-      new InteractionManager(
+    new InteractionManager(
 
         document.getElementById(
           "hero-root"
@@ -187,7 +187,7 @@ export class App {
       );
 
     this.interactionManager.setMode(
-      "trail"
+      "Off"
     );
 
     // ------------------------------------------------
@@ -444,58 +444,68 @@ saveFolder.add({
   }
 
   // ------------------------------------------------
-  // 🖱️ MOUSE
-  // ------------------------------------------------
+// 🖱️ MOUSE
+// ------------------------------------------------
 
-  setupMouse(){
+setupMouse(){
 
-    window.addEventListener(
+  window.addEventListener(
 
-      "pointermove",
+    "pointermove",
 
-      (e)=>{
+    (e)=>{
 
-        const x =
-          e.clientX /
-          window.innerWidth;
+      const x =
 
-        const y =
-          e.clientY /
-          window.innerHeight;
+        e.clientX /
 
-        const nx =
-          (x - 0.5) * 2;
+        window.innerWidth;
 
-        const ny =
-          (y - 0.5) * 2;
+      const y =
 
-        this.mouseVel.x =
-          nx - this.mouse.x;
+        e.clientY /
 
-        this.mouseVel.y =
-          ny - this.mouse.y;
+        window.innerHeight;
 
-        this.mouse.x = nx;
-        this.mouse.y = ny;
+      const nx =
 
-      }
+        (x - 0.5) * 2;
 
-    );
+      const ny =
 
-    window.addEventListener(
+        (y - 0.5) * 2;
 
-  "wheel",
+      this.mouseVel.x =
 
-  (e)=>{
+        nx - this.mouse.x;
 
-    this.wheel.delta +=
-      e.deltaY * 0.001;
+      this.mouseVel.y =
 
-  }
+        ny - this.mouse.y;
 
-);
+      this.mouse.x = nx;
 
-  }
+      this.mouse.y = ny;
+
+    }
+
+  );
+
+  window.addEventListener(
+
+    "wheel",
+
+    (e)=>{
+
+      this.wheel.delta +=
+
+        e.deltaY * 0.001;
+
+    }
+
+  );
+
+}
 
   // ------------------------------------------------
   // 🎬 THEME SWITCHING
@@ -650,7 +660,7 @@ saveFolder.add({
 
   }
 
-  // ------------------------------------------------
+// ------------------------------------------------
 // 💾 SAVE GUI
 // ------------------------------------------------
 
@@ -659,20 +669,21 @@ saveGUISettings(){
   const data =
     this.gui.save();
 
-  localStorage.setItem(
+  const key =
+  `hero-core-gui-${this.themeManager.activeThemeName}`;
 
-    "hero-core-gui",
+localStorage.setItem(
+  key,
+  JSON.stringify(data)
+);
 
-    JSON.stringify(data)
+  console.log("💾 GUI saved");
 
-  );
-
-  console.log(
-    "💾 GUI saved"
+  this.showNotification(
+    "💾 GUI Saved"
   );
 
 }
-
 
 // ------------------------------------------------
 // 📂 LOAD GUI
@@ -680,11 +691,11 @@ saveGUISettings(){
 
 loadGUISettings(){
 
-  const raw =
+  const key =
+  `hero-core-gui-${this.themeManager.activeThemeName}`;
 
-    localStorage.getItem(
-      "hero-core-gui"
-    );
+const raw =
+  localStorage.getItem(key);
 
   if(!raw) return;
 
@@ -699,54 +710,9 @@ loadGUISettings(){
       "📂 GUI loaded"
     );
 
-  }catch(err){
-
-    console.error(err);
-
-  }
-
-}
-
-// ------------------------------------------------
-// 💾 SAVE GUI
-// ------------------------------------------------
-
-saveGUISettings(){
-
-  const data =
-    this.gui.save();
-
-  localStorage.setItem(
-    "hero-core-gui",
-    JSON.stringify(data)
-  );
-
-  console.log("💾 GUI saved");
-
-}
-
-
-// ------------------------------------------------
-// 📂 LOAD GUI
-// ------------------------------------------------
-
-loadGUISettings(){
-
-  const raw =
-    localStorage.getItem(
-      "hero-core-gui"
+    this.showNotification(
+      "📂 GUI Loaded"
     );
-
-  if(!raw) return;
-
-  try{
-
-    const data =
-      JSON.parse(raw);
-
-    this.gui.load(data);
-
-    console.log("📂 GUI loaded");
 
   }
   catch(err){
@@ -754,6 +720,71 @@ loadGUISettings(){
     console.error(err);
 
   }
+
+}
+
+// ------------------------------------------------
+// 🔔 NOTIFICATION
+// ------------------------------------------------
+
+showNotification(text){
+
+  const old =
+    document.getElementById(
+      "hero-notification"
+    );
+
+  if(old){
+
+    old.remove();
+
+  }
+
+  const div =
+    document.createElement("div");
+
+  div.id =
+    "hero-notification";
+
+  div.textContent =
+    text;
+
+  div.style.position =
+    "fixed";
+
+  div.style.top =
+    "20px";
+
+  div.style.right =
+    "20px";
+
+  div.style.padding =
+    "12px 18px";
+
+  div.style.background =
+    "rgba(0,0,0,0.75)";
+
+  div.style.color =
+    "#fff";
+
+  div.style.borderRadius =
+    "8px";
+
+  div.style.zIndex =
+    "99999";
+
+  div.style.fontFamily =
+    "sans-serif";
+
+  document.body.appendChild(
+    div
+  );
+
+  setTimeout(()=>{
+
+    div.remove();
+
+  }, 2000);
 
 }
 
@@ -834,15 +865,15 @@ loadGUISettings(){
     // 🖱️ INTERACTION
     // ------------------------------------------------
 
-    this.interactionManager.update(
+    if(this.interactionManager){
 
-      this.mouse,
+  this.interactionManager.update(
+    this.mouse,
+    state.audio,
+    this.time
+  );
 
-      state.audio,
-
-      this.time
-
-    );
+}
 
     // ------------------------------------------------
     // 🌍 ENVIRONMENT
@@ -871,17 +902,6 @@ loadGUISettings(){
 
       this.material.uniforms
         .uTime.value += 0.01;
-
-    }
-
-    // ------------------------------------------------
-    // 🔥 AUDIO DEBUG VISUAL
-    // ------------------------------------------------
-
-    if(state.audio){
-
-      document.body.style.background =
-        `rgb(${state.audio.energy * 2550},0,0)`;
 
     }
 

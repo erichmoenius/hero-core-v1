@@ -7,6 +7,7 @@ this.gui = gui;
 
 this.themes = new Map();
 this.activeTheme = null;
+this.activeThemeName = null;
 
 }
 
@@ -37,6 +38,8 @@ if(this.activeTheme){
 }
 
 // 🔥 create new theme WITH GUI
+this.activeThemeName = name;
+
 this.activeTheme = new ThemeClass(
   this.container,
   this.gui

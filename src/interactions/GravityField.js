@@ -359,6 +359,15 @@ this.audioBoost +=
 const px =
   (mouse.x * 0.5 + 0.5) * this.width;
 
+console.log(
+  "mouse",
+  mouse.x.toFixed(2),
+  "px",
+  Math.round(px),
+  "width",
+  this.width
+);  
+
 const py =
   (mouse.y * 0.5 + 0.5) * this.height;
 
