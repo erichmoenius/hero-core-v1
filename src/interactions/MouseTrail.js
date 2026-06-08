@@ -56,7 +56,11 @@ this.canvas =
   document.createElement("canvas");
 
 this.canvas.style.position =
-  "absolute";
+  "fixed";
+
+this.canvas.style.top = "0";
+
+this.canvas.style.left = "0";
 
 this.canvas.style.top = "0";
 
@@ -88,7 +92,7 @@ if(computed.position === "static"){
 
 }
 
-this.container.appendChild(
+document.body.appendChild(
   this.canvas
 );
 
@@ -181,8 +185,11 @@ const rect =
 const dpr =
   window.devicePixelRatio || 1;
 
-this.width = rect.width;
-this.height = rect.height;
+this.width =
+  window.innerWidth;
+
+this.height =
+  window.innerHeight;
 
 this.canvas.width =
   rect.width * dpr;
@@ -226,6 +233,14 @@ const px =
 const py =
   (mouse.y * 0.5 + 0.5) *
   this.height;
+
+console.log(
+  "trail",
+  px,
+  py,
+  "scroll",
+  window.scrollY
+);
 
 // ------------------------------------------------
 // 🌌 GHOST INERTIA

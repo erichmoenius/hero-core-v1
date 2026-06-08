@@ -19,7 +19,7 @@ this.settings = {
 
   gravity: 0.55,
 
-  gravityRadius: 220,
+  gravityRadius: 350,
 
   repulseRadius: 28,
 
@@ -59,7 +59,7 @@ Object.assign(
 this.canvas =
   document.createElement("canvas");
 
-this.canvas.style.position = "absolute";
+this.canvas.style.position = "fixed";
 
 this.canvas.style.top = "0";
 
@@ -468,7 +468,14 @@ for(const p of this.particles){
   const dist =
     Math.sqrt(gx * gx + gy * gy);
 
-  if(
+  console.log(
+  "ghostX",
+  Math.round(this.ghost.x),
+  "radius",
+  this.settings.gravityRadius
+);
+  
+    if(
     dist <
     this.settings.gravityRadius
   ){
@@ -488,7 +495,7 @@ for(const p of this.particles){
 
       strength /
 
-      Math.max(dist, 8);
+      Math.max(dist, 2);
 
     p.vx += gx * force;
 

@@ -195,8 +195,7 @@ camera.position.y +=
 // 🌌 ZOOM
 // ------------------------------------------------
 
-camera.position.z =
-  5 + this.zoom;
+camera.position.z = 5;
 
 }
 
@@ -311,10 +310,6 @@ this.kickPulse *= 0.92;
 
 if(audio.kick){
 
-  console.log(
-    "🥁 KICK",
-    this.kickPulse
-  );
 
 }
 
@@ -340,6 +335,7 @@ this.zoomVelocity *= 0.9;
 
 this.zoom +=
   this.zoomVelocity;
+
 
 // ------------------------------------------------
 // 🌫️ BREATHING
@@ -781,6 +777,17 @@ this.fibonacci.group.position.y +=
 
   ) * 0.01;
 
+console.log(
+  "fibY:",
+  this.fibonacci.group.position.y
+);  
+
+console.log(
+  "group",
+  this.group.position.x,
+  this.group.position.y,
+  this.group.position.z
+);
 
 // ------------------------------------------------
 // 🌠 DEPTH

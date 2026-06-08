@@ -443,7 +443,7 @@ saveFolder.add({
 
   }
 
-  // ------------------------------------------------
+// ------------------------------------------------
 // 🖱️ MOUSE
 // ------------------------------------------------
 
@@ -456,36 +456,35 @@ setupMouse(){
     (e)=>{
 
       const x =
-
         e.clientX /
-
         window.innerWidth;
 
       const y =
-
         e.clientY /
-
         window.innerHeight;
 
       const nx =
-
         (x - 0.5) * 2;
 
       const ny =
-
         (y - 0.5) * 2;
 
       this.mouseVel.x =
-
         nx - this.mouse.x;
 
       this.mouseVel.y =
-
         ny - this.mouse.y;
 
       this.mouse.x = nx;
-
       this.mouse.y = ny;
+
+      console.log(
+        "mouse",
+        this.mouse.x,
+        this.mouse.y,
+        "scroll",
+        window.scrollY
+      );
 
     }
 
@@ -498,7 +497,6 @@ setupMouse(){
     (e)=>{
 
       this.wheel.delta +=
-
         e.deltaY * 0.001;
 
     }
@@ -842,6 +840,13 @@ showNotification(text){
 
     this.updateCamera();
 
+    console.log(
+  "camera",
+  this.camera.position.x,
+  this.camera.position.y,
+  this.camera.position.z
+);
+
     // ------------------------------------------------
     // 🎨 THEMES
     // ------------------------------------------------
@@ -867,7 +872,19 @@ showNotification(text){
 
     if(this.interactionManager){
 
-  this.interactionManager.update(
+  
+    console.log(
+  "APP MOUSE",
+  this.mouse.x,
+  this.mouse.y,
+  "PARALLAX",
+  this.parallax.x,
+  this.parallax.y,
+  "SCROLL",
+  window.scrollY
+);  
+  
+      this.interactionManager.update(
     this.mouse,
     state.audio,
     this.time
