@@ -1,162 +1,192 @@
-# Hero Core v1 – Cinematic WebGL Hero Engine
+Hero Core v1 – Interactive Experience Engine
 
-A cinematic WebGL hero section built with **Three.js**.
-The system renders a **procedural space environment** with nebula shaders, layered starfields, a glass portal, and scroll-driven themes.
+Universal Story – A Fibonacci Narrative
+An experimental engine for creating cinematic, interactive digital journeys.
 
-This project explores how interactive graphics, audio, and visual storytelling can transform a website hero section into a **digital dream journey**.
 
----
+Vision
+Most websites present information.
+Hero Core explores a different idea:
+What if a website could become an experience?
+Hero Core transforms the traditional hero section into a living environment that combines procedural graphics, audio, interaction, and narrative progression.
+Rather than displaying static content, the system unfolds through visual states, evolving themes, and user-driven interactions.
+At the center of the project is a concept called:
+Universal Story – A Fibonacci Narrative
+The Fibonacci sequence is not used as decoration, but as a metaphor for growth, emergence, transformation, and interconnected systems.
+Every theme, interaction, and visual system is designed around the idea that experiences can evolve through recurring narrative patterns:
+Observation → Exploration → Transformation → Revelation
+The goal is not to build isolated visual effects.
+The goal is to create digital environments that feel alive.
 
-# ✨ Features
+Current Themes
+🌌 Space Theme
+A procedural cosmic environment featuring:
 
-### 🌌 Procedural Space Background
+Multi-layer plasma systems
+Nebula-inspired visual structures
+Cinematic camera movement
+Audio-reactive behavior
+Scroll-driven atmosphere transitions
+Interactive presence systems
 
-* Dual-layer **nebula shader**
-* **Curl noise gas flow**
-* **Depth parallax**
-* **Chromatic scattering**
-* **Volumetric light rays**
+🎬 Movies Theme
+A cinematic visual storytelling system featuring:
 
-### ⭐ Cinematic Starfield
+Multi-layer video composition
+Dynamic blending
+Audio integration
+Reusable content pipeline
+Theme-based visual narratives
 
-* 3 parallax star layers
-* **Milky Way band**
-* **Micro-star deep space dust**
-* Variable star sizes
-* Twinkling animation
-* Blue / white / orange star colors
-
-### 🪟 Glass Portal
-
-* Transparent **refraction portal**
-* Cinematic light sweep
-* Scroll-controlled visual states
-* Theme container for dynamic content
-
-### 🎨 Theme System
-
-Current themes:
-
-1. **Seasons Theme**
-   Color transitions representing seasonal moods.
-
-2. **Image Theme**
-   Cross-fading image transitions inside the portal.
-
+🎨 Future Themes
 Planned:
 
-3. **Video Theme**
-   Looping WebM / MOV visual experiences.
+Interactive Worlds
+Procedural Landscapes
+Symbolic Narrative Systems
+DaVinci Theme
 
-### ✨ Particle System
 
-Interactive particle field reacting to user input.
+Interaction Systems
+Hero Core contains a modular interaction framework independent from individual themes.
+🌀 Fibonacci Presence
+A living procedural presence that follows and responds to the user.
+🌊 Mouse Trail
+Cinematic motion trails with inertia and atmospheric behavior.
+⚫ Gravity Field
+Particle attraction system creating the illusion of local gravitational influence.
+🎧 Audio Interaction
+Visual systems can react to:
 
-### 🖱 Interaction
+Frequency bands
+Energy levels
+Live audio input
+Uploaded music
+Future beat/event detection
 
-* Scroll-driven state transitions
-* Mouse parallax
-* Click intensity boost
 
----
+Technical Features
+Rendering
 
-# 🧠 Architecture
+Three.js
+WebGL
+GLSL shaders
+Procedural animation systems
+Real-time post-processing foundations
 
-```text
-Renderer
+Audio
+
+Unified Audio Manager
+File-based audio input
+Live audio input
+Frequency analysis
+Energy extraction
+
+Interaction
+
+Mouse tracking
+Scroll-driven progression
+State-based transitions
+Cinematic interpolation
+Modular interaction architecture
+
+Engine
+
+Theme Manager
+State Manager
+Scroll Controller
+Audio Manager
+Interaction Manager
+GUI Persistence System
+Modular Render Loop
+
+
+Architecture
+Engine
+├── Themes
+│   ├── SpaceTheme
+│   ├── MoviesTheme
+│   └── Future Themes
 │
-├── ShaderWorld
-│   └── Procedural Nebula
+├── Audio
+│   ├── AudioManager
+│   ├── Live Input
+│   └── File Input
 │
-├── Starfield
-│   ├── Micro stars
-│   ├── Far layer
-│   ├── Mid layer
-│   └── Near layer
+├── Interactions
+│   ├── FibonacciPresence
+│   ├── MouseTrail
+│   └── GravityField
 │
-├── GlassPortal
+├── Core
+│   ├── StateManager
+│   ├── ScrollController
+│   ├── InteractionManager
+│   └── Loop
 │
-├── ThemeStage
-│   └── ThemeManager
-│       ├── SeasonsTheme
-│       └── ImageTheme
-│
-├── ParticleField
-│
-└── Engine
-    ├── ScrollController
-    ├── StateManager
-    └── Loop
-```
+└── Rendering
+├── Three.js
 
----
+├── GLSL
 
-# 🛠 Tech Stack
+└── Visual Systems
 
-* **Three.js**
-* **WebGL / GLSL**
-* **Vite**
-* **JavaScript ES Modules**
 
----
+Technology Stack
 
-# 🚀 Development
+Three.js
+WebGL
+GLSL
+JavaScript ES Modules
+Web Audio API
+Vite
+GitHub
+Vercel
 
+
+Development
 Install dependencies:
-
-```
 npm install
-```
 
 Run development server:
-
-```
 npm run dev
-```
 
 Build production version:
-
-```
 npm run build
-```
 
----
 
-# 🌐 Deployment
+Roadmap
+Phase 1 — Foundation ✅
 
-The project is automatically deployed via **Vercel**.
+Theme architecture
+Audio pipeline
+Interaction framework
+Deployment workflow
+Modular engine structure
 
-Every push to the `main` branch triggers a new deployment.
+Phase 2 — Cinematic Experiences 🚧
 
----
+Advanced audio interpretation
+Event-driven visual systems
+Narrative scroll choreography
+Mobile interaction language
 
-# 🔮 Roadmap
+Phase 3 — Universal Story
 
-Planned improvements:
+Interactive Worlds
+Procedural Symbol Systems
+DaVinci Theme
+Cross-theme narrative architecture
+Fully realized Fibonacci Narrative framework
 
-* Video portal theme (WebM / VideoTexture)
-* Mobile optimization
-* Audio-reactive visual states
-* Cinematic UI overlay
-* Shader performance tuning
-* Reusable hero template engine
 
----
+Philosophy
+Hero Core is not a template.
+Hero Core is an exploration of how technology, sound, interaction, motion, and storytelling can merge into a single experience.
+Every theme is a different expression of the same underlying idea:
+A Universal Story told through a Fibonacci Narrative.
 
-# 🎭 Concept
-
-This hero section is part of a larger idea:
-
-> A **digital dream journey** through multiple visual states.
-
-Instead of static visuals, the hero becomes an **interactive environment**.
-
----
-
-# 👤 Author
-
+Author
 Erich Moenius
-
-Project related to:
-
-**thefridolin.com – Interactive Web Experiments**
+Interactive Experiments • Creative Technology • Real-Time Visual Systems
+🌐 thefridolin.com
