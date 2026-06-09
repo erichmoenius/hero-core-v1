@@ -1,27 +1,34 @@
-🌌 Hero Core v1
+🌌 HERO CORE V1
 Interactive Experience Engine
+
 Universal Story – A Fibonacci Narrative
-A framework for creating cinematic, audio-reactive, interactive digital journeys.
+A framework for creating cinematic, audio-reactive and interactive digital journeys.
 
-🚀 Live Prototype
-prototype.thefridolin.com
 
-The Vision
+🚀 LIVE EXPERIENCE
+👉 prototype.thefridolin.com
+
+
+✨ THE IDEA
 Most websites present information.
-Hero Core explores a different idea:
+Hero Core explores a different question:
 
 What if a website could become an experience?
 
-Instead of static content, Hero Core creates living digital environments that evolve through interaction, audio, motion, and narrative progression.
-The objective is not to build isolated visual effects.
-The objective is to create experiences that feel alive.
+Instead of static content, Hero Core creates living digital environments driven by:
 
-🌀 Universal Story – A Fibonacci Narrative
-At the heart of Hero Core lies a simple principle:
-Growth.
-Emergence.
-Transformation.
-The Fibonacci sequence is not used as decoration, but as a narrative structure that guides the evolution of themes, interactions, and visual systems.
+🌌 Visual Systems
+🎧 Audio
+🖱 Interaction
+🎬 Narrative Progression
+
+The goal is not to create effects.
+The goal is to create experiences.
+
+
+🌀 UNIVERSAL STORY
+A Fibonacci Narrative
+Hero Core is guided by a simple principle:
 Observe
    ↓
 Explore
@@ -30,9 +37,12 @@ Transform
    ↓
 Reveal
 
-Every theme is a different interpretation of the same underlying journey.
+The Fibonacci sequence is not used as decoration.
+It is used as a narrative structure for growth, emergence and transformation.
+Every theme is a different expression of the same journey.
 
-⚡ Current Systems
+
+⚡ CURRENT SYSTEMS
 
 
 
@@ -66,17 +76,14 @@ Status
 ✅
 
 
-🖱 Scroll Controller
-✅
-
-
 🚀 Vercel Deployment
 ✅
 
 
 
 
-🌌 Experience Architecture
+
+🏗 EXPERIENCE ARCHITECTURE
 Universal Story
         │
         ▼
@@ -93,71 +100,80 @@ Theme  Audio  Interaction
  Experience
 
 
-Themes
-🌌 Space Theme
-A procedural cosmic environment featuring:
 
-Layered plasma systems
-Nebula-inspired visuals
-Cinematic motion
-Audio-reactive behavior
-Scroll-driven atmosphere
-Interactive presence systems
+🌌 THEMES
+Space Theme
+Procedural cosmic environments.
+
+Plasma Systems
+Nebula Structures
+Audio Reactivity
+Scroll Progression
+Cinematic Motion
 
 
 🎬 Movies Theme
-A cinematic visual storytelling system featuring:
+Visual storytelling through video.
 
-Multi-layer video composition
-Dynamic blending
-Audio integration
-Reusable content pipeline
-Narrative-driven presentation
+Multi-Layer Video System
+Dynamic Blending
+Audio Integration
+Narrative Presentation
 
 
-🎨 DaVinci Theme (In Development)
+🎨 DaVinci Theme
+In Development
 The long-term vision of Hero Core.
 Combining:
 
-Procedural graphics
-Symbolic systems
-Audio interpretation
-Video composition
-Interactive storytelling
+Procedural Graphics
+Symbolic Systems
+Audio Interpretation
+Video
+Interaction
 
 into a unified narrative experience.
 
-🎧 Interaction Systems
+
+🎧 INTERACTION SYSTEMS
 🌀 Fibonacci Presence
-A living procedural presence that follows and responds to the user.
+A living procedural presence.
+
 ⚫ Gravity Field
-A particle attraction system creating local gravitational influence.
+A local gravitational influence system.
+
 🌊 Mouse Trail
-Atmospheric motion trails with inertia and cinematic movement.
+Atmospheric cinematic motion trails.
+
 🎧 Audio Reactivity
-Visual systems respond to:
+Supports:
 
-Frequency bands
-Energy levels
-Uploaded music
-Live audio input
+Audio Files
+Live Input
+Frequency Analysis
+Energy Detection
 
-Future versions will support event-based audio interpretation.
+Future versions will support:
 
-⚙️ Technical Candy
+Beat Detection
+Event Systems
+Emotional Audio Mapping
+
+
+
+⚙ TECHNICAL CANDY
 Rendering
 
 Three.js
 WebGL
-GLSL Shaders
-Procedural Animation Systems
+GLSL
+Procedural Animation
 
 Audio
 
 Web Audio API
+Live Audio Input
 Frequency Analysis
-Energy Detection
-Live Input Support
 
 Engine
 
@@ -166,8 +182,6 @@ State Manager
 Scroll Controller
 Audio Manager
 Interaction Manager
-GUI Persistence
-Modular Render Loop
 
 Deployment
 
@@ -176,51 +190,39 @@ GitHub
 Vercel
 
 
-🛠 Development
-Install dependencies:
-npm install
 
-Run development server:
-npm run dev
-
-Build production version:
-npm run build
-
-
-🔮 Roadmap
+🔮 ROADMAP
 Foundation ✅
 
 Modular Engine Architecture
+Theme System
 Audio Pipeline
 Interaction Framework
-Theme System
-Deployment Workflow
 
-Next Steps 🚧
+Next 🚧
 
 Mobile Interaction Language
 Event-Based Audio Reactions
 Narrative Scroll Choreography
-Advanced Theme Transitions
 Cinematic Experience Design
 
-Long-Term Vision
+Future 🌌
 
 Interactive Worlds
-Symbolic Narrative Systems
 DaVinci Theme
 Universal Story Framework
 
 
-🎭 Philosophy
+
+🎭 PHILOSOPHY
+
 Hero Core is not a website template.
-Hero Core is an exploration of how technology, sound, interaction, motion, and storytelling can merge into a single experience.
-Every theme is a different expression of the same idea:
+Hero Core is an exploration of how technology, sound, interaction, motion and storytelling can merge into a single experience.
 
 A Universal Story told through a Fibonacci Narrative.
 
 
-👤 Author
+👤 AUTHOR
 Erich Moenius
-Creative Technology • Real-Time Graphics • Interactive Experiences
+Creative Technology • Interactive Experiences • Real-Time Graphics
 🌐 thefridolin.com
