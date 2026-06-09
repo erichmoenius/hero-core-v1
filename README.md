@@ -1,6 +1,5 @@
 🌌 HERO CORE V1
 Interactive Experience Engine
-https://github.com/erichmoenius/hero-core-v1/blob/main/src/assets/images/blob_1.png
 Universal Story – A Fibonacci Narrative
 A framework for creating cinematic, audio-reactive and interactive digital journeys.
 
