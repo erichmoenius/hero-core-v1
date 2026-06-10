@@ -1,5 +1,10 @@
-🌌 HERO CORE V1
-Interactive Experience Engine
+🌌 Hero Core v1
+
+<p align="center">
+  <img src="docs/images/blob_1.png" width="1000">
+</p>
+
+Interactive Experience Engin🌌e
 Universal Story – A Fibonacci Narrative
 A framework for creating cinematic, audio-reactive and interactive digital journeys.
 
