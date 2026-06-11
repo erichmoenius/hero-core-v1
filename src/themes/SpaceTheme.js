@@ -119,6 +119,22 @@ this.mouseField = new THREE.Vector2();
 
 this.mouseVelocity = new THREE.Vector2();
 
+// ------------------------------------------------
+// 🌀 COMMUNICATION SYSTEM
+// ------------------------------------------------
+
+this.communication = {
+
+  connection: 0,
+
+  signal: 0,
+
+  resonance: 0,
+
+  coherence: 0
+
+};
+
 }
 
 // ------------------------------------------------
@@ -486,7 +502,7 @@ const delta =
 
   bass * 0.04;
 
-this.fibonacci.update(
+  this.fibonacci.update(
   delta,
   audio
 );
@@ -719,6 +735,72 @@ if(energy > 0.35){
 const blobPos =
   this.plasmaBlob._mesh.position;
 
+  const fibPos =
+  this.fibonacci.group.position;
+
+const distance =
+  fibPos.distanceTo(blobPos);
+
+const connection =
+
+  THREE.MathUtils.clamp(
+
+    1.0 - distance / 6.0,
+
+    0,
+
+    1
+
+  );
+
+this.communication.connection =
+  connection;
+
+// ------------------------------------------------
+// 📡 FIBONACCI SIGNAL
+// ------------------------------------------------
+
+const signal =
+
+  (
+    bass * 0.5 +
+    mid * 0.3 +
+    high * 0.2
+  ) *
+
+  connection;
+
+this.communication.signal +=
+
+  (
+    signal -
+    this.communication.signal
+  ) * 0.05;  
+
+console.log(
+
+  "COMM",
+
+  this.communication
+
+);
+
+this.plasmaBlob.update(
+  audio,
+  this.time
+);
+
+//if(this.plasmaBlob._mesh){
+//
+  //const pulse =
+    //1.0 +
+    //connection * 0.12;
+
+  //this.plasmaBlob._mesh.scale.setScalar(
+    //pulse
+  //);
+
+//}
 
 // ------------------------------------------------
 // 🌀 ORBITAL RELATIONSHIP

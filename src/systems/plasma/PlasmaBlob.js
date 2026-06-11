@@ -142,19 +142,19 @@ vec3 spectrum(float t){
 
   t=clamp(t,0.0,1.0);
 
-vec3 c0=vec3(0.95,0.20,0.12);
+vec3 c0=vec3(0.02,0.03,0.10);  // deep space
 
-vec3 c1=vec3(1.00,0.45,0.08);
+vec3 c1=vec3(0.08,0.12,0.25);  // dark blue
 
-vec3 c2=vec3(1.00,0.65,0.18);
+vec3 c2=vec3(0.25,0.15,0.55);  // violet
 
-vec3 c3=vec3(0.90,0.18,0.55);
+vec3 c3=vec3(0.55,0.20,0.85);  // magenta
 
-vec3 c4=vec3(0.28,0.18,0.85);
+vec3 c4=vec3(0.15,0.65,0.95);  // cyan
 
-vec3 c5=vec3(0.12,0.30,0.95);
+vec3 c5=vec3(0.95,0.75,0.25);  // gold signal
 
-vec3 c6=vec3(0.65,0.08,0.88);
+vec3 c6=vec3(0.60,0.85,1.00);  // bright cyan
 
   float s=t*6.0; int i=int(s); float f=fract(s);
 
