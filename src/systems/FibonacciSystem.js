@@ -135,17 +135,29 @@ this.targets = shapes.map(fn =>
 // ------------------------------------------------
 createParticles(){
 
-const geo = new THREE.SphereGeometry(0.04, 8, 8);
+const geo = new THREE.SphereGeometry(0.025, 6, 6);
 
 for(let i = 0; i < this.N; i++){
 
   const hue = (i * 0.618033) % 1;
 
   const mat = new THREE.MeshBasicMaterial({
-    color: new THREE.Color().setHSL(hue, 0.8, 0.6),
-    transparent: true,
-    opacity: 0.9
-  });
+
+  color: new THREE.Color().setHSL(
+
+    0.12,      // gold
+
+    0.75,
+
+    0.65
+
+  ),
+
+  transparent: true,
+
+  opacity: 0.9
+
+});
 
   const mesh = new THREE.Mesh(geo, mat);
 
