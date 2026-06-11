@@ -84,24 +84,24 @@ if(this.gui){
 // ------------------------------------------------
 
 this.far = this.createLayer(
-  1500,
+  800,
   60,
   0.02,
-  0x6688ff
+  0x334488
 );
 
 this.mid = this.createLayer(
-  1000,
+  500,
   30,
-  0.04,
-  0xffffff
+  0.03,
+  0xaaccff
 );
 
 this.near = this.createLayer(
-  600,
+  250,
   15,
-  0.07,
-  0xffaa55
+  0.05,
+  0xaa8866
 );
 
 // ------------------------------------------------
@@ -254,7 +254,7 @@ const material =
 
     transparent: true,
 
-    opacity: 0.9,
+    opacity: 0.25,
 
     depthWrite: false,
 

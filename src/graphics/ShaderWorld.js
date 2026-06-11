@@ -110,12 +110,12 @@ void main(){
   float n = fbm(uv * uNoiseScale + uTime * uSpeed);
   n = pow(n,1.2);
 
-  vec3 colorA = vec3(0.02,0.03,0.10);
-  vec3 colorB = vec3(0.08,0.12,0.35);
-  vec3 colorC = vec3(0.35,0.55,1.0);
+  vec3 colorA = vec3(0.005,0.008,0.02);
+  vec3 colorB = vec3(0.015,0.025,0.06);
+  vec3 colorC = vec3(0.08,0.12,0.25);
 
   vec3 col = mix(colorA,colorB,n);
-  col += colorC * n * 0.3;
+  col += colorC * n * 0.12;
 
   gl_FragColor = vec4(col,1.0);
 
@@ -150,9 +150,9 @@ _createFogLayer(z){
 const geo = new THREE.PlaneGeometry(40,40);
 
 const mat = new THREE.MeshBasicMaterial({
-  color:0x1a2a55,
+  color:0x05070d,
   transparent:true,
-  opacity:0.08,
+  opacity:0.04,
   depthWrite:false
 });
 
