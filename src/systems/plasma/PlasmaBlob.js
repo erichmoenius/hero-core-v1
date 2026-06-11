@@ -195,7 +195,7 @@ ct = clamp(ct,0.0,1.0);
 
 vec3 base=spectrum(ct);
 
-base*=(0.8+uEnergy*0.8);
+base*=(0.45+uEnergy*0.65);
 
   vec3 N=normalize(vNormal);
   vec3 V=normalize(-vWorldPos);
@@ -204,17 +204,17 @@ base*=(0.8+uEnergy*0.8);
   float d1=max(dot(N,L1),0.0);
   vec3 H1=normalize(V+L1);
   float sp=pow(max(dot(N,H1),0.0),32.0+uHigh*180.0);
-  vec3 col=base*vec3(0.75,0.82,1.0)*d1*2.2+vec3(1.0)*sp*(0.25+uHigh*0.5);
+  vec3 col=base*vec3(0.45,0.55,1.0)*d1*2.2+vec3(0.55,0.45,1.0)*sp*(0.25+uHigh*0.5);
 
   col+=base*vec3(0.12,0.25,0.80)*max(dot(N,normalize(vec3(-4,-2,2)-vWorldPos)),0.0)*0.7;
 
   float rim=pow(max(dot(N,normalize(vec3(0,-4,-6)-vWorldPos)),0.0),3.5);
-  col+=spectrum(vDisplace+0.3)*rim*(0.8+uHigh*1.4);
+  col+=spectrum(vDisplace+0.3)*rim*(0.35+uHigh*0.8);
 
   float fr=pow(1.0-max(dot(N,V),0.0),2.8);
   col+=spectrum(fr)*fr*(0.35+uEnergy*0.9);
 
-  col+=base*vec3(0.04,0.07,0.20)*(1.0+uMid*0.5);
+  col+=base*vec3(0.02,0.03,0.08)*(1.0+uMid*0.3);
 
   col=pow(clamp(col,0.0,1.0),vec3(0.4545));
   gl_FragColor=vec4(col,uOpacity);
