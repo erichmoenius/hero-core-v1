@@ -4,6 +4,8 @@ import { FibonacciSystem } from "../systems/FibonacciSystem.js";
 
 import { PlasmaBlob } from "../systems/plasma/PlasmaBlob.js";
 
+import { NarrativeSpiral } from "../systems/NarrativeSpiral.js";
+
 export class SpaceTheme {
 
 constructor(container, gui){
@@ -43,6 +45,10 @@ this.fibonacci = new FibonacciSystem(
 );
 
 this.fibonacci.group.position.z = -12;
+
+this.narrativeSpiral =   new NarrativeSpiral(
+  this.group
+);
 
 // ------------------------------------------------
 // 🫧 PLASMA BLOB
@@ -316,18 +322,17 @@ const intensity =
 const audio =
   state.audio || {};
 
+  this.narrativeSpiral.update(
+  0.016,
+  audio
+);
+
 if(audio.kick){
 
   this.kickPulse = 1;
-
 }
 
 this.kickPulse *= 0.92;
-
-if(audio.kick){
-
-
-}
 
 // ------------------------------------------------
 // 🖱️ SPACE ZOOM INPUT
@@ -436,6 +441,10 @@ const targetMouseX =
 const targetMouseY =
   state.parallax?.y || 0;
 
+this.narrativeSpiral.update(
+  0.016,
+  audio
+);
 
 // ------------------------------------------------
 // 🌌 INTERACTION INERTIA
