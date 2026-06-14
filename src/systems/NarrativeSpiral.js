@@ -4,19 +4,21 @@ export class NarrativeSpiral {
 
   constructor(scene){
 
-    this.scene = scene;
+  this.scene = scene;
 
-    this.group = new THREE.Group();
+  this.group = new THREE.Group();
 
-    this.group.name = "NarrativeSpiral";
+  this.group.name = "NarrativeSpiral";
 
-    this.scene.add(this.group);
+  this.scene.add(this.group);
 
-    this.lines = [];
+  this.lines = [];
 
-    this.createSpiral();
+  this.nodes = [];
 
-  }
+  this.createSpiral();
+
+}
 
   createSpiral(){
 
@@ -92,45 +94,6 @@ const glowMat =
 
   });
 
-//for(let i = 0; i < this.group.children.length - 1; i++){
-
-  //const a = this.group.children[i];
-  //const b = this.group.children[i + 1];
-
-  //const points = [
-
-    //a.position,
-    //b.position
-
-  //];
-
-  //const geo =
-    //new THREE.BufferGeometry()
-      //.setFromPoints(points);
-
-  //const mat =
-    //new THREE.LineBasicMaterial({
-
-      //color: 0xffd86b,
-
-      //transparent: true,
-
-      //opacity: 0.15
-
-    //});
-
-  //const line =
-    //new THREE.Line(
-      //geo,
-      //mat
-    //);
-
-  //this.group.add(line);
-
-  //this.lines.push(line);
-
-//}  
-
 const glow =
   new THREE.Mesh(
     glowGeo,
@@ -155,14 +118,71 @@ this.group.add(
   sphere
 );
 
-    }
+this.nodes.push(
+  sphere
+);
 
-    this.group.position.set(
-      3.2,
-      1.0,
-      -8
+}
+
+console.log(
+  "Narrative nodes:",
+  this.nodes.length
+);
+
+for(let i = 0; i < this.nodes.length - 4; i++){
+
+  const a = this.nodes[i];
+
+  const b = this.nodes[i + 4];
+
+  const points = [
+
+    a.position,
+
+    b.position
+
+  ];
+
+  const geo =
+    new THREE.BufferGeometry()
+      .setFromPoints(points);
+
+  const mat =
+    new THREE.LineBasicMaterial({
+
+      color: 0xffd86b,
+
+      transparent: true,
+
+      opacity: 0.35
+
+    });
+
+  const line =
+    new THREE.Line(
+      geo,
+      mat
     );
-  
+
+  this.group.add(
+    line
+  );
+
+  this.lines.push(
+    line
+  );
+
+}
+
+this.group.position.set(
+
+  3.2,
+
+  1.0,
+
+  -8
+
+);  
 
   }
 
