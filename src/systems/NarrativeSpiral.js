@@ -154,7 +154,7 @@ for(let i = 0; i < this.nodes.length - 4; i++){
 
       transparent: true,
 
-      opacity: 0.35
+      opacity: 0.30
 
     });
 
