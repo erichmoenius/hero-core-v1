@@ -154,7 +154,7 @@ vec3 c4=vec3(0.15,0.65,0.95);  // cyan
 
 vec3 c5=vec3(0.20,0.45,1.00);  // bright blue
 
-vec3 c6=vec3(0.85,0.95,1.00);  // white hot
+vec3 c6=vec3(0.65,0.85,1.00);  // white hot
 
   float s=t*6.0; int i=int(s); float f=fract(s);
 

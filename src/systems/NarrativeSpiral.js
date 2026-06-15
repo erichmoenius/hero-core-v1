@@ -33,13 +33,19 @@ const angle =
   arm * Math.PI;
 
 const radius =
-  i * 0.025;
+
+  Math.pow(i, 1.1) * 0.02;
 
 const x =
   Math.cos(angle) * radius;
 
 const y =
-  Math.sin(angle) * radius;
+
+  Math.sin(angle) *
+
+  radius *
+
+  0.55;
 
       const size =
         0.015 +
@@ -154,7 +160,7 @@ for(let i = 0; i < this.nodes.length - 4; i++){
 
       transparent: true,
 
-      opacity: 0.30
+      opacity: 0.02
 
     });
 
@@ -176,17 +182,23 @@ for(let i = 0; i < this.nodes.length - 4; i++){
 
 this.group.position.set(
 
-  3.2,
+  4.5,
 
   1.0,
 
   -8
 
-);  
+);
+
+this.group.scale.setScalar(2.0); 
+
+
+this.group.rotation.x = 0.35;
+this.group.rotation.y = -0.15;
 
   }
 
-  update(delta = 0.016){
+  update(delta = 0.016, audio = {}){
 
   if(!this.time){
 
@@ -194,11 +206,19 @@ this.group.position.set(
 
   }
 
+  const energy =
+
+    audio.energy || 0;
+
   this.time += delta;
 
   // slow storyteller rotation
 
-  this.group.rotation.z += 0.0005;
+  this.group.rotation.z +=
+
+    0.00005 +
+
+    energy * 0.0005;
 
   // breathing
 
@@ -207,12 +227,30 @@ this.group.position.set(
     1 +
 
     Math.sin(
+
       this.time * 0.5
-    ) * 0.05;
+
+    ) * 0.05 +
+
+    energy * 1.0;
 
   this.group.scale.setScalar(
+
     breath
+
   );
+
+  // communication v1
+
+  for(const line of this.lines){
+
+    line.material.opacity =
+
+      0.02 +
+
+      energy * 0.15;
+
+  }
 
 }
 

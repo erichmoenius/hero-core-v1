@@ -33,6 +33,7 @@ this.targets = [];
 
 // ---------------- INIT ----------------
 this.init();
+this.group.scale.setScalar(0.5);
 
 }
 
@@ -145,11 +146,11 @@ for(let i = 0; i < this.N; i++){
 
   color: new THREE.Color().setHSL(
 
-    0.12,      // gold
+    0.55,      // cyan
 
-    0.75,
+    0.85,
 
-    0.65
+    0.70
 
   ),
 
@@ -256,7 +257,7 @@ if(this.morphProgress < 1){
 
 // ---------------- ROTATION ----------------
 
-this.group.rotation.y += 0.002 + this.mouseSmooth.x * 0.02 + energy * 0.05;
+this.group.rotation.y += 0.001 + this.mouseSmooth.x * 0.01 + energy * 0.005;
 this.group.rotation.x += this.mouseSmooth.y * 0.01;
 
 
@@ -265,7 +266,7 @@ this.group.rotation.x += this.mouseSmooth.y * 0.01;
 const s =
   1 +
   Math.sin(this.time * 1.2) * 0.03 +
-  energy * 0.2;
+  energy * 0.05;
 
 this.group.scale.setScalar(s);
 
