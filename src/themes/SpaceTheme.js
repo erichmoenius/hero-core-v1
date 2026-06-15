@@ -20,6 +20,8 @@ this.velocity = 0;
 
 this.kickPulse = 0;
 
+this.stardust = [];
+
 // ------------------------------------------------
 // 🌌 WORLD GROUP
 // ------------------------------------------------
@@ -330,9 +332,51 @@ const audio =
 if(audio.kick){
 
   this.kickPulse = 1;
+
+  const dust = {
+
+    progress: 0,
+
+    position: new THREE.Vector3(
+      -1.2,
+      0,
+      -6
+    )
+
+  };
+
+  this.stardust.push(dust);
+
 }
 
 this.kickPulse *= 0.92;
+
+for(const dust of this.stardust){
+
+  dust.progress += 0.01;
+
+  dust.position.lerp(
+
+    new THREE.Vector3(
+      3.8,
+      1.0,
+      -8
+    ),
+
+    0.02
+
+  );
+
+}
+
+if(this.stardust.length){
+
+  console.log(
+    "Dust count:",
+    this.stardust.length
+  );
+
+}
 
 // ------------------------------------------------
 // 🖱️ SPACE ZOOM INPUT
