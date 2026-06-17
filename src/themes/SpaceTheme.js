@@ -22,6 +22,8 @@ this.kickPulse = 0;
 
 this.stardust = [];
 
+this.communicationParticles = [];
+
 // ------------------------------------------------
 // 🌌 WORLD GROUP
 // ------------------------------------------------
@@ -142,6 +144,12 @@ this.communication = {
   coherence: 0
 
 };
+
+this.createCommunicationField();
+
+console.log(
+  "COMM FIELD CREATED"
+);
 
 }
 
@@ -332,49 +340,6 @@ const audio =
 if(audio.kick){
 
   this.kickPulse = 1;
-
-  const dust = {
-
-    progress: 0,
-
-    position: new THREE.Vector3(
-      -1.2,
-      0,
-      -6
-    )
-
-  };
-
-  this.stardust.push(dust);
-
-}
-
-this.kickPulse *= 0.92;
-
-for(const dust of this.stardust){
-
-  dust.progress += 0.01;
-
-  dust.position.lerp(
-
-    new THREE.Vector3(
-      3.8,
-      1.0,
-      -8
-    ),
-
-    0.02
-
-  );
-
-}
-
-if(this.stardust.length){
-
-  console.log(
-    "Dust count:",
-    this.stardust.length
-  );
 
 }
 
@@ -942,6 +907,41 @@ this.fibonacci.group.position.z =
 // 🌌 SPACE DRIFT
 // ------------------------------------------------
 
+// ------------------------------------------------
+// ✨ COMMUNICATION FIELD
+// ------------------------------------------------
+
+for(const p of this.communicationParticles){
+
+  const t =
+    this.time +
+    p.userData.seed;
+
+  p.position.y +=
+    Math.sin(t) * 0.0008;
+
+  p.position.x +=
+    Math.cos(t * 0.7) * 0.0005;
+
+}
+
+// ------------------------------------------------
+// ✨ COMMUNICATION PARTICLES
+// ------------------------------------------------
+
+for(const particle of this.communicationParticles){
+
+  particle.position.x +=
+    particle.userData.speed;
+
+  if(particle.position.x > 4){
+
+    particle.position.x = -2;
+
+  }
+
+}
+
 this.group.position.z =
   this.zoom * 0.4;
 
@@ -950,6 +950,83 @@ this.group.position.z =
 // ------------------------------------------------
 // 🔁 STAR LAYER UPDATE
 // ------------------------------------------------
+
+createCommunicationField(){
+
+  const geo =
+    new THREE.SphereGeometry(
+      0.04,
+      6,
+      6
+    );
+
+  for(let i = 0; i < 200; i++){
+
+    const mat =
+  new THREE.MeshBasicMaterial({
+
+    color:
+
+      i % 2 === 0
+
+        ? 0x66ddff   // Blob blue
+
+        : 0xffcc66,  // Storyteller gold
+
+    transparent: true,
+
+    opacity: 0.6
+
+  });
+
+    const particle =
+      new THREE.Mesh(
+        geo,
+        mat
+      );
+
+    particle.position.set(
+
+      THREE.MathUtils.randFloat(
+        -1.5,
+        3.5
+      ),
+
+      THREE.MathUtils.randFloat(
+        -1.5,
+        1.5
+      ),
+
+      THREE.MathUtils.randFloat(
+        -8,
+        -6
+      )
+
+    );
+
+    particle.userData = {
+
+  seed:
+    Math.random() * 100,
+
+  speed:
+    0.002 +
+    Math.random() * 0.003
+
+};
+
+    this.group.add(
+      particle
+    );
+
+    this.communicationParticles.push(
+      particle
+    );
+
+  }
+
+
+}
 
 updateLayer(layer, speed){
 
