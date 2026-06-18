@@ -929,16 +929,88 @@ for(const p of this.communicationParticles){
 // ✨ COMMUNICATION PARTICLES
 // ------------------------------------------------
 
+// ------------------------------------------------
+// ✨ MAGNETIC COMMUNICATION
+// ------------------------------------------------
+
+const storyPos =
+  this.narrativeSpiral.group.position;
+
 for(const particle of this.communicationParticles){
 
-  particle.position.x +=
-    particle.userData.speed;
+  const target =
 
-  if(particle.position.x > 4){
+    particle.userData.direction > 0
 
-    particle.position.x = -2;
+      ? storyPos
+
+      : blobPos;
+
+  const force =
+
+    target.clone()
+      .sub(particle.position)
+      .normalize()
+      .multiplyScalar(0.002);
+
+  particle.userData.velocity.add(force);
+
+  particle.userData.velocity.multiplyScalar(
+    0.97
+  );
+
+  particle.position.add(
+    particle.userData.velocity
+  );
+
+  particle.position.y +=
+
+  Math.sin(
+
+    this.time * 2 +
+
+    particle.userData.seed
+
+  ) * 0.01;
+
+particle.position.x +=
+
+  Math.cos(
+
+    this.time * 1.7 +
+
+    particle.userData.seed
+
+  ) * 0.005;
+
+  const distance =
+  particle.position.distanceTo(
+    target
+  );
+
+if(distance < 0.3){
+
+  if(particle.userData.direction > 0){
+
+    particle.position.copy(
+      blobPos
+    );
+
+  }else{
+
+    particle.position.copy(
+      storyPos
+    );
 
   }
+
+  particle.userData.velocity.set(
+    0,
+    0,
+    0
+  );
+
+}
 
 }
 
@@ -1009,9 +1081,11 @@ createCommunicationField(){
   seed:
     Math.random() * 100,
 
-  speed:
-    0.002 +
-    Math.random() * 0.003
+  velocity:
+    new THREE.Vector3(),
+
+  direction:
+    i % 2 === 0 ? 1 : -1
 
 };
 
