@@ -350,8 +350,13 @@ if(audio.kick){
 const wheel =
   state.wheel?.delta || 0;
 
+console.log(
+  "WHEEL",
+  state.wheel
+);
+
 this.zoomVelocity +=
-  wheel * 1.0;
+  wheel * 1.0; 
 
 // ------------------------------------------------
 // 🌊 ZOOM DAMPING
@@ -946,12 +951,42 @@ for(const particle of this.communicationParticles){
 
       : blobPos;
 
-  const force =
+  const dir =
 
-    target.clone()
-      .sub(particle.position)
-      .normalize()
-      .multiplyScalar(0.002);
+  target.clone()
+    .sub(particle.position)
+    .normalize();
+
+const force =
+  dir.clone()
+     .multiplyScalar(0.02);
+
+const orbit =
+
+  new THREE.Vector3(
+
+    -dir.y,
+     dir.x,
+     0
+
+  ).multiplyScalar(0.001);
+
+const targetDistance =
+
+  particle.position.distanceTo(
+    target
+  );
+
+orbit.multiplyScalar(
+
+  Math.min(
+    targetDistance * 0.15,
+    1.0
+  )
+
+);
+
+force.add(orbit);
 
   particle.userData.velocity.add(force);
 
@@ -962,6 +997,26 @@ for(const particle of this.communicationParticles){
   particle.position.add(
     particle.userData.velocity
   );
+
+  particle.position.x +=
+
+  Math.sin(
+
+    this.time * 2.5 +
+
+    particle.userData.seed
+
+  ) * 0.008;
+
+particle.position.y +=
+
+  Math.cos(
+
+    this.time * 1.8 +
+
+    particle.userData.seed
+
+  ) * 0.012;
 
   particle.position.y +=
 
@@ -1027,12 +1082,12 @@ createCommunicationField(){
 
   const geo =
     new THREE.SphereGeometry(
-      0.04,
-      6,
-      6
+      0.02,
+      3,
+      3
     );
 
-  for(let i = 0; i < 200; i++){
+  for(let i = 0; i < 150; i++){
 
     const mat =
   new THREE.MeshBasicMaterial({
@@ -1047,7 +1102,7 @@ createCommunicationField(){
 
     transparent: true,
 
-    opacity: 0.6
+    opacity: 1.0
 
   });
 
