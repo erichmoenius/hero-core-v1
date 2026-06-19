@@ -943,6 +943,7 @@ const storyPos =
 
 for(const particle of this.communicationParticles){
 
+/*  
   const target =
 
     particle.userData.direction > 0
@@ -989,6 +990,35 @@ orbit.multiplyScalar(
 force.add(orbit);
 
   particle.userData.velocity.add(force);
+*/  
+
+particle.userData.velocity.x +=
+
+  Math.sin(
+
+    this.time * 0.8 +
+
+    particle.userData.seed
+
+  ) * 0.0004;
+
+particle.userData.velocity.y +=
+
+  Math.cos(
+
+    this.time * 0.6 +
+
+    particle.userData.seed
+
+  ) * 0.0004;
+
+  particle.userData.velocity.multiplyScalar(
+  0.995
+);
+
+particle.position.add(
+  particle.userData.velocity
+);
 
   particle.userData.velocity.multiplyScalar(
     0.97
