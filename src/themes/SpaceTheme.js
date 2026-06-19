@@ -1068,34 +1068,34 @@ particle.position.x +=
 
   ) * 0.005;
 
-  const distance =
-  particle.position.distanceTo(
-    target
-  );
+  // const distance =
+  // particle.position.distanceTo(
+  //   target
+  // );
 
-if(distance < 0.3){
+// if(distance < 0.3){
 
-  if(particle.userData.direction > 0){
+//   if(particle.userData.direction > 0){
 
-    particle.position.copy(
-      blobPos
-    );
+//     particle.position.copy(
+//       blobPos
+//     );
 
-  }else{
+//   }else{
 
-    particle.position.copy(
-      storyPos
-    );
+//     particle.position.copy(
+//       storyPos
+//     );
 
-  }
+//   }
 
-  particle.userData.velocity.set(
-    0,
-    0,
-    0
-  );
+//   particle.userData.velocity.set(
+//     0,
+//     0,
+//     0
+//   );
 
-}
+// }
 
 }
 
