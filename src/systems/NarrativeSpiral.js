@@ -96,7 +96,7 @@ const glowMat =
 
     transparent: true,
 
-    opacity: 0.08
+    opacity: 0.20
 
   });
 
@@ -170,9 +170,9 @@ for(let i = 0; i < this.nodes.length - 4; i++){
       mat
     );
 
-  this.group.add(
-    line
-  );
+  // this.group.add(
+  //   line
+  // );
 
   this.lines.push(
     line

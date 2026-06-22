@@ -323,6 +323,20 @@ update(state){
 
 this.time += 0.016;
 
+// ------------------------------------------------
+// 🌌 COSMIC BREATH
+// ------------------------------------------------
+
+const breath =
+
+  1.0 +
+
+  Math.sin(
+
+    this.time * 0.25
+
+  ) * 0.18;
+
 const p =
   state.progress ?? 0;
 
@@ -335,6 +349,20 @@ const audio =
   this.narrativeSpiral.update(
   0.016,
   audio
+);
+
+const response =
+
+  1.0 +
+
+  Math.sin(
+
+    this.time * 0.25 - 1.0
+
+  ) * 0.35;
+
+this.narrativeSpiral.group.scale.setScalar(
+  response
 );
 
 if(audio.kick){
@@ -454,11 +482,6 @@ const targetMouseX =
 
 const targetMouseY =
   state.parallax?.y || 0;
-
-this.narrativeSpiral.update(
-  0.016,
-  audio
-);
 
 // ------------------------------------------------
 // 🌌 INTERACTION INERTIA
@@ -581,6 +604,18 @@ this.plasmaBlob.update(
   audio,
   this.time
 );
+
+if(this.plasmaBlob?._mesh){
+
+  this.plasmaBlob._mesh.scale.setScalar(
+
+    this.plasmaBlob.cfg.scale *
+
+    breath
+
+  );
+
+}
 
 // ------------------------------------------------
 // 🌌 CINEMATIC PLASMA FLOAT
@@ -806,11 +841,6 @@ console.log(
 
   this.communication
 
-);
-
-this.plasmaBlob.update(
-  audio,
-  this.time
 );
 
 //if(this.plasmaBlob._mesh){
