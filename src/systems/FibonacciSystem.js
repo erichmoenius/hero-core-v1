@@ -12,6 +12,52 @@ this.scene.add(this.group);
 
 this.time = 0;
 
+// ------------------------------------------------
+// 💡 FIBONACCI LIGHTING
+// ------------------------------------------------
+
+this.cyanLight = new THREE.PointLight(
+  0x66ccff,
+  12.0,
+  50
+);
+
+this.cyanLight.position.set(
+  -4,
+  2,
+  3
+);
+
+this.scene.add(this.cyanLight);
+
+this.violetLight = new THREE.PointLight(
+  0x8866ff,
+  10.0,
+  50
+);
+
+this.violetLight.position.set(
+  4,
+  -2,
+  2
+);
+
+this.scene.add(this.violetLight);
+
+this.goldLight = new THREE.PointLight(
+  0xffd38a,
+  4.0,
+  50
+);
+
+this.goldLight.position.set(
+  0,
+  4,
+  -2
+);
+
+this.scene.add(this.goldLight);
+
 // ---------------- CONFIG ----------------
 this.N = 400;
 this.R = 2.8;
@@ -136,28 +182,36 @@ this.targets = shapes.map(fn =>
 // ------------------------------------------------
 createParticles(){
 
-const geo = new THREE.SphereGeometry(0.025, 6, 6);
+const geo = new THREE.SphereGeometry(0.04, 8, 8);
 
 for(let i = 0; i < this.N; i++){
 
   const hue = (i * 0.618033) % 1;
 
-  const mat = new THREE.MeshBasicMaterial({
+const mat = new THREE.MeshStandardMaterial({
 
-  color: new THREE.Color().setHSL(
-
-    0.55,      // cyan
-
-    0.85,
-
+  color: new THREE.Color(
+    0.62,
+    0.64,
     0.70
-
   ),
+
+  emissive: new THREE.Color(
+  0.03,
+  0.04,
+  0.05
+),
+
+  emissiveIntensity: 0.35,
+
+  metalness: 0.95,
+
+  roughness: 0.22,
 
   transparent: true,
 
   opacity: 0.9
-
+  
 });
 
   const mesh = new THREE.Mesh(geo, mat);
@@ -271,12 +325,80 @@ const s =
 this.group.scale.setScalar(s);
 
 
-// ---------------- OPACITY PULSE ----------------
+// ---------------- OPACITY + TITANIUM SHIMMER ----------------
 
 const opacityPulse = 0.6 + energy * 0.8;
 
-this.meshes.forEach(m=>{
+this.meshes.forEach((m, i)=>{
+
   m.material.opacity = opacityPulse;
+
+  const shimmer =
+
+    Math.sin(
+
+      this.time * 1.5 +
+
+      i * 0.25
+
+    ) * 0.35;
+
+  m.material.color.setRGB(
+
+    0.60 + shimmer * 0.15,
+
+    0.62 + shimmer * 0.08,
+
+    0.68 + shimmer * 0.20
+
+  );
+
+  // --------------------------------
+  // Spectral metal reflections
+  // --------------------------------
+
+  const spectral =
+
+    Math.sin(
+
+      this.time * 0.8 +
+
+      i * 0.11
+
+    );
+
+  if(spectral > 0.6){
+
+    m.material.emissive.setRGB(
+
+      0.03,
+      0.08,
+      0.12
+
+    );
+
+  }else if(spectral < -0.6){
+
+    m.material.emissive.setRGB(
+
+      0.10,
+      0.07,
+      0.02
+
+    );
+
+  }else{
+
+    m.material.emissive.setRGB(
+
+      0.03,
+      0.03,
+      0.05
+
+    );
+
+  }
+
 });
 
 
