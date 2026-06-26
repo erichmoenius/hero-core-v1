@@ -65,9 +65,7 @@ this.scene.add(this.goldLight);
 this.rimLight = new THREE.PointLight(
 
   0xb8dfff,
-
-  10,
-
+  32,
   80
 
 );
@@ -217,9 +215,9 @@ for(let i = 0; i < this.N; i++){
 const mat = new THREE.MeshStandardMaterial({
 
   color: new THREE.Color(
-    0.58,
-    0.60,
-    0.66
+    0.42,
+    0.43,
+    0.46
   ),
 
   emissive: new THREE.Color(
@@ -242,20 +240,47 @@ const mat = new THREE.MeshStandardMaterial({
 
   const mesh = new THREE.Mesh(geo, mat);
 
+  mesh.userData.roughness = THREE.MathUtils.randFloat(
+  0.12,
+  0.30
+);
+
+  mesh.userData.metalness = THREE.MathUtils.randFloat(
+  0.88,
+  1.00
+);
+
+  mat.roughness = mesh.userData.roughness;
+
+  mat.metalness = mesh.userData.metalness;
+
+  const phi = 0.61803398875;
+
+  mesh.userData.age = (i * phi) % 1;
+
   const p = this.targets[0][i];
   mesh.position.copy(p);
 
   mesh.userData = {
     from: p.clone(),
-    to: p.clone()
-  };
+    to: p.clone(),
+
+    brightness: 0.92 + Math.random() * 0.16,
+
+    roughness: 0.18 + Math.random() * 0.18,
+
+    metalness: 0.88 + Math.random() * 0.10,
+
+    age: Math.random(),
+
+    scratch: Math.random()
+};
 
   this.group.add(mesh);
   this.meshes.push(mesh);
 }
 
 }
-
 
 // ------------------------------------------------
 // 🔁 MORPH
@@ -271,7 +296,6 @@ this.meshes.forEach((m, i)=>{
 });
 
 }
-
 
 // ------------------------------------------------
 // 🎮 INTERACTION
@@ -337,10 +361,11 @@ if(this.morphProgress < 1){
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   this.meshes.forEach(m=>{
-    m.position.lerpVectors(
-      m.userData.from,
-      m.userData.to,
-      ease
+
+      m.position.lerpVectors(
+        m.userData.from,
+        m.userData.to,
+        ease
     );
   });
 
@@ -393,15 +418,52 @@ this.meshes.forEach((m, i)=>{
 
     ) * 0.35;
 
+  const patina =
+
+    Math.sin(
+
+        i * 2.37
+
+    ) * 0.5 + 0.5;  
+
+  const ageTint =
+    m.userData.age * 0.025;  
+
   m.material.color.setRGB(
 
-    0.60 + shimmer * 0.15,
+    (0.36 + shimmer * 0.08)
+        * m.userData.brightness,
 
-    0.62 + shimmer * 0.08,
+    (0.37 + shimmer * 0.04 + patina * 0.012 + ageTint)
+        * m.userData.brightness,
 
-    0.68 + shimmer * 0.20
+    (0.39 + shimmer * 0.10 - patina * 0.008)
+        * m.userData.brightness
 
-  );
+);
+
+  m.material.roughness =
+    m.userData.roughness;
+
+  m.material.metalness =
+    m.userData.metalness;
+
+  const sparkle =
+
+    Math.sin(
+        this.time * 2.2 +
+        i * 0.73
+    );
+
+if (sparkle > 0.992 && m.userData.scratch > 0.82) {
+
+    m.material.emissiveIntensity = 0.28;
+
+} else {
+
+    m.material.emissiveIntensity = 0.08;
+
+}  
 
   // --------------------------------
   // Spectral metal reflections
