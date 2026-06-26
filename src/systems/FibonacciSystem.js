@@ -58,6 +58,32 @@ this.goldLight.position.set(
 
 this.scene.add(this.goldLight);
 
+// ------------------------------------------------
+// 💡 RIM LIGHT
+// ------------------------------------------------
+
+this.rimLight = new THREE.PointLight(
+
+  0xb8dfff,
+
+  10,
+
+  80
+
+);
+
+this.rimLight.position.set(
+
+  -8,
+
+  4,
+
+  -6
+
+);
+
+this.scene.add(this.rimLight);
+
 // ---------------- CONFIG ----------------
 this.N = 400;
 this.R = 2.8;
@@ -191,22 +217,22 @@ for(let i = 0; i < this.N; i++){
 const mat = new THREE.MeshStandardMaterial({
 
   color: new THREE.Color(
-    0.62,
-    0.64,
-    0.70
+    0.58,
+    0.60,
+    0.66
   ),
 
   emissive: new THREE.Color(
-  0.03,
-  0.04,
-  0.05
+  0.0015,
+  0.0020,
+  0.030
 ),
 
   emissiveIntensity: 0.35,
 
-  metalness: 0.95,
+  metalness: 1.0,
 
-  roughness: 0.22,
+  roughness: 0.15,
 
   transparent: true,
 
@@ -265,6 +291,30 @@ this.holdTimer = this.HOLD_TIME;
 update(delta = 0.016, audio = null){
 
 this.time += delta;
+
+// ------------------------------------------------
+// 💡 RIM LIGHT MOTION
+// ------------------------------------------------
+
+this.rimLight.position.x =
+
+  -8 +
+
+  Math.sin(
+
+    this.time * 0.18
+
+  ) * 2;
+
+this.rimLight.position.y =
+
+  4 +
+
+  Math.cos(
+
+    this.time * 0.15
+
+  ) * 1;
 
 // smooth mouse
 this.mouseSmooth.lerp(this.mouse, 0.08);
