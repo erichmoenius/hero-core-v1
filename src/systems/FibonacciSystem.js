@@ -63,24 +63,46 @@ this.scene.add(this.goldLight);
 // ------------------------------------------------
 
 this.rimLight = new THREE.PointLight(
-
-  0xb8dfff,
-  32,
-  80
-
+    0xdfe8ff,   // less cyan, colder moonlight
+    26,         // intensity
+    100         // reaches the whole artifact
 );
 
 this.rimLight.position.set(
 
-  -8,
-
-  4,
-
-  -6
+  -6,
+  3,
+  -4
 
 );
 
 this.scene.add(this.rimLight);
+
+// ----------------------------------
+// Warm reflection light
+// ----------------------------------
+
+this.warmLight = new THREE.PointLight(
+
+    0xffc97a,
+
+    3,
+
+    80
+
+);
+
+this.warmLight.position.set(
+
+    6,
+
+   -2,
+
+    5
+
+);
+
+this.scene.add(this.warmLight);
 
 // ---------------- CONFIG ----------------
 this.N = 400;
@@ -221,9 +243,9 @@ const mat = new THREE.MeshStandardMaterial({
   ),
 
   emissive: new THREE.Color(
-  0.0015,
-  0.0020,
-  0.030
+    0.0015,
+    0.0020,
+    0.030
 ),
 
   emissiveIntensity: 0.35,
@@ -262,18 +284,26 @@ const mat = new THREE.MeshStandardMaterial({
   mesh.position.copy(p);
 
   mesh.userData = {
+
     from: p.clone(),
+
     to: p.clone(),
 
-    brightness: 0.92 + Math.random() * 0.16,
+    brightness:
+        0.88 + Math.random() * 0.18,
 
-    roughness: 0.18 + Math.random() * 0.18,
+    roughness:
+        0.18 + Math.random() * 0.12,
 
-    metalness: 0.88 + Math.random() * 0.10,
+    metalness:
+        0.88 + Math.random() * 0.08,
 
-    age: Math.random(),
+    patina:
+        Math.random(),
 
-    scratch: Math.random()
+    scratch:
+        Math.random()
+
 };
 
   this.group.add(mesh);
@@ -322,23 +352,31 @@ this.time += delta;
 
 this.rimLight.position.x =
 
-  -8 +
+  -6 +
 
   Math.sin(
 
-    this.time * 0.18
+    this.time * 0.08
 
   ) * 2;
 
 this.rimLight.position.y =
 
-  4 +
+  3 +
 
   Math.cos(
 
-    this.time * 0.15
+    this.time * 0.07
 
   ) * 1;
+
+this.warmLight.position.x =
+     6 +
+     Math.cos(this.time * 0.14) * 1.5;
+
+this.warmLight.position.y =
+    -2 +
+     Math.sin(this.time * 0.12) * 0.8;  
 
 // smooth mouse
 this.mouseSmooth.lerp(this.mouse, 0.08);
@@ -429,15 +467,20 @@ this.meshes.forEach((m, i)=>{
   const ageTint =
     m.userData.age * 0.025;  
 
-  m.material.color.setRGB(
+  const base = 0.34;
 
-    (0.36 + shimmer * 0.08)
+m.material.color.setRGB(
+
+    (base)
         * m.userData.brightness,
 
-    (0.37 + shimmer * 0.04 + patina * 0.012 + ageTint)
+    (base +
+        m.userData.patina * 0.012)
         * m.userData.brightness,
 
-    (0.39 + shimmer * 0.10 - patina * 0.008)
+    (base +
+        0.03 -
+        m.userData.patina * 0.008)
         * m.userData.brightness
 
 );
@@ -455,13 +498,13 @@ this.meshes.forEach((m, i)=>{
         i * 0.73
     );
 
-if (sparkle > 0.992 && m.userData.scratch > 0.82) {
+if (sparkle > 0.992 && m.userData.scratch > 0.90) {
 
-    m.material.emissiveIntensity = 0.28;
+    m.material.emissiveIntensity = 0.32;
 
 } else {
 
-    m.material.emissiveIntensity = 0.08;
+    m.material.emissiveIntensity = 0.06;
 
 }  
 
