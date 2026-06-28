@@ -6,6 +6,8 @@ import { PlasmaBlob } from "../systems/plasma/PlasmaBlob.js";
 
 import { NarrativeSpiral } from "../systems/NarrativeSpiral.js";
 
+import StorytellerSystem from "../systems/StorytellerSystem.js";
+
 export class SpaceTheme {
 
 constructor(container, gui){
@@ -53,6 +55,28 @@ this.fibonacci.group.position.z = -12;
 this.narrativeSpiral =   new NarrativeSpiral(
   this.group
 );
+
+this.storyteller = new StorytellerSystem();
+this.storyteller.object.position.set(2.2, 0, -6.8);
+this.storyteller.object.scale.setScalar(3.0);
+this.group.add(this.storyteller.object);
+
+// ------------------------------------------------
+// 🎛️ STORYTELLER SYSTEM
+// ------------------------------------------------
+
+// this.storyteller = new StorytellerSystem();
+// this.group.add(this.storyteller.object);
+
+this.storyteller = new StorytellerSystem();
+
+this.storyteller.object.position.set(
+    2.8,
+    0,
+    -8
+);
+
+this.group.add(this.storyteller.object);
 
 // ------------------------------------------------
 // 🫧 PLASMA BLOB
@@ -346,10 +370,7 @@ const intensity =
 const audio =
   state.audio || {};
 
-  this.narrativeSpiral.update(
-  0.016,
-  audio
-);
+this.storyteller.update(0.016);
 
 const response =
 
@@ -361,9 +382,11 @@ const response =
 
   ) * 0.35;
 
-this.narrativeSpiral.group.scale.setScalar(
-  response
-);
+// this.narrativeSpiral.group.scale.setScalar(
+//   response
+// );
+
+this.storyteller.object.scale.setScalar(response);
 
 if(audio.kick){
 
