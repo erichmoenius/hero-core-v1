@@ -6,7 +6,7 @@ import { PlasmaBlob } from "../systems/plasma/PlasmaBlob.js";
 
 import { NarrativeSpiral } from "../systems/NarrativeSpiral.js";
 
-import StorytellerSystem from "../systems/StorytellerSystem.js";
+import EngineSystem from "../systems/EngineSystem.js";
 
 export class SpaceTheme {
 
@@ -56,10 +56,21 @@ this.narrativeSpiral =   new NarrativeSpiral(
   this.group
 );
 
-this.storyteller = new StorytellerSystem();
-this.storyteller.object.position.set(2.2, 0, -6.8);
-this.storyteller.object.scale.setScalar(3.0);
-this.group.add(this.storyteller.object);
+this.narrativeSpiral.group.visible = false;
+
+// ------------------------------------------------
+// ⚙️ ENGINE SYSTEM
+// ------------------------------------------------
+
+this.engine = new EngineSystem();
+
+this.engine.object.position.set(
+    2.8,
+    0,
+    -8
+);
+
+this.group.add(this.engine.object);
 
 // ------------------------------------------------
 // 🎛️ STORYTELLER SYSTEM
@@ -68,15 +79,17 @@ this.group.add(this.storyteller.object);
 // this.storyteller = new StorytellerSystem();
 // this.group.add(this.storyteller.object);
 
-this.storyteller = new StorytellerSystem();
+this.engine = new EngineSystem();
 
-this.storyteller.object.position.set(
+this.engine.object.position.set(
     2.8,
     0,
     -8
 );
 
-this.group.add(this.storyteller.object);
+this.group.add(this.engine.object);
+
+//this.group.add(this.storyteller.object);
 
 // ------------------------------------------------
 // 🫧 PLASMA BLOB
@@ -370,7 +383,7 @@ const intensity =
 const audio =
   state.audio || {};
 
-this.storyteller.update(0.016);
+this.engine.update(0.016);
 
 const response =
 
@@ -386,7 +399,11 @@ const response =
 //   response
 // );
 
-this.storyteller.object.scale.setScalar(response);
+this.engine.update(0.016);
+
+// No breathing.
+// The Engine exists.
+// It does not react.
 
 if(audio.kick){
 
