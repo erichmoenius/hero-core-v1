@@ -32,6 +32,28 @@ this.communicationParticles = [];
 
 this.group = new THREE.Group();
 
+// ------------------------------------------------
+// DEBUG LIGHTS
+// ------------------------------------------------
+
+const DEBUG_ENGINE = true;
+
+if (DEBUG_ENGINE) {
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    keyLight.position.set(8, 6, 6);
+    this.group.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x88aaff, 1.5);
+    fillLight.position.set(-6, -2, 5);
+    this.group.add(fillLight);
+
+    const rimLight = new THREE.PointLight(0xffddaa, 3, 30);
+    rimLight.position.set(0, 2, 6);
+    this.group.add(rimLight);
+
+}
+
 this.container.add(this.group);
 
 // ------------------------------------------------

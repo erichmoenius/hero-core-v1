@@ -1,13 +1,18 @@
 /*
-----------------------------------------------------------------
+------------------------------------------------------------
 
 THE ENGINE
 
-The Engine is not assembled.
-It is accumulated.
+It was never built.
+
+It was accumulated.
+
+Every repair remembers.
 Every ring belongs to a different age.
 
-----------------------------------------------------------------
+The Engine is the Storyteller.
+
+------------------------------------------------------------
 */
 
 import * as THREE from "three";
@@ -15,19 +20,34 @@ export default class EngineSystem {
 
     constructor() {
 
-        this.group = new THREE.Group();
-        this.group.name = "Engine";
+    this.group = new THREE.Group();
+    this.group.name = "Engine";
 
-        this.time = 0;
+    this.time = 0;
 
-        this.rings = [];
+    this.rings = [];
 
-        this.createCore();
-        this.createRings();
-        //this.createRepairPlates();
-        this.createContainmentAssembly();
-       
-    }
+    // Material shared by all repair clamps
+    this.repairMaterial = new THREE.MeshPhysicalMaterial({
+
+        color: 0x3a3530,
+
+        metalness: 1,
+
+        roughness: 0.28,
+
+        clearcoat: 1,
+
+        clearcoatRoughness: 0.12
+
+    });
+
+    this.createCore();
+    this.createRings();
+    // this.createRepairPlates();
+    // this.createContainmentAssembly();
+
+}
 
     // =====================================================
     // CORE
@@ -192,7 +212,8 @@ export default class EngineSystem {
 
             );
 
-            // Tiny imperfections
+// Tiny imperfections
+
             ring.scale.set(
 
                 1,
@@ -208,12 +229,150 @@ export default class EngineSystem {
             this.group.add(ring);
 
             this.rings.push(ring);
+            
+            if (cfg.radius === 3.70) {
+
+    this.createRepairPlate(ring);
+
+}
 
         });
 
     }
 
-    createContainmentAssembly() {
+createRepairPlate(ring) {
+
+    const group = new THREE.Group();
+
+    const material = this.repairMaterial;
+
+    const top = new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+            1.20,
+            0.35,
+            0.22
+        ),
+
+        material
+
+    );
+
+    const bottom = top.clone();
+
+    top.position.z = 0.18;
+    bottom.position.z = -0.18;
+
+    group.add(top);
+    group.add(bottom);
+
+    const boltGeometry = new THREE.CylinderGeometry(
+
+    0.045,
+    0.045,
+    0.42,
+    16
+
+);
+
+const boltMaterial = new THREE.MeshPhysicalMaterial({
+
+    color: 0x151515,
+
+    metalness: 1,
+
+    roughness: 0.32,
+
+    clearcoat: 1
+
+});
+
+const boltPositions = [
+
+    [-0.42, 0, 0.18],
+    [ 0.42, 0, 0.18],
+    [-0.42, 0,-0.18],
+    [ 0.42, 0,-0.18]
+
+];
+
+boltPositions.forEach(pos => {
+
+    const bolt = new THREE.Mesh(
+
+        boltGeometry,
+
+        boltMaterial
+
+    );
+
+    bolt.rotation.x = Math.PI * 0.5;
+
+    bolt.position.set(
+
+        pos[0],
+        pos[1],
+        pos[2]
+
+    );
+
+    group.add(bolt);
+
+// ------------------------------------------------
+// FRONT BOLT HEAD
+// ------------------------------------------------
+
+const head = new THREE.Mesh(
+
+    new THREE.CylinderGeometry(
+        0.075,
+        0.075,
+        0.04,
+        16
+    ),
+
+    boltMaterial
+
+);
+
+head.rotation.x = Math.PI * 0.5;
+
+head.position.copy(bolt.position);
+
+// Move to one side of the clamp
+head.position.y += 0.22;
+
+group.add(head);
+
+// ------------------------------------------------
+// BACK BOLT HEAD
+// ------------------------------------------------
+
+const backHead = head.clone();
+
+// Move to the opposite side
+backHead.position.y -= 0.44;
+
+group.add(backHead);
+
+});
+
+    // TEMPORARY POSITION
+    group.position.set(
+        3.70,
+        0,
+        0
+    );
+
+    group.rotation.x = 0.04;
+    group.rotation.y = -0.02;
+    group.rotation.z = 0.06;
+
+    ring.add(group);
+
+}
+
+        createContainmentAssembly() {
 
     this.assembly = [];
 
@@ -268,7 +427,7 @@ export default class EngineSystem {
         this.rings.forEach((ring,index)=>{
 
             ring.rotation.z +=
-                delta * ring.userData.speed;
+                delta * ring.userData.speed * 80;
 
             // Tiny independent motion
             ring.rotation.x +=
