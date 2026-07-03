@@ -7,10 +7,9 @@ It was never built.
 
 It was accumulated.
 
-Every repair remembers.
 Every ring belongs to a different age.
 
-The Engine is the Storyteller.
+Every repair remembers.
 
 ------------------------------------------------------------
 */
@@ -28,19 +27,20 @@ export default class EngineSystem {
     this.rings = [];
 
     // Material shared by all repair clamps
-    this.repairMaterial = new THREE.MeshPhysicalMaterial({
 
-        color: 0x3a3530,
+this.repairMaterial = new THREE.MeshPhysicalMaterial({
 
-        metalness: 1,
+    color: 0x3a3632,
 
-        roughness: 0.28,
+    metalness: 0.95,
 
-        clearcoat: 1,
+    roughness: 0.48,
 
-        clearcoatRoughness: 0.12
+    clearcoat: 0.45,
 
-    });
+    clearcoatRoughness: 0.65
+
+});
 
     this.createCore();
     this.createRings();
@@ -149,8 +149,7 @@ export default class EngineSystem {
                 radius: 3.70,
 
     // Massive forged containment ring
-                tube: 0.110,
-
+                tube: 0.135,
                 rotation: new THREE.Vector3(
                     -15,
                     110,
@@ -177,32 +176,72 @@ export default class EngineSystem {
 
             const age = Math.random();
 
-            const material = new THREE.MeshPhysicalMaterial({
+let material;
 
-                color: new THREE.Color().setHSL(
-                    0.08,
-                    0.12,
-                    0.14 + age * 0.08
-                ),
+if (cfg.radius === 3.70) {
 
-                metalness: 1,
+    // Ancient containment alloy
 
-                roughness: 0.18 + age * 0.35,
+material = new THREE.MeshPhysicalMaterial({
 
-                clearcoat: 1,
+    color: new THREE.Color().setHSL(
 
-                clearcoatRoughness: age * 0.45,
+        0.08,
+        0.06,
+        0.09 + age * 0.03
 
-                emissive: 0x100804,
+    ),
 
-                emissiveIntensity: 0.03
+    metalness: 0.90,
 
-            });
+    roughness: 0.72 + age * 0.12,
+
+    clearcoat: 0.12,
+
+    clearcoatRoughness: 1.0,
+
+    emissive: 0x020201,
+
+    emissiveIntensity: 0.005
+
+});
+
+} else {
+
+    // Standard engine alloy
+    material = new THREE.MeshPhysicalMaterial({
+
+        color: new THREE.Color().setHSL(
+            0.08,
+            0.12,
+            0.14 + age * 0.08
+        ),
+
+        metalness: 1,
+        roughness: 0.18 + age * 0.35,
+
+        clearcoat: 1,
+        clearcoatRoughness: age * 0.45,
+
+        emissive: 0x100804,
+        emissiveIntensity: 0.03
+
+    });
+
+}
 
             const ring = new THREE.Mesh(
                 geometry,
                 material
             );
+
+            if (cfg.radius === 3.70) {
+
+    this.createForgeSeam(ring, 0);
+    this.createForgeSeam(ring, Math.PI * 0.55);
+    this.createForgeSeam(ring, Math.PI * 1.25);
+
+}
 
             ring.rotation.set(
 
@@ -232,7 +271,9 @@ export default class EngineSystem {
             
             if (cfg.radius === 3.70) {
 
-    this.createRepairPlate(ring);
+            this.createRepairPlate(ring, 0);
+
+            this.createRepairPlate(ring, Math.PI * 0.55);
 
 }
 
@@ -240,7 +281,7 @@ export default class EngineSystem {
 
     }
 
-createRepairPlate(ring) {
+createRepairPlate(ring, angle = 0) {
 
     const group = new THREE.Group();
 
@@ -249,9 +290,9 @@ createRepairPlate(ring) {
     const top = new THREE.Mesh(
 
         new THREE.BoxGeometry(
-            1.20,
-            0.35,
-            0.22
+            1.45,
+            0.22,
+            0.16
         ),
 
         material
@@ -260,8 +301,14 @@ createRepairPlate(ring) {
 
     const bottom = top.clone();
 
-    top.position.z = 0.18;
-    bottom.position.z = -0.18;
+    top.position.x += 0.03;
+    top.position.y += 0.01;
+
+    bottom.position.x -= 0.02;
+    bottom.position.y -= 0.01;
+
+    top.rotation.z = THREE.MathUtils.degToRad(1.5);
+    bottom.rotation.z = THREE.MathUtils.degToRad(-0.8);
 
     group.add(top);
     group.add(bottom);
@@ -318,6 +365,25 @@ boltPositions.forEach(pos => {
 
     group.add(bolt);
 
+    const sleeve = new THREE.Mesh(
+
+    new THREE.CylinderGeometry(
+        0.07,
+        0.07,
+        0.26,
+        16
+    ),
+
+    material
+
+);
+
+    sleeve.rotation.x = Math.PI * 0.5;
+
+    sleeve.position.copy(bolt.position);
+
+    group.add(sleeve);
+
 // ------------------------------------------------
 // FRONT BOLT HEAD
 // ------------------------------------------------
@@ -358,17 +424,59 @@ group.add(backHead);
 });
 
     // TEMPORARY POSITION
+    const radius = 3.70;
+
     group.position.set(
-        3.70,
-        0,
-        0
-    );
+    Math.cos(angle) * radius,
+    Math.sin(angle) * radius,
+    0
+);
+
+    group.lookAt(0, 0, 0);
 
     group.rotation.x = 0.04;
     group.rotation.y = -0.02;
     group.rotation.z = 0.06;
 
     ring.add(group);
+
+}
+
+createForgeSeam(ring, angle) {
+
+    const seam = new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+            0.06,
+            0.18,
+            0.22
+        ),
+
+        new THREE.MeshPhysicalMaterial({
+
+            color: 0x1b1a19,
+
+            metalness: 0.8,
+
+            roughness: 0.9
+
+        })
+
+    );
+
+    const radius = 3.70;
+
+    seam.position.set(
+
+        Math.cos(angle) * radius,
+        Math.sin(angle) * radius,
+        0
+
+    );
+
+    seam.lookAt(0, 0, 0);
+
+    ring.add(seam);
 
 }
 
@@ -384,17 +492,17 @@ group.add(backHead);
 
     const material = new THREE.MeshPhysicalMaterial({
 
-        color: 0x2a241f,
+    color: 0x3a3632,
 
-        metalness: 1,
+    metalness: 0.95,
 
-        roughness: 0.32,
+    roughness: 0.48,
 
-        clearcoat: 1,
+    clearcoat: 0.45,
 
-        clearcoatRoughness: 0.12
+    clearcoatRoughness: 0.65
 
-    });
+});
 
     const block = new THREE.Mesh(
         geometry,
