@@ -30,20 +30,24 @@ export default class EngineSystem {
 
 this.repairMaterial = new THREE.MeshPhysicalMaterial({
 
-    color: 0x3a3632,
+    color: 0x342d27,
 
-    metalness: 0.95,
+    metalness: 0.90,
 
-    roughness: 0.48,
+    roughness: 0.62,
 
-    clearcoat: 0.45,
+    clearcoat: 0.15,
 
-    clearcoatRoughness: 0.65
+    clearcoatRoughness: 0.85
 
 });
 
     this.createCore();
+
+    this.createLights();
+
     this.createRings();
+
     // this.createRepairPlates();
     // this.createContainmentAssembly();
 
@@ -56,25 +60,26 @@ this.repairMaterial = new THREE.MeshPhysicalMaterial({
     createCore() {
 
         const geometry = new THREE.SphereGeometry(
-            0.55,
+            0.48,
             64,
             64
         );
 
         const material = new THREE.MeshPhysicalMaterial({
 
-            color: 0x111111,
+        color: 0x4d6485,
 
-            metalness: 0.98,
-            roughness: 0.16,
+        metalness: 0.05,
 
-            clearcoat: 1,
-            clearcoatRoughness: 0.04,
+        roughness: 1,
 
-            emissive: 0x050505,
-            emissiveIntensity: 0.18
+        clearcoat: 0,
 
-        });
+        emissive: 0x0b1220,
+
+        emissiveIntensity: 0.08
+
+});
 
         this.core = new THREE.Mesh(
             geometry,
@@ -89,8 +94,76 @@ this.repairMaterial = new THREE.MeshPhysicalMaterial({
         );
 
         this.group.add(this.core);
+        this.group.add(this.heart);
 
-    }
+// ------------------------------------------------
+// ENGINE HEART
+// ------------------------------------------------
+
+    const heartGeometry = new THREE.OctahedronGeometry(
+    0.35
+);
+
+    const heartMaterial = new THREE.MeshPhysicalMaterial({
+
+    color: 0xff0000,
+
+    metalness: 0,
+
+    roughness: 0.2,
+
+    transparent: false,
+
+    opacity: 1.0,
+
+    transmission: 0.35,
+
+    clearcoat: 0
+
+});
+
+this.heart = new THREE.Mesh(
+    heartGeometry,
+    heartMaterial
+);
+
+this.core.add(this.heart);
+
+}
+
+// =====================================================
+// LIGHTING
+// =====================================================
+
+createLights() {
+
+    const warm = new THREE.DirectionalLight(
+        0xffc28a,
+        0.45
+    );
+
+    warm.position.set(
+        4,
+        2,
+        3
+    );
+
+    this.group.add(warm);
+
+    const cool = new THREE.DirectionalLight(
+        0x7ba8ff,
+        0.25
+    );
+
+    cool.position.set(
+        -3,
+        -1,
+        -2
+    );
+
+    this.group.add(cool);
+
+}
 
     // =====================================================
     // RINGS
@@ -185,24 +258,22 @@ if (cfg.radius === 3.70) {
 material = new THREE.MeshPhysicalMaterial({
 
     color: new THREE.Color().setHSL(
-
-        0.08,
-        0.06,
-        0.09 + age * 0.03
-
+        0.085,
+        0.05,
+        0.085 + age * 0.025
     ),
 
-    metalness: 0.90,
+    metalness: 0.88,
 
-    roughness: 0.72 + age * 0.12,
+    roughness: 0.82,
 
-    clearcoat: 0.12,
+    clearcoat: 0.05,
 
     clearcoatRoughness: 1.0,
 
-    emissive: 0x020201,
+    emissive: 0x020101,
 
-    emissiveIntensity: 0.005
+    emissiveIntensity: 0.003
 
 });
 
@@ -521,26 +592,68 @@ createForgeSeam(ring, angle) {
 
 }
 
-    // =====================================================
-    // UPDATE
-    // =====================================================
+// =====================================================
+// UPDATE
+// =====================================================
 
     update(delta = 0.016) {
 
         this.time += delta;
 
-        // Ancient drift
-        this.group.rotation.y += delta * 0.003;
+    // ------------------------------------------------
+    // CORE BREATHING
+    // ------------------------------------------------    
 
-        this.rings.forEach((ring,index)=>{
+    const breathe =
 
-            ring.rotation.z +=
-                delta * ring.userData.speed * 80;
+    1 +
 
-            // Tiny independent motion
-            ring.rotation.x +=
-                Math.sin(
-                    this.time*0.08 + index
+    Math.sin(this.time * 0.45) * 0.008;
+
+        this.core.scale.setScalar(breathe);
+
+    // ------------------------------------------------
+    // HEART
+    // ------------------------------------------------
+
+    const pulse =
+    1 +
+    Math.sin(this.time * 1.2) * 0.08;
+
+    this.heart.scale.setScalar(pulse);
+
+    this.heart.material.opacity =
+    0.05 +
+    Math.sin(this.time * 1.2) * 0.04;   
+
+    this.heart.rotation.y += delta * 0.35;
+
+    this.heart.rotation.x += delta * 0.12;
+
+    // ------------------------------------------------
+    // CORE HEARTBEAT
+    // ------------------------------------------------ 
+
+    this.core.material.emissiveIntensity =
+
+    0.05 +
+
+    Math.sin(this.time * 0.3) * 0.015;
+
+    //------------------------------------------------
+    // ANCIENT DRIFT
+    // ------------------------------------------------
+        
+    this.group.rotation.y += delta * 0.003;
+
+    this.rings.forEach((ring, index) => {
+
+        ring.rotation.z +=
+            delta * ring.userData.speed * 80;
+
+        // Tiny independent motion
+        ring.rotation.x +=      
+            Math.sin(this.time*0.08 + index
                 ) * 0.00002;
 
         });
