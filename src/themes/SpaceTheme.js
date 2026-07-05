@@ -27,6 +27,16 @@ this.stardust = [];
 this.communicationParticles = [];
 
 // ------------------------------------------------
+// ENGINE RELATIONSHIP
+// ------------------------------------------------
+
+this.relationship = {
+
+    energy: 0
+
+};
+
+// ------------------------------------------------
 // 🌌 WORLD GROUP
 // ------------------------------------------------
 
@@ -93,25 +103,6 @@ this.engine.object.position.set(
 );
 
 this.group.add(this.engine.object);
-
-// ------------------------------------------------
-// 🎛️ STORYTELLER SYSTEM
-// ------------------------------------------------
-
-// this.storyteller = new StorytellerSystem();
-// this.group.add(this.storyteller.object);
-
-this.engine = new EngineSystem();
-
-this.engine.object.position.set(
-    2.8,
-    0,
-    -8
-);
-
-this.group.add(this.engine.object);
-
-//this.group.add(this.storyteller.object);
 
 // ------------------------------------------------
 // 🫧 PLASMA BLOB
@@ -402,8 +393,7 @@ const p =
 const intensity =
   state.intensity ?? 0;
 
-const audio =
-  state.audio || {};
+const audio = state.audio || {};  
 
 this.engine.update(0.016);
 
@@ -863,18 +853,25 @@ const distance =
 
 const connection =
 
-  THREE.MathUtils.clamp(
+    THREE.MathUtils.clamp(
 
-    1.0 - distance / 6.0,
+        1.0 - distance / 6.0,
 
-    0,
+        0,
 
-    1
+        1
 
-  );
+    );
 
-this.communication.connection =
-  connection;
+this.communication.connection = connection;
+
+// ------------------------------------------------
+// ENGINE RELATIONSHIP
+// ------------------------------------------------
+
+//this.engine.targetRelationshipEnergy = connection;
+
+this.engine.targetRelationshipEnergy = 1;
 
 // ------------------------------------------------
 // 📡 FIBONACCI SIGNAL

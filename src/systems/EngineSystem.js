@@ -19,16 +19,21 @@ export default class EngineSystem {
 
     constructor() {
 
+    console.log("ENGINE SYSTEM VERSION 2");    
+
     this.group = new THREE.Group();
     this.group.name = "Engine";
 
     this.time = 0;
 
+    this.relationshipEnergy = 0;
+    this.targetRelationshipEnergy = 0;
+
     this.rings = [];
 
     // Material shared by all repair clamps
 
-this.repairMaterial = new THREE.MeshPhysicalMaterial({
+    this.repairMaterial = new THREE.MeshPhysicalMaterial({
 
     color: 0x342d27,
 
@@ -86,6 +91,8 @@ this.repairMaterial = new THREE.MeshPhysicalMaterial({
             material
         );
 
+        console.log(this.core.material);
+
         // Slight imperfection
         this.core.position.set(
             0.04,
@@ -94,11 +101,10 @@ this.repairMaterial = new THREE.MeshPhysicalMaterial({
         );
 
         this.group.add(this.core);
-        this.group.add(this.heart);
-
-// ------------------------------------------------
-// ENGINE HEART
-// ------------------------------------------------
+        
+    // ------------------------------------------------
+    // ENGINE HEART
+    // ------------------------------------------------
 
     const heartGeometry = new THREE.OctahedronGeometry(
     0.35
@@ -128,6 +134,10 @@ this.heart = new THREE.Mesh(
 );
 
 this.core.add(this.heart);
+
+// DEBUG
+const axes = new THREE.AxesHelper(1);
+this.core.add(axes);
 
 }
 
@@ -600,6 +610,22 @@ createForgeSeam(ring, angle) {
 
         this.time += delta;
 
+        this.core.rotation.y += delta * 3;
+
+    // ------------------------------------------------
+    // RELATIONSHIP ENERGY
+    // ------------------------------------------------
+
+    this.relationshipEnergy = THREE.MathUtils.lerp(
+
+    this.relationshipEnergy,
+
+    this.targetRelationshipEnergy ?? 0,
+
+    delta * 2
+
+    ); 
+
     // ------------------------------------------------
     // CORE BREATHING
     // ------------------------------------------------    
@@ -634,11 +660,15 @@ createForgeSeam(ring, angle) {
     // CORE HEARTBEAT
     // ------------------------------------------------ 
 
-    this.core.material.emissiveIntensity =
+    // this.core.material.emissiveIntensity =
 
-    0.05 +
+    // 0.04 +
 
-    Math.sin(this.time * 0.3) * 0.015;
+    // this.relationshipEnergy * 0.08 +
+
+    // Math.sin(this.time * 0.3) * 0.01;
+
+    this.core.material.emissiveIntensity = 1.5;
 
     //------------------------------------------------
     // ANCIENT DRIFT
@@ -649,11 +679,13 @@ createForgeSeam(ring, angle) {
     this.rings.forEach((ring, index) => {
 
         ring.rotation.z +=
-            delta * ring.userData.speed * 80;
+            delta *
+            ring.userData.speed *
+            (80 + this.relationshipEnergy * 40);
 
         // Tiny independent motion
         ring.rotation.x +=      
-            Math.sin(this.time*0.08 + index
+            Math.sin(this.time * 0.08 + index
                 ) * 0.00002;
 
         });
