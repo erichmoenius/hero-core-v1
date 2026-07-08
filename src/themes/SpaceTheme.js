@@ -871,7 +871,7 @@ this.communication.connection = connection;
 
 //this.engine.targetRelationshipEnergy = connection;
 
-this.engine.targetRelationshipEnergy = 1;
+this.engine.targetRelationshipEnergy = connection;
 
 // ------------------------------------------------
 // 📡 FIBONACCI SIGNAL

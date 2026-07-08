@@ -15,11 +15,11 @@ Every repair remembers.
 */
 
 import * as THREE from "three";
+
+import EngineCore from "./EngineCore";
 export default class EngineSystem {
 
     constructor() {
-
-    console.log("ENGINE SYSTEM VERSION 2");    
 
     this.group = new THREE.Group();
     this.group.name = "Engine";
@@ -47,7 +47,9 @@ export default class EngineSystem {
 
 });
 
-    this.createCore();
+    this.core = new EngineCore();
+
+    this.group.add(this.core.object);
 
     this.createLights();
 
@@ -62,84 +64,138 @@ export default class EngineSystem {
     // CORE
     // =====================================================
 
-    createCore() {
+//     createCore() {
 
-        const geometry = new THREE.SphereGeometry(
-            0.48,
-            64,
-            64
-        );
+//     const geometry = new THREE.SphereGeometry(
+//         0.38,
+//         64,
+//         64
+//     );
 
-        const material = new THREE.MeshPhysicalMaterial({
+//     const material = new THREE.MeshPhysicalMaterial({
 
-        color: 0x4d6485,
+//     color: 0x181b1f,
 
-        metalness: 0.05,
+//     metalness: 0.95,
 
-        roughness: 1,
+//     roughness: 0.88,
 
-        clearcoat: 0,
+//     transparent: true,
 
-        emissive: 0x0b1220,
+//     opacity: 0.08,
 
-        emissiveIntensity: 0.08
+//     depthWrite: false,
 
-});
+//     transmission: 0.15,
 
-        this.core = new THREE.Mesh(
-            geometry,
-            material
-        );
+//     emissive: 0x050608,
 
-        console.log(this.core.material);
+//     emissiveIntensity: 0.01
 
-        // Slight imperfection
-        this.core.position.set(
-            0.04,
-            -0.03,
-            0.02
-        );
+// });
 
-        this.group.add(this.core);
+//         this.core = new THREE.Mesh(
+//             geometry,
+//             material
+//         );
+
+//     // Slight imperfection
+
+//         this.core.position.set(
+//             0.04,
+//             -0.03,
+//             0.02
+//         );
+
+//         this.group.add(this.core);
+
+//         this.core.visible = false;
+
+//     // ------------------------------------------------
+//     // SINGULARITY
+//     // ------------------------------------------------
+
+//     this.singularity = new THREE.Mesh(
+
+//     new THREE.SphereGeometry(
+
+//         0.055,
+
+//         32,
+
+//         32
+
+//     ),
+
+//     new THREE.MeshStandardMaterial({
+
+//         color: 0x030303,
+
+//         metalness: 0,
+
+//         roughness: 1
+
+//     })
+
+//     );
+
+//     this.core.add(this.singularity);    
+
+//     const test = new THREE.Mesh(
+
+//     new THREE.BoxGeometry(0.5, 0.5, 0.5),
+
+//     new THREE.MeshBasicMaterial({
+
+//         color: 0xff0000
+
+//     })
+
+// );
+
+// this.core.add(test);
+
+//     // ------------------------------------------------
+//     // ACCRETION RING
+//     // ------------------------------------------------
+
+//     this.accretionRing = new THREE.Mesh(
+
+//     new THREE.TorusGeometry(
+
+//         0.095,
+
+//         0.006,
+
+//         16,
+
+//         128
+
+//     ),
+
+//     new THREE.MeshBasicMaterial({
+
+//         color: 0xffc86a,
+
+//         transparent: true,
+
+//         opacity: 1.0
+
+//     })
+
+//     );
+
+//     this.accretionRing.rotation.x =
+
+//     Math.PI * 0.5;
+
+//     this.core.add(
+
+//     this.accretionRing
+
+//     );
         
-    // ------------------------------------------------
-    // ENGINE HEART
-    // ------------------------------------------------
-
-    const heartGeometry = new THREE.OctahedronGeometry(
-    0.35
-);
-
-    const heartMaterial = new THREE.MeshPhysicalMaterial({
-
-    color: 0xff0000,
-
-    metalness: 0,
-
-    roughness: 0.2,
-
-    transparent: false,
-
-    opacity: 1.0,
-
-    transmission: 0.35,
-
-    clearcoat: 0
-
-});
-
-this.heart = new THREE.Mesh(
-    heartGeometry,
-    heartMaterial
-);
-
-this.core.add(this.heart);
-
-// DEBUG
-const axes = new THREE.AxesHelper(1);
-this.core.add(axes);
-
-}
+// }
 
 // =====================================================
 // LIGHTING
@@ -227,11 +283,11 @@ createLights() {
                 speed: 0.001
             },
 
-            {
+           {
+          
+            // Massive forged containment ring
 
                 radius: 3.70,
-
-    // Massive forged containment ring
                 tube: 0.135,
                 rotation: new THREE.Vector3(
                     -15,
@@ -242,7 +298,7 @@ createLights() {
                 speed: 0.00035,
 
                 segments: true
-            }
+            } 
 
         ];
 
@@ -311,10 +367,10 @@ material = new THREE.MeshPhysicalMaterial({
 
 }
 
-            const ring = new THREE.Mesh(
-                geometry,
-                material
-            );
+        const ring = new THREE.Mesh(
+            geometry,
+            material
+);
 
             if (cfg.radius === 3.70) {
 
@@ -349,6 +405,28 @@ material = new THREE.MeshPhysicalMaterial({
             this.group.add(ring);
 
             this.rings.push(ring);
+
+// ------------------------------------------------
+// SECOND CONTAINMENT RING
+// ------------------------------------------------
+
+if (cfg.radius === 3.70) {
+
+    const outerRing = ring.clone();
+
+    // Slightly larger than the first ring
+    outerRing.scale.multiplyScalar(1.03);
+
+    // Small offset so both rings are visible
+    outerRing.rotation.x += THREE.MathUtils.degToRad(5);
+
+    outerRing.rotation.y += THREE.MathUtils.degToRad(-3);
+
+    this.group.add(outerRing);
+
+    this.rings.push(outerRing);
+
+}
             
             if (cfg.radius === 3.70) {
 
@@ -610,8 +688,6 @@ createForgeSeam(ring, angle) {
 
         this.time += delta;
 
-        this.core.rotation.y += delta * 3;
-
     // ------------------------------------------------
     // RELATIONSHIP ENERGY
     // ------------------------------------------------
@@ -636,25 +712,7 @@ createForgeSeam(ring, angle) {
 
     Math.sin(this.time * 0.45) * 0.008;
 
-        this.core.scale.setScalar(breathe);
-
-    // ------------------------------------------------
-    // HEART
-    // ------------------------------------------------
-
-    const pulse =
-    1 +
-    Math.sin(this.time * 1.2) * 0.08;
-
-    this.heart.scale.setScalar(pulse);
-
-    this.heart.material.opacity =
-    0.05 +
-    Math.sin(this.time * 1.2) * 0.04;   
-
-    this.heart.rotation.y += delta * 0.35;
-
-    this.heart.rotation.x += delta * 0.12;
+    //this.core.scale.setScalar(breathe);
 
     // ------------------------------------------------
     // CORE HEARTBEAT
@@ -668,7 +726,13 @@ createForgeSeam(ring, angle) {
 
     // Math.sin(this.time * 0.3) * 0.01;
 
-    this.core.material.emissiveIntensity = 1.5;
+    // this.core.material.emissiveIntensity =
+
+    // 0.005 +
+
+    // this.relationshipEnergy * 0.01;
+
+    this.core.update(delta);
 
     //------------------------------------------------
     // ANCIENT DRIFT
