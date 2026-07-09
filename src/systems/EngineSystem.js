@@ -229,6 +229,32 @@ createLights() {
 
     this.group.add(cool);
 
+// ------------------------------------------------
+// ENGINE ACCENT LIGHT
+// ------------------------------------------------
+
+    const accent = new THREE.PointLight(
+
+        0xffd38a,
+
+        0.12,
+
+        6
+
+    );
+
+    accent.position.set(
+
+        0,
+
+        0,
+
+        0
+
+    );
+
+    this.group.add(accent);
+
 }
 
     // =====================================================
