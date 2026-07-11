@@ -5,22 +5,14 @@ import { loadMovieTexture } from "../movieLoader.js";
 // 🎬 CINEMATIC HELPER
 // ------------------------------------------------
 
-function smoothstep(a, b, x){
-
-  const t = THREE.MathUtils.clamp(
-    (x - a) / (b - a),
-    0,
-    1
-  );
+function smoothstep(a, b, x) {
+  const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1);
 
   return t * t * (3 - 2 * t);
-
 }
 
 export class MoviesTheme {
-
-  constructor(container, gui){
-
+  constructor(container, gui) {
     this.container = container;
 
     this.gui = gui;
@@ -32,7 +24,6 @@ export class MoviesTheme {
     // ------------------------------------------------
 
     this.settings = {
-
       baseOpacity: 0.5,
 
       midOpacity: 0.7,
@@ -48,8 +39,7 @@ export class MoviesTheme {
       // ✨ NEW
       // narrative strength of mid layer
 
-      midBoost: 1.0
-
+      midBoost: 1.0,
     };
 
     // ------------------------------------------------
@@ -62,138 +52,70 @@ export class MoviesTheme {
     // 🎬 LAYERS
     // ------------------------------------------------
 
-    this.base = this.create(
-      "/mov/base.mp4",
-      14,
-      -8,
-      this.settings.baseOpacity
-    );
+    this.base = this.create("/mov/base.mp4", 14, -8, this.settings.baseOpacity);
 
-    this.mid = this.create(
-      "/mov/mid.mp4",
-      12,
-      -6,
-      this.settings.midOpacity
-    );
+    this.mid = this.create("/mov/mid.mp4", 12, -6, this.settings.midOpacity);
 
     this.energy = this.create(
       "/mov/energy.mp4",
       8,
       -4,
       this.settings.energyOpacity,
-      true
+      true,
     );
-
   }
 
   // ------------------------------------------------
   // 🎛️ GUI
   // ------------------------------------------------
 
-  initGUI(){
+  initGUI() {
+    this.folder = this.gui.addFolder("🎬 Movies");
 
-    this.folder =
-      this.gui.addFolder("🎬 Movies");
+    this.folder.add(this.settings, "baseOpacity", 0, 1, 0.01);
 
-    this.folder.add(
-      this.settings,
-      "baseOpacity",
-      0,
-      1,
-      0.01
-    );
+    this.folder.add(this.settings, "midOpacity", 0, 1, 0.01);
 
-    this.folder.add(
-      this.settings,
-      "midOpacity",
-      0,
-      1,
-      0.01
-    );
-
-    this.folder.add(
-      this.settings,
-      "energyOpacity",
-      0,
-      1,
-      0.01
-    );
+    this.folder.add(this.settings, "energyOpacity", 0, 1, 0.01);
 
     // ✨ NEW
-    this.folder.add(
-      this.settings,
-      "midBoost",
-      0,
-      4,
-      0.01
-    );
+    this.folder.add(this.settings, "midBoost", 0, 4, 0.01);
 
-    this.folder.add(
-      this.settings,
-      "motionStrength",
-      0,
-      2,
-      0.01
-    );
+    this.folder.add(this.settings, "motionStrength", 0, 2, 0.01);
 
-    this.folder.add(
-      this.settings,
-      "boostStrength",
-      0,
-      2,
-      0.01
-    );
+    this.folder.add(this.settings, "boostStrength", 0, 2, 0.01);
 
-    this.folder.add(
-      this.settings,
-      "audioStrength",
-      0,
-      3,
-      0.01
-    );
+    this.folder.add(this.settings, "audioStrength", 0, 3, 0.01);
 
     this.folder.open();
-
   }
 
   // ------------------------------------------------
   // 🎬 CREATE
   // ------------------------------------------------
 
-  create(path, w, z, opacity, additive = false){
-
+  create(path, w, z, opacity, additive = false) {
     const tex = loadMovieTexture(path);
 
     console.log("🎬 Loaded:", path);
 
-    const mat =
-      new THREE.MeshBasicMaterial({
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
 
-        map: tex,
+      transparent: true,
 
-        transparent: true,
+      opacity,
 
-        opacity,
+      depthWrite: false,
+    });
 
-        depthWrite: false
-
-      });
-
-    if(additive){
-
-      mat.blending =
-        THREE.AdditiveBlending;
-
+    if (additive) {
+      mat.blending = THREE.AdditiveBlending;
     }
 
-    const geo =
-      new THREE.PlaneGeometry(
-        w,
-        w * 9 / 16
-      );
+    const geo = new THREE.PlaneGeometry(w, (w * 9) / 16);
 
-    const mesh =
-      new THREE.Mesh(geo, mat);
+    const mesh = new THREE.Mesh(geo, mat);
 
     mesh.position.z = z;
 
@@ -201,27 +123,22 @@ export class MoviesTheme {
 
     return {
       mesh,
-      mat
+      mat,
     };
-
   }
 
   // ------------------------------------------------
   // 🎬 UPDATE
   // ------------------------------------------------
 
-  update(state){
-
+  update(state) {
     this.time += 0.016;
 
-    const p =
-      state.progress ?? 0;
+    const p = state.progress ?? 0;
 
-    const i =
-      state.intensity ?? 0;
+    const i = state.intensity ?? 0;
 
-    const audio =
-      state.audio || {};
+    const audio = state.audio || {};
 
     const s = this.settings;
 
@@ -229,252 +146,123 @@ export class MoviesTheme {
     // 🎧 AUDIO
     // ------------------------------------------------
 
-    const energy =
-      Math.pow(
-        audio.energy || 0,
-        0.6
-      ) * s.audioStrength;
+    const energy = Math.pow(audio.energy || 0, 0.6) * s.audioStrength;
 
-    const bass =
-      (audio.bass || 0) *
-      s.audioStrength;
+    const bass = (audio.bass || 0) * s.audioStrength;
 
     // ------------------------------------------------
     // 🎬 PHASES
     // ------------------------------------------------
 
-    const a1 =
-      smoothstep(0.0, 0.25, p);
+    const a1 = smoothstep(0.0, 0.25, p);
 
-    const a2 =
-      smoothstep(0.25, 0.5, p);
+    const a2 = smoothstep(0.25, 0.5, p);
 
-    const a3 =
-      smoothstep(0.5, 0.75, p);
+    const a3 = smoothstep(0.5, 0.75, p);
 
-    const a4 =
-      smoothstep(0.75, 1.0, p);
+    const a4 = smoothstep(0.75, 1.0, p);
 
     // ------------------------------------------------
     // ⚡ BOOST
     // ------------------------------------------------
 
-    const boost =
-      (i + energy * 1.5) *
-      s.boostStrength;
+    const boost = (i + energy * 1.5) * s.boostStrength;
 
     // ------------------------------------------------
     // 🎬 OPACITY STORY
     // ------------------------------------------------
 
-    const baseTarget =
-
-      s.baseOpacity *
-
-      (1 - a4 * 0.5);
+    const baseTarget = s.baseOpacity * (1 - a4 * 0.5);
 
     // ✨ MID LAYER
     // stronger cinematic control
 
     const midTarget =
+      s.midOpacity * s.midBoost * (0.25 + a1 * 0.4 + a2 + a3 * 0.5 + a4);
 
-      s.midOpacity *
-
-      s.midBoost *
-
-      (
-
-        0.25 +
-
-        a1 * 0.4 +
-
-        a2 +
-
-        a3 * 0.5 +
-
-        a4
-
-      );
-
-    const energyTarget =
-
-      s.energyOpacity *
-
-      (
-
-        a3 +
-
-        a4 * 1.5 +
-
-        energy * 2
-
-      );
+    const energyTarget = s.energyOpacity * (a3 + a4 * 1.5 + energy * 2);
 
     // ------------------------------------------------
     // 🎬 DIRECT OPACITY
     // ------------------------------------------------
 
-    this.base.mat.opacity =
-      THREE.MathUtils.clamp(
-        baseTarget,
-        0,
-        1
-      );
+    this.base.mat.opacity = THREE.MathUtils.clamp(baseTarget, 0, 1);
 
-    this.mid.mat.opacity =
-      THREE.MathUtils.clamp(
-        midTarget,
-        0,
-        1
-      );
+    this.mid.mat.opacity = THREE.MathUtils.clamp(midTarget, 0, 1);
 
-    this.energy.mat.opacity =
-      THREE.MathUtils.clamp(
-        energyTarget,
-        0,
-        1
-      );
+    this.energy.mat.opacity = THREE.MathUtils.clamp(energyTarget, 0, 1);
 
     // ------------------------------------------------
     // 🎬 MOTION
     // ------------------------------------------------
 
-    const motion =
-
-      s.motionStrength *
-
-      (
-        0.2 +
-
-        a2 * 0.5 +
-
-        a3 * 1.0 +
-
-        a4 * 1.5
-      );
+    const motion = s.motionStrength * (0.2 + a2 * 0.5 + a3 * 1.0 + a4 * 1.5);
 
     // ------------------------------------------------
     // 🎬 BASE
     // ------------------------------------------------
 
-    this.base.mesh.position.x =
-
-      Math.sin(this.time * 0.05) *
-
-      0.05 *
-
-      motion;
+    this.base.mesh.position.x = Math.sin(this.time * 0.05) * 0.05 * motion;
 
     // ------------------------------------------------
     // 🎬 MID
     // ------------------------------------------------
 
-    this.mid.mesh.position.x =
-
-      Math.sin(this.time * 0.2) *
-
-      0.3 *
-
-      motion;
+    this.mid.mesh.position.x = Math.sin(this.time * 0.2) * 0.3 * motion;
 
     // ------------------------------------------------
     // 🎬 ENERGY
     // ------------------------------------------------
 
-    this.energy.mesh.position.x =
-
-      Math.sin(this.time * 0.6) *
-
-      0.8 *
-
-      motion;
+    this.energy.mesh.position.x = Math.sin(this.time * 0.6) * 0.8 * motion;
 
     // ------------------------------------------------
     // 🎬 DEPTH
     // ------------------------------------------------
 
-    this.base.mesh.position.z =
-      -8 + a2 * 1;
+    this.base.mesh.position.z = -8 + a2 * 1;
 
-    this.mid.mesh.position.z =
-      -6 + a3 * 2;
+    this.mid.mesh.position.z = -6 + a3 * 2;
 
-    this.energy.mesh.position.z =
-      -4 + a4 * 3;
+    this.energy.mesh.position.z = -4 + a4 * 3;
 
     // ------------------------------------------------
     // 🎬 SCALE
     // ------------------------------------------------
 
-    const scale =
+    const scale = 1 + a3 * 0.2 + a4 * 0.3;
 
-      1 +
+    this.base.mesh.scale.setScalar(scale);
 
-      a3 * 0.2 +
+    this.mid.mesh.scale.setScalar(scale * 1.1 * (1 + bass * 0.3));
 
-      a4 * 0.3;
-
-    this.base.mesh.scale.setScalar(
-      scale
-    );
-
-    this.mid.mesh.scale.setScalar(
-
-      scale *
-
-      1.1 *
-
-      (1 + bass * 0.3)
-
-    );
-
-    this.energy.mesh.scale.setScalar(
-
-      scale *
-
-      1.2 *
-
-      (1 + bass * 0.6)
-
-    );
-
+    this.energy.mesh.scale.setScalar(scale * 1.2 * (1 + bass * 0.6));
   }
 
   // ------------------------------------------------
   // 🌍 ENVIRONMENT
   // ------------------------------------------------
 
-  getEnvironment(){
-
+  getEnvironment() {
     return {
-
       world: false,
 
       stars: false,
 
-      stage: false
-
+      stage: false,
     };
-
   }
 
   // ------------------------------------------------
   // 🧹 DESTROY
   // ------------------------------------------------
 
-  destroy(){
+  destroy() {
+    this.container.remove(this.base.mesh);
 
-    this.container.remove(
-      this.base.mesh
-    );
+    this.container.remove(this.mid.mesh);
 
-    this.container.remove(
-      this.mid.mesh
-    );
-
-    this.container.remove(
-      this.energy.mesh
-    );
+    this.container.remove(this.energy.mesh);
 
     this.base.mesh.geometry.dispose();
     this.mid.mesh.geometry.dispose();
@@ -485,7 +273,5 @@ export class MoviesTheme {
     this.energy.mat.dispose();
 
     this.folder?.destroy();
-
   }
-
 }

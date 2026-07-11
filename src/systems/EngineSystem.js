@@ -18,9 +18,7 @@ import * as THREE from "three";
 
 import EngineCore from "./EngineCore";
 export default class EngineSystem {
-
-    constructor() {
-
+  constructor() {
     this.group = new THREE.Group();
     this.group.name = "Engine";
 
@@ -34,18 +32,16 @@ export default class EngineSystem {
     // Material shared by all repair clamps
 
     this.repairMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x342d27,
 
-    color: 0x342d27,
+      metalness: 0.9,
 
-    metalness: 0.90,
+      roughness: 0.62,
 
-    roughness: 0.62,
+      clearcoat: 0.15,
 
-    clearcoat: 0.15,
-
-    clearcoatRoughness: 0.85
-
-});
+      clearcoatRoughness: 0.85,
+    });
 
     this.core = new EngineCore();
 
@@ -57,431 +53,354 @@ export default class EngineSystem {
 
     // this.createRepairPlates();
     // this.createContainmentAssembly();
+  }
 
-}
+  // =====================================================
+  // CORE
+  // =====================================================
 
-    // =====================================================
-    // CORE
-    // =====================================================
+  //     createCore() {
 
-//     createCore() {
+  //     const geometry = new THREE.SphereGeometry(
+  //         0.38,
+  //         64,
+  //         64
+  //     );
 
-//     const geometry = new THREE.SphereGeometry(
-//         0.38,
-//         64,
-//         64
-//     );
+  //     const material = new THREE.MeshPhysicalMaterial({
 
-//     const material = new THREE.MeshPhysicalMaterial({
+  //     color: 0x181b1f,
 
-//     color: 0x181b1f,
+  //     metalness: 0.95,
 
-//     metalness: 0.95,
+  //     roughness: 0.88,
 
-//     roughness: 0.88,
+  //     transparent: true,
 
-//     transparent: true,
+  //     opacity: 0.08,
 
-//     opacity: 0.08,
+  //     depthWrite: false,
 
-//     depthWrite: false,
+  //     transmission: 0.15,
 
-//     transmission: 0.15,
+  //     emissive: 0x050608,
 
-//     emissive: 0x050608,
+  //     emissiveIntensity: 0.01
 
-//     emissiveIntensity: 0.01
+  // });
 
-// });
+  //         this.core = new THREE.Mesh(
+  //             geometry,
+  //             material
+  //         );
 
-//         this.core = new THREE.Mesh(
-//             geometry,
-//             material
-//         );
+  //     // Slight imperfection
 
-//     // Slight imperfection
+  //         this.core.position.set(
+  //             0.04,
+  //             -0.03,
+  //             0.02
+  //         );
 
-//         this.core.position.set(
-//             0.04,
-//             -0.03,
-//             0.02
-//         );
+  //         this.group.add(this.core);
 
-//         this.group.add(this.core);
+  //         this.core.visible = false;
 
-//         this.core.visible = false;
+  //     // ------------------------------------------------
+  //     // SINGULARITY
+  //     // ------------------------------------------------
 
-//     // ------------------------------------------------
-//     // SINGULARITY
-//     // ------------------------------------------------
+  //     this.singularity = new THREE.Mesh(
 
-//     this.singularity = new THREE.Mesh(
+  //     new THREE.SphereGeometry(
 
-//     new THREE.SphereGeometry(
+  //         0.055,
 
-//         0.055,
+  //         32,
 
-//         32,
+  //         32
 
-//         32
+  //     ),
 
-//     ),
+  //     new THREE.MeshStandardMaterial({
 
-//     new THREE.MeshStandardMaterial({
+  //         color: 0x030303,
 
-//         color: 0x030303,
+  //         metalness: 0,
 
-//         metalness: 0,
+  //         roughness: 1
 
-//         roughness: 1
+  //     })
 
-//     })
+  //     );
 
-//     );
+  //     this.core.add(this.singularity);
 
-//     this.core.add(this.singularity);    
+  //     const test = new THREE.Mesh(
 
-//     const test = new THREE.Mesh(
+  //     new THREE.BoxGeometry(0.5, 0.5, 0.5),
 
-//     new THREE.BoxGeometry(0.5, 0.5, 0.5),
+  //     new THREE.MeshBasicMaterial({
 
-//     new THREE.MeshBasicMaterial({
+  //         color: 0xff0000
 
-//         color: 0xff0000
+  //     })
 
-//     })
+  // );
 
-// );
+  // this.core.add(test);
 
-// this.core.add(test);
+  //     // ------------------------------------------------
+  //     // ACCRETION RING
+  //     // ------------------------------------------------
 
-//     // ------------------------------------------------
-//     // ACCRETION RING
-//     // ------------------------------------------------
+  //     this.accretionRing = new THREE.Mesh(
 
-//     this.accretionRing = new THREE.Mesh(
+  //     new THREE.TorusGeometry(
 
-//     new THREE.TorusGeometry(
+  //         0.095,
 
-//         0.095,
+  //         0.006,
 
-//         0.006,
+  //         16,
 
-//         16,
+  //         128
 
-//         128
+  //     ),
 
-//     ),
+  //     new THREE.MeshBasicMaterial({
 
-//     new THREE.MeshBasicMaterial({
+  //         color: 0xffc86a,
 
-//         color: 0xffc86a,
+  //         transparent: true,
 
-//         transparent: true,
+  //         opacity: 1.0
 
-//         opacity: 1.0
+  //     })
 
-//     })
+  //     );
 
-//     );
+  //     this.accretionRing.rotation.x =
 
-//     this.accretionRing.rotation.x =
+  //     Math.PI * 0.5;
 
-//     Math.PI * 0.5;
+  //     this.core.add(
 
-//     this.core.add(
+  //     this.accretionRing
 
-//     this.accretionRing
+  //     );
 
-//     );
-        
-// }
+  // }
 
-// =====================================================
-// LIGHTING
-// =====================================================
+  // =====================================================
+  // LIGHTING
+  // =====================================================
 
-createLights() {
+  createLights() {
+    const warm = new THREE.DirectionalLight(0xffc28a, 0.45);
 
-    const warm = new THREE.DirectionalLight(
-        0xffc28a,
-        0.45
-    );
-
-    warm.position.set(
-        4,
-        2,
-        3
-    );
+    warm.position.set(4, 2, 3);
 
     this.group.add(warm);
 
-    const cool = new THREE.DirectionalLight(
-        0x7ba8ff,
-        0.25
-    );
+    const cool = new THREE.DirectionalLight(0x7ba8ff, 0.25);
 
-    cool.position.set(
-        -3,
-        -1,
-        -2
-    );
+    cool.position.set(-3, -1, -2);
 
     this.group.add(cool);
 
-// ------------------------------------------------
-// ENGINE ACCENT LIGHT
-// ------------------------------------------------
+    // ------------------------------------------------
+    // ENGINE ACCENT LIGHT
+    // ------------------------------------------------
 
     const accent = new THREE.PointLight(
+      0xffd38a,
 
-        0xffd38a,
+      0.12,
 
-        0.12,
-
-        6
-
+      6,
     );
 
     accent.position.set(
+      0,
 
-        0,
+      0,
 
-        0,
-
-        0
-
+      0,
     );
 
     this.group.add(accent);
+  }
 
-}
+  // =====================================================
+  // RINGS
+  // =====================================================
 
-    // =====================================================
-    // RINGS
-    // =====================================================
+  createRings() {
+    const configs = [
+      {
+        radius: 0.95,
+        tube: 0.02,
+        rotation: new THREE.Vector3(12, 38, 4),
+        speed: 0.002,
+      },
 
-    createRings() {
+      {
+        radius: 1.3,
+        tube: 0.03,
+        rotation: new THREE.Vector3(-30, 15, 42),
+        speed: -0.003,
+      },
 
-        
+      {
+        radius: 1.9,
+        tube: 0.042,
+        rotation: new THREE.Vector3(25, 0, 15),
+        speed: 0.004,
+      },
 
-                const configs = [
+      {
+        radius: 2.2,
+        tube: 0.02,
+        rotation: new THREE.Vector3(70, -18, 55),
+        speed: 0.002,
+      },
 
-            {
-                radius: 0.95,
-                tube: 0.020,
-                rotation: new THREE.Vector3(12,38,4),
-                speed: 0.002
-            },
+      {
+        radius: 2.7,
+        tube: 0.018,
+        rotation: new THREE.Vector3(-48, 82, 5),
+        speed: -0.0015,
+      },
 
-            {
-                radius: 1.30,
-                tube: 0.030,
-                rotation: new THREE.Vector3(-30,15,42),
-                speed: -0.003
-            },
+      {
+        radius: 3.15,
+        tube: 0.01,
+        rotation: new THREE.Vector3(88, 22, 66),
+        speed: 0.001,
+      },
 
-            {
-                radius: 1.90,
-                tube: 0.042,
-                rotation: new THREE.Vector3(25,0,15),
-                speed: 0.004
-            },
+      {
+        // Massive forged containment ring
 
-            {
-                radius: 2.20,
-                tube: 0.020,
-                rotation: new THREE.Vector3(70,-18,55),
-                speed: 0.002
-            },
+        radius: 3.7,
+        tube: 0.135,
+        rotation: new THREE.Vector3(-15, 110, -25),
 
-            {
-                radius: 2.70,
-                tube: 0.018,
-                rotation: new THREE.Vector3(-48,82,5),
-                speed: -0.0015
-            },
+        speed: 0.00035,
 
-            {
-                radius: 3.15,
-                tube: 0.010,
-                rotation: new THREE.Vector3(88,22,66),
-                speed: 0.001
-            },
+        segments: true,
+      },
+    ];
 
-           {
-          
-            // Massive forged containment ring
+    configs.forEach((cfg) => {
+      const geometry = new THREE.TorusGeometry(cfg.radius, cfg.tube, 24, 256);
 
-                radius: 3.70,
-                tube: 0.135,
-                rotation: new THREE.Vector3(
-                    -15,
-                    110,
-                    -25
-    ),
+      const age = Math.random();
 
-                speed: 0.00035,
+      let material;
 
-                segments: true
-            } 
+      if (cfg.radius === 3.7) {
+        // Ancient containment alloy
 
-        ];
+        material = new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color().setHSL(0.085, 0.05, 0.085 + age * 0.025),
 
-        configs.forEach(cfg => {
+          metalness: 0.88,
 
-            const geometry = new THREE.TorusGeometry(
+          roughness: 0.82,
 
-                cfg.radius,
-                cfg.tube,
-                24,
-                256
+          clearcoat: 0.05,
 
-            );
+          clearcoatRoughness: 1.0,
 
-            const age = Math.random();
+          emissive: 0x020101,
 
-let material;
-
-if (cfg.radius === 3.70) {
-
-    // Ancient containment alloy
-
-material = new THREE.MeshPhysicalMaterial({
-
-    color: new THREE.Color().setHSL(
-        0.085,
-        0.05,
-        0.085 + age * 0.025
-    ),
-
-    metalness: 0.88,
-
-    roughness: 0.82,
-
-    clearcoat: 0.05,
-
-    clearcoatRoughness: 1.0,
-
-    emissive: 0x020101,
-
-    emissiveIntensity: 0.003
-
-});
-
-} else {
-
-    // Standard engine alloy
-    material = new THREE.MeshPhysicalMaterial({
-
-        color: new THREE.Color().setHSL(
-            0.08,
-            0.12,
-            0.14 + age * 0.08
-        ),
-
-        metalness: 1,
-        roughness: 0.18 + age * 0.35,
-
-        clearcoat: 1,
-        clearcoatRoughness: age * 0.45,
-
-        emissive: 0x100804,
-        emissiveIntensity: 0.03
-
-    });
-
-}
-
-        const ring = new THREE.Mesh(
-            geometry,
-            material
-);
-
-            if (cfg.radius === 3.70) {
-
-    this.createForgeSeam(ring, 0);
-    this.createForgeSeam(ring, Math.PI * 0.55);
-    this.createForgeSeam(ring, Math.PI * 1.25);
-
-}
-
-            ring.rotation.set(
-
-                THREE.MathUtils.degToRad(cfg.rotation.x),
-                THREE.MathUtils.degToRad(cfg.rotation.y),
-                THREE.MathUtils.degToRad(cfg.rotation.z)
-
-            );
-
-// Tiny imperfections
-
-            ring.scale.set(
-
-                1,
-
-                0.97 + Math.random()*0.05,
-
-                0.98 + Math.random()*0.04
-
-            );
-
-            ring.userData.speed = cfg.speed;
-
-            this.group.add(ring);
-
-            this.rings.push(ring);
-
-// ------------------------------------------------
-// SECOND CONTAINMENT RING
-// ------------------------------------------------
-
-if (cfg.radius === 3.70) {
-
-    const outerRing = ring.clone();
-
-    // Slightly larger than the first ring
-    outerRing.scale.multiplyScalar(1.03);
-
-    // Small offset so both rings are visible
-    outerRing.rotation.x += THREE.MathUtils.degToRad(5);
-
-    outerRing.rotation.y += THREE.MathUtils.degToRad(-3);
-
-    this.group.add(outerRing);
-
-    this.rings.push(outerRing);
-
-}
-            
-            if (cfg.radius === 3.70) {
-
-            this.createRepairPlate(ring, 0);
-
-            this.createRepairPlate(ring, Math.PI * 0.55);
-
-}
-
+          emissiveIntensity: 0.003,
         });
+      } else {
+        // Standard engine alloy
+        material = new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color().setHSL(0.08, 0.12, 0.14 + age * 0.08),
 
-    }
+          metalness: 1,
+          roughness: 0.18 + age * 0.35,
 
-createRepairPlate(ring, angle = 0) {
+          clearcoat: 1,
+          clearcoatRoughness: age * 0.45,
 
+          emissive: 0x100804,
+          emissiveIntensity: 0.03,
+        });
+      }
+
+      const ring = new THREE.Mesh(geometry, material);
+
+      if (cfg.radius === 3.7) {
+        this.createForgeSeam(ring, 0);
+        this.createForgeSeam(ring, Math.PI * 0.55);
+        this.createForgeSeam(ring, Math.PI * 1.25);
+      }
+
+      ring.rotation.set(
+        THREE.MathUtils.degToRad(cfg.rotation.x),
+        THREE.MathUtils.degToRad(cfg.rotation.y),
+        THREE.MathUtils.degToRad(cfg.rotation.z),
+      );
+
+      // Tiny imperfections
+
+      ring.scale.set(
+        1,
+
+        0.97 + Math.random() * 0.05,
+
+        0.98 + Math.random() * 0.04,
+      );
+
+      ring.userData.speed = cfg.speed;
+
+      this.group.add(ring);
+
+      this.rings.push(ring);
+
+      // ------------------------------------------------
+      // SECOND CONTAINMENT RING
+      // ------------------------------------------------
+
+      if (cfg.radius === 3.7) {
+        const outerRing = ring.clone();
+
+        // Slightly larger than the first ring
+        outerRing.scale.multiplyScalar(1.03);
+
+        // Small offset so both rings are visible
+        outerRing.rotation.x += THREE.MathUtils.degToRad(5);
+
+        outerRing.rotation.y += THREE.MathUtils.degToRad(-3);
+
+        this.group.add(outerRing);
+
+        this.rings.push(outerRing);
+      }
+
+      if (cfg.radius === 3.7) {
+        this.createRepairPlate(ring, 0);
+
+        this.createRepairPlate(ring, Math.PI * 0.55);
+      }
+    });
+  }
+
+  createRepairPlate(ring, angle = 0) {
     const group = new THREE.Group();
 
     const material = this.repairMaterial;
 
     const top = new THREE.Mesh(
+      new THREE.BoxGeometry(1.45, 0.22, 0.16),
 
-        new THREE.BoxGeometry(
-            1.45,
-            0.22,
-            0.16
-        ),
-
-        material
-
+      material,
     );
 
     const bottom = top.clone();
@@ -498,124 +417,85 @@ createRepairPlate(ring, angle = 0) {
     group.add(top);
     group.add(bottom);
 
-    const boltGeometry = new THREE.CylinderGeometry(
+    const boltGeometry = new THREE.CylinderGeometry(0.045, 0.045, 0.42, 16);
 
-    0.045,
-    0.045,
-    0.42,
-    16
+    const boltMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x151515,
 
-);
+      metalness: 1,
 
-const boltMaterial = new THREE.MeshPhysicalMaterial({
+      roughness: 0.32,
 
-    color: 0x151515,
+      clearcoat: 1,
+    });
 
-    metalness: 1,
+    const boltPositions = [
+      [-0.42, 0, 0.18],
+      [0.42, 0, 0.18],
+      [-0.42, 0, -0.18],
+      [0.42, 0, -0.18],
+    ];
 
-    roughness: 0.32,
-
-    clearcoat: 1
-
-});
-
-const boltPositions = [
-
-    [-0.42, 0, 0.18],
-    [ 0.42, 0, 0.18],
-    [-0.42, 0,-0.18],
-    [ 0.42, 0,-0.18]
-
-];
-
-boltPositions.forEach(pos => {
-
-    const bolt = new THREE.Mesh(
-
+    boltPositions.forEach((pos) => {
+      const bolt = new THREE.Mesh(
         boltGeometry,
 
-        boltMaterial
+        boltMaterial,
+      );
 
-    );
+      bolt.rotation.x = Math.PI * 0.5;
 
-    bolt.rotation.x = Math.PI * 0.5;
+      bolt.position.set(pos[0], pos[1], pos[2]);
 
-    bolt.position.set(
+      group.add(bolt);
 
-        pos[0],
-        pos[1],
-        pos[2]
+      const sleeve = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.07, 0.07, 0.26, 16),
 
-    );
+        material,
+      );
 
-    group.add(bolt);
+      sleeve.rotation.x = Math.PI * 0.5;
 
-    const sleeve = new THREE.Mesh(
+      sleeve.position.copy(bolt.position);
 
-    new THREE.CylinderGeometry(
-        0.07,
-        0.07,
-        0.26,
-        16
-    ),
+      group.add(sleeve);
 
-    material
+      // ------------------------------------------------
+      // FRONT BOLT HEAD
+      // ------------------------------------------------
 
-);
+      const head = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.075, 0.075, 0.04, 16),
 
-    sleeve.rotation.x = Math.PI * 0.5;
+        boltMaterial,
+      );
 
-    sleeve.position.copy(bolt.position);
+      head.rotation.x = Math.PI * 0.5;
 
-    group.add(sleeve);
+      head.position.copy(bolt.position);
 
-// ------------------------------------------------
-// FRONT BOLT HEAD
-// ------------------------------------------------
+      // Move to one side of the clamp
+      head.position.y += 0.22;
 
-const head = new THREE.Mesh(
+      group.add(head);
 
-    new THREE.CylinderGeometry(
-        0.075,
-        0.075,
-        0.04,
-        16
-    ),
+      // ------------------------------------------------
+      // BACK BOLT HEAD
+      // ------------------------------------------------
 
-    boltMaterial
+      const backHead = head.clone();
 
-);
+      // Move to the opposite side
+      backHead.position.y -= 0.44;
 
-head.rotation.x = Math.PI * 0.5;
-
-head.position.copy(bolt.position);
-
-// Move to one side of the clamp
-head.position.y += 0.22;
-
-group.add(head);
-
-// ------------------------------------------------
-// BACK BOLT HEAD
-// ------------------------------------------------
-
-const backHead = head.clone();
-
-// Move to the opposite side
-backHead.position.y -= 0.44;
-
-group.add(backHead);
-
-});
+      group.add(backHead);
+    });
 
     // TEMPORARY POSITION
-    const radius = 3.70;
+    const radius = 3.7;
 
-    group.position.set(
-    Math.cos(angle) * radius,
-    Math.sin(angle) * radius,
-    0
-);
+    group.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
 
     group.lookAt(0, 0, 0);
 
@@ -624,125 +504,86 @@ group.add(backHead);
     group.rotation.z = 0.06;
 
     ring.add(group);
+  }
 
-}
-
-createForgeSeam(ring, angle) {
-
+  createForgeSeam(ring, angle) {
     const seam = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 0.18, 0.22),
 
-        new THREE.BoxGeometry(
-            0.06,
-            0.18,
-            0.22
-        ),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x1b1a19,
 
-        new THREE.MeshPhysicalMaterial({
+        metalness: 0.8,
 
-            color: 0x1b1a19,
-
-            metalness: 0.8,
-
-            roughness: 0.9
-
-        })
-
+        roughness: 0.9,
+      }),
     );
 
-    const radius = 3.70;
+    const radius = 3.7;
 
-    seam.position.set(
-
-        Math.cos(angle) * radius,
-        Math.sin(angle) * radius,
-        0
-
-    );
+    seam.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
 
     seam.lookAt(0, 0, 0);
 
     ring.add(seam);
+  }
 
-}
-
-        createContainmentAssembly() {
-
+  createContainmentAssembly() {
     this.assembly = [];
 
-    const geometry = new THREE.BoxGeometry(
-        0.18,
-        0.12,
-        0.10
-    );
+    const geometry = new THREE.BoxGeometry(0.18, 0.12, 0.1);
 
     const material = new THREE.MeshPhysicalMaterial({
+      color: 0x3a3632,
 
-    color: 0x3a3632,
+      metalness: 0.95,
 
-    metalness: 0.95,
+      roughness: 0.48,
 
-    roughness: 0.48,
+      clearcoat: 0.45,
 
-    clearcoat: 0.45,
+      clearcoatRoughness: 0.65,
+    });
 
-    clearcoatRoughness: 0.65
+    const block = new THREE.Mesh(geometry, material);
 
-});
-
-    const block = new THREE.Mesh(
-        geometry,
-        material
-    );
-
-    block.position.set(
-        3.70,
-        0,
-        0
-    );
+    block.position.set(3.7, 0, 0);
 
     this.group.add(block);
 
     this.assembly.push(block);
+  }
 
-}
+  // =====================================================
+  // UPDATE
+  // =====================================================
 
-// =====================================================
-// UPDATE
-// =====================================================
-
-    update(delta = 0.016) {
-
-        this.time += delta;
+  update(delta = 0.016) {
+    this.time += delta;
 
     // ------------------------------------------------
     // RELATIONSHIP ENERGY
     // ------------------------------------------------
 
     this.relationshipEnergy = THREE.MathUtils.lerp(
+      this.relationshipEnergy,
 
-    this.relationshipEnergy,
+      this.targetRelationshipEnergy ?? 0,
 
-    this.targetRelationshipEnergy ?? 0,
-
-    delta * 2
-
-    ); 
+      delta * 2,
+    );
 
     // ------------------------------------------------
     // CORE BREATHING
-    // ------------------------------------------------    
+    // ------------------------------------------------
 
-    const breathe =
-
-    1 +
-
-    Math.sin(this.time * 0.45) * 0.008;
+    const breathe = 1 + Math.sin(this.time * 0.45) * 0.008;
 
     //this.core.scale.setScalar(breathe);
 
     // ------------------------------------------------
     // CORE HEARTBEAT
-    // ------------------------------------------------ 
+    // ------------------------------------------------
 
     // this.core.material.emissiveIntensity =
 
@@ -763,33 +604,23 @@ createForgeSeam(ring, angle) {
     //------------------------------------------------
     // ANCIENT DRIFT
     // ------------------------------------------------
-        
+
     this.group.rotation.y += delta * 0.003;
 
     this.rings.forEach((ring, index) => {
+      ring.rotation.z +=
+        delta * ring.userData.speed * (80 + this.relationshipEnergy * 40);
 
-        ring.rotation.z +=
-            delta *
-            ring.userData.speed *
-            (80 + this.relationshipEnergy * 40);
+      // Tiny independent motion
+      ring.rotation.x += Math.sin(this.time * 0.08 + index) * 0.00002;
+    });
+  }
 
-        // Tiny independent motion
-        ring.rotation.x +=      
-            Math.sin(this.time * 0.08 + index
-                ) * 0.00002;
+  // =====================================================
+  // PUBLIC
+  // =====================================================
 
-        });
-
-    }
-
-    // =====================================================
-    // PUBLIC
-    // =====================================================
-
-    get object(){
-
-        return this.group;
-
-    }
-
+  get object() {
+    return this.group;
+  }
 }

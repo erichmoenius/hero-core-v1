@@ -1,66 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
 
-<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<meta charset="utf-8" />
+    <title>Hero Core</title>
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
-/>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-<title>Hero Core</title>
+      html,
+      body {
+        width: 100%;
+        background: #000;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
 
-<style>
+      /* ------------------------------------------------ */
+      /* 🌌 HERO ROOT                                     */
+      /* ------------------------------------------------ */
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
+      #hero-root {
+        position: relative;
 
-html,
-body{
-  width:100%;
-  background:#000;
-  overflow-x:hidden;
-  overflow-y:auto;
-}
+        width: 100%;
+        min-height: 100vh;
 
-/* ------------------------------------------------ */
-/* 🌌 HERO ROOT                                     */
-/* ------------------------------------------------ */
+        overflow: hidden;
+      }
 
-#hero-root{
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
 
-  position:relative;
+  <body>
+    <div id="hero-root"></div>
 
-  width:100%;
-  min-height:100vh;
-
-  overflow:hidden;
-
-}
-
-canvas{
-  display:block;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div id="hero-root"></div>
-
-<script
-  type="module"
-  src="/src/main.js"
-></script>
-
-</body>
-
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

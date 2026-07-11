@@ -1,263 +1,146 @@
 import * as THREE from "three";
 
 export class NarrativeSpiral {
+  constructor(scene) {
+    this.scene = scene;
 
-  constructor(scene){
+    this.group = new THREE.Group();
 
-  this.scene = scene;
+    this.group.name = "NarrativeSpiral";
 
-  this.group = new THREE.Group();
+    this.scene.add(this.group);
 
-  this.group.name = "NarrativeSpiral";
+    this.lines = [];
 
-  this.scene.add(this.group);
+    this.nodes = [];
 
-  this.lines = [];
+    this.createSpiral();
+  }
 
-  this.nodes = [];
-
-  this.createSpiral();
-
-}
-
-  createSpiral(){
-
+  createSpiral() {
     const count = 120;
 
-    for(let i = 0; i < count; i++){
-
+    for (let i = 0; i < count; i++) {
       const arm = i % 2;
 
-const angle =
-  i * 0.25 +
-  arm * Math.PI;
+      const angle = i * 0.25 + arm * Math.PI;
 
-const radius =
+      const radius = Math.pow(i, 1.1) * 0.02;
 
-  Math.pow(i, 1.1) * 0.02;
+      const x = Math.cos(angle) * radius;
 
-const x =
-  Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius * 0.55;
 
-const y =
+      const size = 0.015 + Math.random() * 0.04;
 
-  Math.sin(angle) *
+      const geo = new THREE.SphereGeometry(size, 8, 8);
 
-  radius *
+      const brightness = 0.6 + Math.random() * 0.4;
 
-  0.55;
-
-      const size =
-        0.015 +
-        Math.random() * 0.04;
-
-      const geo =
-        new THREE.SphereGeometry(
-          size,
-          8,
-          8
+      const color = new THREE.Color(
+        brightness,
+        brightness * 0.85,
+        brightness * 0.45,
       );
 
-      const brightness =
-  0.6 +
-  Math.random() * 0.4;
+      const mat = new THREE.MeshBasicMaterial({
+        color,
+      });
 
-const color =
-  new THREE.Color(
-    brightness,
-    brightness * 0.85,
-    brightness * 0.45
-  );
+      const sphere = new THREE.Mesh(geo, mat);
 
-const mat =
-  new THREE.MeshBasicMaterial({
+      const glowGeo = new THREE.SphereGeometry(size * 2.5, 8, 8);
 
-    color
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: 0xffd86b,
 
-  });
+        transparent: true,
 
-      const sphere =
-        new THREE.Mesh(
-          geo,
-          mat
-        );
+        opacity: 0.2,
+      });
 
-const glowGeo =
-  new THREE.SphereGeometry(
-    size * 2.5,
-    8,
-    8
-  );
+      const glow = new THREE.Mesh(glowGeo, glowMat);
 
-const glowMat =
-  new THREE.MeshBasicMaterial({
+      sphere.position.set(x, y, 0);
 
-    color: 0xffd86b,
+      glow.position.copy(sphere.position);
 
-    transparent: true,
+      this.group.add(glow);
 
-    opacity: 0.20
+      this.group.add(sphere);
 
-  });
+      this.nodes.push(sphere);
+    }
 
-const glow =
-  new THREE.Mesh(
-    glowGeo,
-    glowMat
-  );        
+    console.log("Narrative nodes:", this.nodes.length);
 
-      sphere.position.set(
-  x,
-  y,
-  0
-);
+    for (let i = 0; i < this.nodes.length - 4; i++) {
+      const a = this.nodes[i];
 
-glow.position.copy(
-  sphere.position
-);
+      const b = this.nodes[i + 4];
 
-this.group.add(
-  glow
-);
+      const points = [a.position, b.position];
 
-this.group.add(
-  sphere
-);
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
 
-this.nodes.push(
-  sphere
-);
+      const mat = new THREE.LineBasicMaterial({
+        color: 0xffd86b,
 
-}
+        transparent: true,
 
-console.log(
-  "Narrative nodes:",
-  this.nodes.length
-);
+        opacity: 0.02,
+      });
 
-for(let i = 0; i < this.nodes.length - 4; i++){
+      const line = new THREE.Line(geo, mat);
 
-  const a = this.nodes[i];
+      // this.group.add(
+      //   line
+      // );
 
-  const b = this.nodes[i + 4];
+      this.lines.push(line);
+    }
 
-  const points = [
+    this.group.position.set(
+      4.5,
 
-    a.position,
+      1.0,
 
-    b.position
-
-  ];
-
-  const geo =
-    new THREE.BufferGeometry()
-      .setFromPoints(points);
-
-  const mat =
-    new THREE.LineBasicMaterial({
-
-      color: 0xffd86b,
-
-      transparent: true,
-
-      opacity: 0.02
-
-    });
-
-  const line =
-    new THREE.Line(
-      geo,
-      mat
+      -8,
     );
 
-  // this.group.add(
-  //   line
-  // );
+    this.group.scale.setScalar(2.0);
 
-  this.lines.push(
-    line
-  );
-
-}
-
-this.group.position.set(
-
-  4.5,
-
-  1.0,
-
-  -8
-
-);
-
-this.group.scale.setScalar(2.0); 
-
-
-this.group.rotation.x = 0.35;
-this.group.rotation.y = -0.15;
-
+    this.group.rotation.x = 0.35;
+    this.group.rotation.y = -0.15;
   }
 
-  update(delta = 0.016, audio = {}){
+  update(delta = 0.016, audio = {}) {
+    if (!this.time) {
+      this.time = 0;
+    }
 
-  if(!this.time){
+    const energy = audio.energy || 0;
 
-    this.time = 0;
+    this.time += delta;
 
+    // slow storyteller rotation
+
+    this.group.rotation.z += 0.00005 + energy * 0.0005;
+
+    // breathing
+
+    const breath = 1 + Math.sin(this.time * 0.5) * 0.05 + energy * 1.0;
+
+    this.group.scale.setScalar(breath);
+
+    // communication v1
+
+    for (const line of this.lines) {
+      line.material.opacity = 0.02 + energy * 0.15;
+    }
   }
 
-  const energy =
-
-    audio.energy || 0;
-
-  this.time += delta;
-
-  // slow storyteller rotation
-
-  this.group.rotation.z +=
-
-    0.00005 +
-
-    energy * 0.0005;
-
-  // breathing
-
-  const breath =
-
-    1 +
-
-    Math.sin(
-
-      this.time * 0.5
-
-    ) * 0.05 +
-
-    energy * 1.0;
-
-  this.group.scale.setScalar(
-
-    breath
-
-  );
-
-  // communication v1
-
-  for(const line of this.lines){
-
-    line.material.opacity =
-
-      0.02 +
-
-      energy * 0.15;
-
-  }
-
-}
-
-  destroy(){
-
+  destroy() {
     this.scene.remove(this.group);
-
   }
-
 }

@@ -1,19 +1,18 @@
 export class BaseTheme {
-
-  constructor(container, app){
+  constructor(container, app) {
     this.container = container;
     this.app = app;
   }
 
-  init(){}
+  init() {}
 
-  update(state){}
+  update(state) {}
 
-  updateCamera(camera, state){}
+  updateCamera(camera, state) {}
 
-  getEnvironment(){
+  getEnvironment() {
     return {};
   }
 
-  destroy(){}
+  destroy() {}
 }

@@ -2,7 +2,7 @@ import { App } from "./core/App.js";
 
 // Movie files for Theme 3
 export const movieFiles = [
-  "/assets/mov/test.mp4"
+  "/assets/mov/test.mp4",
   // "/assets/mov/electric.webm",
   //"/assets/mov/mov1.webm",
   //"/assets/mov/mov2.webm",

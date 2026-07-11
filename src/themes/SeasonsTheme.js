@@ -2,89 +2,69 @@ import * as THREE from "three";
 import { BaseTheme } from "./BaseTheme.js";
 
 export class SeasonsTheme extends BaseTheme {
+  constructor(container) {
+    super(container);
+  }
 
-constructor(container){
-super(container);
-}
+  init() {
+    this.colors = {
+      state1: 0x8df5a6, // spring → light green
 
-init(){
+      state2: 0xff7a00, // summer → strong warm orange
 
-this.colors = {
+      state3: 0xa06b3b, // autumn → brown dust
 
-state1: 0x8df5a6, // spring → light green
+      state4: 0x9fdfff, // winter → icy blue
+    };
 
-state2: 0xff7a00, // summer → strong warm orange
+    this.geometry = new THREE.PlaneGeometry(5.5, 5.5);
 
-state3: 0xa06b3b, // autumn → brown dust
+    this.material = new THREE.MeshBasicMaterial({
+      color: this.colors.state1,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+    });
 
-state4: 0x9fdfff  // winter → icy blue
+    this.plane = new THREE.Mesh(this.geometry, this.material);
 
-};
+    // wichtig
+    this.plane.renderOrder = 2;
 
-this.geometry = new THREE.PlaneGeometry(5.5,5.5);
+    // leicht hinter das Glas
+    this.plane.position.z = -0.02;
 
-this.material = new THREE.MeshBasicMaterial({
-color: this.colors.state1,
-transparent: true,
-opacity: 0.35,
-depthWrite: false,
-depthTest: false,
-blending: THREE.AdditiveBlending
-});
+    this.container.add(this.plane);
+  }
 
-this.plane = new THREE.Mesh(
-this.geometry,
-this.material
-);
+  update({ current, next, blend, intensity }) {
+    if (!current || !next) return;
 
-// wichtig
-this.plane.renderOrder = 2;
+    const c1 = new THREE.Color(this.colors[current]);
+    const c2 = new THREE.Color(this.colors[next]);
 
-// leicht hinter das Glas
-this.plane.position.z = -0.02;
+    const blended = c1.clone().lerp(c2, blend);
 
-this.container.add(this.plane);
+    this.plane.material.color.copy(blended);
 
-}
+    // Portal breathing
+    if (intensity !== undefined) {
+      const boost = 1 + intensity * 0.08;
 
-update({ current, next, blend, intensity }){
+      this.plane.scale.set(5.5 * boost, 5.5 * boost, 1);
+    }
+  }
 
-if(!current || !next) return;
+  dispose() {
+    if (!this.plane) return;
 
-const c1 = new THREE.Color(this.colors[current]);
-const c2 = new THREE.Color(this.colors[next]);
+    this.container.remove(this.plane);
 
-const blended = c1.clone().lerp(c2, blend);
+    this.geometry.dispose();
+    this.material.dispose();
 
-this.plane.material.color.copy(blended);
-
-
-// Portal breathing
-if(intensity !== undefined){
-
-const boost = 1 + intensity * 0.08;
-
-this.plane.scale.set(
-5.5 * boost,
-5.5 * boost,
-1
-);
-
-}
-
-}
-
-dispose(){
-
-if(!this.plane) return;
-
-this.container.remove(this.plane);
-
-this.geometry.dispose();
-this.material.dispose();
-
-this.plane = null;
-
-}
-
+    this.plane = null;
+  }
 }

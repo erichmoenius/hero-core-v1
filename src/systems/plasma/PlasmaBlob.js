@@ -3,7 +3,7 @@ import * as THREE from "three";
 // ------------------------------------------------
 // VERTEX SHADER
 // ------------------------------------------------
-const VERT = /* glsl */`
+const VERT = /* glsl */ `
 uniform float uTime;
 uniform float uSpeed;
 uniform float uOpacity;
@@ -95,7 +95,7 @@ void main(){
 // ------------------------------------------------
 // FRAGMENT SHADER
 // ------------------------------------------------
-const FRAG = /* glsl */`
+const FRAG = /* glsl */ `
 uniform float uTime;
 uniform float uSpeed;
 uniform float uOpacity;
@@ -224,7 +224,7 @@ base*=(0.45+uEnergy*0.65);
 // ------------------------------------------------
 // AURA SHADERS
 // ------------------------------------------------
-const AURA_VERT = /* glsl */`
+const AURA_VERT = /* glsl */ `
 varying vec3 vNormal;
 void main(){
   vNormal=normalize(normalMatrix*normal);
@@ -232,7 +232,7 @@ void main(){
 }
 `;
 
-const AURA_FRAG = /* glsl */`
+const AURA_FRAG = /* glsl */ `
 
 uniform float uAuraOpacity;
 
@@ -277,60 +277,59 @@ void main(){
 // PLASMA BLOB
 // ════════════════════════════════════════════════
 export class PlasmaBlob {
-
-  constructor(scene, options={}){
-    this._scene     = scene;
-    this._enabled   = true;
+  constructor(scene, options = {}) {
+    this._scene = scene;
+    this._enabled = true;
     this._kickDecay = 0.0;
 
     // ── Config ────────────────────────────────────
     this.cfg = {
-      scale:      1.0,
-      opacity:    1.0,
-      auraOpacity:0.35,
-      n1Amp:  0.60,
-      n1Freq: 1.80,
-      n2Amp:  0.35,
-      n2Freq: 3.50,
-      n3Freq: 2.20,
-      speed:  0.22,
-      bassAmt:   1.0,
-      highAmt:   1.0,
+      scale: 1.0,
+      opacity: 1.0,
+      auraOpacity: 0.35,
+      n1Amp: 0.6,
+      n1Freq: 1.8,
+      n2Amp: 0.35,
+      n2Freq: 3.5,
+      n3Freq: 2.2,
+      speed: 0.22,
+      bassAmt: 1.0,
+      highAmt: 1.0,
       energyAmt: 1.0,
       rotY: 0.0012,
       rotX: 0.0006,
       rotZ: 0.0004,
       interactionForce: 0.0,
-      ...options
+      ...options,
     };
 
     // ── Uniforms ──────────────────────────────────
     this._U = {
-      uTime:      { value: 0.0 },
-      uSpeed:     { value: this.cfg.speed },
-      uN1Amp:     { value: this.cfg.n1Amp },
-      uN1Freq:    { value: this.cfg.n1Freq },
-      uN2Amp:     { value: this.cfg.n2Amp },
-      uN2Freq:    { value: this.cfg.n2Freq },
-      uN3Freq:    { value: this.cfg.n3Freq },
-      uBass:      { value: 0.0 },
-      uMid:       { value: 0.0 },
-      uHigh:      { value: 0.0 },
-      uEnergy:    { value: 0.0 },
+      uTime: { value: 0.0 },
+      uSpeed: { value: this.cfg.speed },
+      uN1Amp: { value: this.cfg.n1Amp },
+      uN1Freq: { value: this.cfg.n1Freq },
+      uN2Amp: { value: this.cfg.n2Amp },
+      uN2Freq: { value: this.cfg.n2Freq },
+      uN3Freq: { value: this.cfg.n3Freq },
+      uBass: { value: 0.0 },
+      uMid: { value: 0.0 },
+      uHigh: { value: 0.0 },
+      uEnergy: { value: 0.0 },
       uKickDecay: { value: 0.0 },
-      uBeat:      { value: 0.0 },
-      uOpacity:   { value: 1.0 },
+      uBeat: { value: 0.0 },
+      uOpacity: { value: 1.0 },
     };
 
     // ── Blob Mesh ─────────────────────────────────
-    this._geo  = new THREE.SphereGeometry(1.5, 96, 96);
-    this._mat  = new THREE.ShaderMaterial({
-      vertexShader:   VERT,
+    this._geo = new THREE.SphereGeometry(1.5, 96, 96);
+    this._mat = new THREE.ShaderMaterial({
+      vertexShader: VERT,
       fragmentShader: FRAG,
-      uniforms:       this._U,
-      transparent:    true,
-      depthWrite:     false,
-      blending:       THREE.AdditiveBlending,
+      uniforms: this._U,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
     this._mesh = new THREE.Mesh(this._geo, this._mat);
     this._scene.add(this._mesh);
@@ -338,155 +337,152 @@ export class PlasmaBlob {
     // ── Aura Mesh ─────────────────────────────────
     this._auraGeo = new THREE.SphereGeometry(2.1, 32, 32);
     this._auraMat = new THREE.ShaderMaterial({
-      vertexShader:   AURA_VERT,
+      vertexShader: AURA_VERT,
       fragmentShader: AURA_FRAG,
       uniforms: {
-
-  uAuraOpacity: {
-    value: this.cfg.auraOpacity
-  }
-
-},
+        uAuraOpacity: {
+          value: this.cfg.auraOpacity,
+        },
+      },
       transparent: true,
-      depthWrite:  false,
-      side:        THREE.BackSide,
-      blending:    THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
     });
     this._aura = new THREE.Mesh(this._auraGeo, this._auraMat);
     this._scene.add(this._aura);
   }
 
   // ── Presets ──────────────────────────────────────
-  applyPreset(name="cinematic"){
-    switch(name){
+  applyPreset(name = "cinematic") {
+    switch (name) {
       case "calm":
-        this.cfg.speed=0.08; this.cfg.n1Amp=0.22; this.cfg.n2Amp=0.08; break;
+        this.cfg.speed = 0.08;
+        this.cfg.n1Amp = 0.22;
+        this.cfg.n2Amp = 0.08;
+        break;
       case "nebula":
-        this.cfg.speed=0.18; this.cfg.n1Amp=0.48; this.cfg.n2Amp=0.30; break;
+        this.cfg.speed = 0.18;
+        this.cfg.n1Amp = 0.48;
+        this.cfg.n2Amp = 0.3;
+        break;
       case "crystalline":
-        this.cfg.speed=0.03; this.cfg.n1Amp=0.10; this.cfg.n2Amp=0.82; break;
+        this.cfg.speed = 0.03;
+        this.cfg.n1Amp = 0.1;
+        this.cfg.n2Amp = 0.82;
+        break;
       default: // cinematic
-        this.cfg.speed=0.22; this.cfg.n1Amp=0.60; this.cfg.n2Amp=0.35; break;
+        this.cfg.speed = 0.22;
+        this.cfg.n1Amp = 0.6;
+        this.cfg.n2Amp = 0.35;
+        break;
     }
   }
 
   // ── API ───────────────────────────────────────────
-  setInteractionForce(v=0){ this.cfg.interactionForce=v; }
+  setInteractionForce(v = 0) {
+    this.cfg.interactionForce = v;
+  }
 
-  setPosition(x,y,z){
-    this._mesh.position.set(x,y,z);
-    this._aura.position.set(x,y,z);
+  setPosition(x, y, z) {
+    this._mesh.position.set(x, y, z);
+    this._aura.position.set(x, y, z);
     return this;
   }
 
-  enable(){
-    this._enabled=true;
-    this._mesh.visible=true;
-    this._aura.visible=true;
+  enable() {
+    this._enabled = true;
+    this._mesh.visible = true;
+    this._aura.visible = true;
     return this;
   }
 
-  disable(){
-    this._enabled=false;
-    this._mesh.visible=false;
-    this._aura.visible=false;
+  disable() {
+    this._enabled = false;
+    this._mesh.visible = false;
+    this._aura.visible = false;
     return this;
   }
 
   // ── Update ────────────────────────────────────────
-  update(audio={}, time=0){
-    if(!this._enabled) return;
-    const cfg=this.cfg;
-    const U=this._U;
+  update(audio = {}, time = 0) {
+    if (!this._enabled) return;
+    const cfg = this.cfg;
+    const U = this._U;
 
-    U.uTime.value   = time;
-    U.uOpacity.value= cfg.opacity;
+    U.uTime.value = time;
+    U.uOpacity.value = cfg.opacity;
 
-    const bass   = (audio.bass   ?? 0)*cfg.bassAmt;
-    const mid    =  audio.mid    ?? 0;
-    const high   = (audio.high   ?? 0)*cfg.highAmt;
-    const energy = (audio.energy ?? 0)*cfg.energyAmt;
+    const bass = (audio.bass ?? 0) * cfg.bassAmt;
+    const mid = audio.mid ?? 0;
+    const high = (audio.high ?? 0) * cfg.highAmt;
+    const energy = (audio.energy ?? 0) * cfg.energyAmt;
 
-    U.uBass.value   = bass;
-    U.uMid.value    = mid;
-    U.uHigh.value   = high;
+    U.uBass.value = bass;
+    U.uMid.value = mid;
+    U.uHigh.value = high;
     U.uEnergy.value = energy;
-    U.uBeat.value   = audio.beat ? 1.0 : 0.0;
+    U.uBeat.value = audio.beat ? 1.0 : 0.0;
 
-    if(audio.kick) this._kickDecay=1.0;
-    this._kickDecay*=0.88;
-    U.uKickDecay.value=this._kickDecay;
-    this._auraMat.uniforms.uAuraOpacity.value =
-  cfg.auraOpacity;
-    
+    if (audio.kick) this._kickDecay = 1.0;
+    this._kickDecay *= 0.88;
+    U.uKickDecay.value = this._kickDecay;
+    this._auraMat.uniforms.uAuraOpacity.value = cfg.auraOpacity;
 
-    U.uN1Amp.value =cfg.n1Amp;
-    U.uN1Freq.value=cfg.n1Freq;
-    U.uN2Amp.value =cfg.n2Amp;
-    U.uN2Freq.value=cfg.n2Freq;
-    U.uN3Freq.value=cfg.n3Freq;
-    U.uSpeed.value =cfg.speed;
+    U.uN1Amp.value = cfg.n1Amp;
+    U.uN1Freq.value = cfg.n1Freq;
+    U.uN2Amp.value = cfg.n2Amp;
+    U.uN2Freq.value = cfg.n2Freq;
+    U.uN3Freq.value = cfg.n3Freq;
+    U.uSpeed.value = cfg.speed;
 
-    const beatBoost=audio.beat?1.8:1.0;
-    this._mesh.rotation.y+=(cfg.rotY+high*0.002)*beatBoost;
-    this._mesh.rotation.x+=(cfg.rotX+high*0.001)*beatBoost;
-    this._mesh.rotation.z+=cfg.rotZ+bass*0.001;
-    this._aura.rotation.y-=0.0008;
-    this._aura.rotation.x+=0.0004;
+    const beatBoost = audio.beat ? 1.8 : 1.0;
+    this._mesh.rotation.y += (cfg.rotY + high * 0.002) * beatBoost;
+    this._mesh.rotation.x += (cfg.rotX + high * 0.001) * beatBoost;
+    this._mesh.rotation.z += cfg.rotZ + bass * 0.001;
+    this._aura.rotation.y -= 0.0008;
+    this._aura.rotation.x += 0.0004;
 
+    const pulse = 1 + bass * 0.18 + energy * 0.12 + this._kickDecay * 0.18;
 
-const pulse =
+    this._mesh.scale.setScalar(cfg.scale * pulse);
 
-  1 +
-
-  bass * 0.18 +
-
-  energy * 0.12 +
-
-  this._kickDecay * 0.18;
-
-this._mesh.scale.setScalar(
-  cfg.scale * pulse
-);
-
-this._aura.scale.setScalar(
-  cfg.scale * pulse * 1.15
-);
+    this._aura.scale.setScalar(cfg.scale * pulse * 1.15);
 
     // floating
-    this._mesh.position.y=Math.sin(time*0.4)*0.08;
-    this._aura.position.y=this._mesh.position.y;
+    this._mesh.position.y = Math.sin(time * 0.4) * 0.08;
+    this._aura.position.y = this._mesh.position.y;
   }
 
   // ── GUI ───────────────────────────────────────────
-  addGUI(folder){
-    const c=this.cfg;
-    folder.add(c,"opacity",    0,1,   0.01).name("Opacity");
-    folder.add(c,"auraOpacity",0,1,0.01).name("Aura");
-    folder.add(c,"scale",      0.2,8, 0.01).name("Size");
+  addGUI(folder) {
+    const c = this.cfg;
+    folder.add(c, "opacity", 0, 1, 0.01).name("Opacity");
+    folder.add(c, "auraOpacity", 0, 1, 0.01).name("Aura");
+    folder.add(c, "scale", 0.2, 8, 0.01).name("Size");
 
-    const fN=folder.addFolder("Noise");
-    fN.add(c,"n1Amp", 0,  1.5,0.01);
-    fN.add(c,"n1Freq",0.5,5,  0.05);
-    fN.add(c,"n2Amp", 0,  1.5,0.01);
-    fN.add(c,"n2Freq",0.5,8,  0.05);
-    fN.add(c,"n3Freq",0.5,6,  0.05);
-    fN.add(c,"speed", 0,  1,  0.01);
+    const fN = folder.addFolder("Noise");
+    fN.add(c, "n1Amp", 0, 1.5, 0.01);
+    fN.add(c, "n1Freq", 0.5, 5, 0.05);
+    fN.add(c, "n2Amp", 0, 1.5, 0.01);
+    fN.add(c, "n2Freq", 0.5, 8, 0.05);
+    fN.add(c, "n3Freq", 0.5, 6, 0.05);
+    fN.add(c, "speed", 0, 1, 0.01);
 
-    const fA=folder.addFolder("Audio");
-    fA.add(c,"bassAmt",  0,3,0.01);
-    fA.add(c,"highAmt",  0,3,0.01);
-    fA.add(c,"energyAmt",0,3,0.01);
+    const fA = folder.addFolder("Audio");
+    fA.add(c, "bassAmt", 0, 3, 0.01);
+    fA.add(c, "highAmt", 0, 3, 0.01);
+    fA.add(c, "energyAmt", 0, 3, 0.01);
 
-    const fR=folder.addFolder("Rotation");
-    fR.add(c,"rotY",0,0.005,0.0001);
-    fR.add(c,"rotX",0,0.005,0.0001);
-    fR.add(c,"rotZ",0,0.005,0.0001);
+    const fR = folder.addFolder("Rotation");
+    fR.add(c, "rotY", 0, 0.005, 0.0001);
+    fR.add(c, "rotX", 0, 0.005, 0.0001);
+    fR.add(c, "rotZ", 0, 0.005, 0.0001);
     return this;
   }
 
   // ── Destroy ───────────────────────────────────────
-  destroy(){
+  destroy() {
     this._geo.dispose();
     this._mat.dispose();
     this._auraGeo.dispose();

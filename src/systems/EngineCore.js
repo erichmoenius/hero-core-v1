@@ -102,7 +102,7 @@ export default class EngineCore {
 
     this.orbitParticles = [];
 
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 180; i++) {
       const size = 0.015 + Math.random() * 0.015;
 
       let geometry;
@@ -137,35 +137,13 @@ export default class EngineCore {
 
       const family = Math.random();
 
-      let color;
-
-      if (family < 0.25) {
-        color = 0xfff3d1; // White-gold
-
-        // Inner dust
-      } else if (family < 0.8) {
-        color = 0xe6bf67; // Ancient gold
-
-        // Main disk
-      } else {
-        color = 0x8d6b3f; // Bronze
-
-        // Outer dust
-      }
-
-      const material = new THREE.MeshBasicMaterial({
-        color: color,
-      });
-
-      const particle = new THREE.Mesh(
-        geometry,
-
-        material,
-      );
+      const cluster = Math.random() < 0.35;
 
       let radius;
 
-      const cluster = Math.random() < 0.35;
+      // ------------------------------------------------
+      // RADIUS
+      // ------------------------------------------------
 
       if (family < 0.25) {
         // Inner dust
@@ -181,6 +159,56 @@ export default class EngineCore {
 
         radius = 0.6 + Math.random() * 0.35;
       }
+
+      // ------------------------------------------------
+      // MATTER LANES
+      // ------------------------------------------------
+
+      const lane = Math.floor(Math.random() * 6);
+
+      radius += lane * 0.015;
+
+      // ------------------------------------------------
+      // COLOR
+      // ------------------------------------------------
+
+      let color;
+
+      if (family < 0.25) {
+        color = 0xfff3d1;
+      } else if (family < 0.8) {
+        color = 0xe6bf67;
+      } else {
+        color = 0x8d6b3f;
+      }
+
+      const brightness = 0.45 + Math.random() * 0.45;
+
+      const material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(color).multiplyScalar(brightness),
+
+        roughness: 0.92,
+
+        metalness: 0.12,
+      });
+
+      // ------------------------------------------------
+      // PARTICLE
+      // ------------------------------------------------
+
+      const particle = new THREE.Mesh(
+        geometry,
+
+        material,
+      );
+
+      particle.rotation.set(
+        Math.random() * Math.PI,
+
+        Math.random() * Math.PI,
+
+        Math.random() * Math.PI,
+      );
 
       particle.userData = {
         angle: Math.random() * Math.PI * 2,
@@ -198,9 +226,11 @@ export default class EngineCore {
           Math.random() * 0.05,
 
         height:
-          family > 0.8
-            ? (Math.random() - 0.5) * 0.3
-            : (Math.random() - 0.5) * (0.04 + Math.random() * 0.1),
+          family < 0.25
+            ? (Math.random() - 0.5) * 0.015
+            : family < 0.8
+              ? (Math.random() - 0.5) * 0.05
+              : (Math.random() - 0.5) * 0.18,
 
         drift: Math.random() * Math.PI * 2,
 
@@ -390,7 +420,27 @@ export default class EngineCore {
 
       if (this.orbitParticles) {
         this.orbitParticles.forEach((particle) => {
-          particle.userData.angle += delta * particle.userData.speed;
+          const radiusFactor = THREE.MathUtils.inverseLerp(
+            0.18,
+
+            0.95,
+
+            particle.userData.radius,
+          );
+
+          const orbitalSpeed = THREE.MathUtils.lerp(
+            1.35, // Inner disk
+
+            0.35, // Outer disk
+
+            radiusFactor,
+          );
+
+          particle.userData.angle +=
+            delta * particle.userData.speed * orbitalSpeed;
+          particle.rotation.x += delta * 0.1;
+
+          particle.rotation.y += delta * 0.06;
 
           const animatedRadius =
             particle.userData.radius +

@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
-export function loadMovieTexture(path){
-
+export function loadMovieTexture(path) {
   const video = document.createElement("video");
 
   video.src = path;
@@ -17,7 +16,7 @@ export function loadMovieTexture(path){
   // 🔥 zuverlässiger Start
   const playVideo = () => {
     video.currentTime = 0;
-    video.play().catch(()=>{});
+    video.play().catch(() => {});
   };
 
   video.addEventListener("loadeddata", playVideo);

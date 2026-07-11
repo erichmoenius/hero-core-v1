@@ -9,1030 +9,652 @@ import { NarrativeSpiral } from "../systems/NarrativeSpiral.js";
 import EngineSystem from "../systems/EngineSystem.js";
 
 export class SpaceTheme {
+  constructor(container, gui) {
+    this.container = container;
 
-constructor(container, gui){
+    this.gui = gui;
 
-this.container = container;
+    this.time = 0;
 
-this.gui = gui;
+    this.velocity = 0;
 
-this.time = 0;
+    this.kickPulse = 0;
 
-this.velocity = 0;
+    this.stardust = [];
 
-this.kickPulse = 0;
+    this.communicationParticles = [];
 
-this.stardust = [];
+    this.inspectEngine = false;
 
-this.communicationParticles = [];
+    // ------------------------------------------------
+    // ENGINE RELATIONSHIP
+    // ------------------------------------------------
 
-// ------------------------------------------------
-// ENGINE RELATIONSHIP
-// ------------------------------------------------
+    this.relationship = {
+      energy: 0,
+    };
 
-this.relationship = {
+    // ------------------------------------------------
+    // 🌌 WORLD GROUP
+    // ------------------------------------------------
 
-    energy: 0
+    this.group = new THREE.Group();
 
-};
+    // ------------------------------------------------
+    // DEBUG LIGHTS
+    // ------------------------------------------------
 
-// ------------------------------------------------
-// 🌌 WORLD GROUP
-// ------------------------------------------------
+    const DEBUG_ENGINE = true;
 
-this.group = new THREE.Group();
+    if (DEBUG_ENGINE) {
+      const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+      keyLight.position.set(8, 6, 6);
+      this.group.add(keyLight);
 
-// ------------------------------------------------
-// DEBUG LIGHTS
-// ------------------------------------------------
+      const fillLight = new THREE.DirectionalLight(0x88aaff, 1.5);
+      fillLight.position.set(-6, -2, 5);
+      this.group.add(fillLight);
 
-const DEBUG_ENGINE = true;
+      const rimLight = new THREE.PointLight(0xffddaa, 3, 30);
+      rimLight.position.set(0, 2, 6);
+      this.group.add(rimLight);
+    }
 
-if (DEBUG_ENGINE) {
+    this.container.add(this.group);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    keyLight.position.set(8, 6, 6);
-    this.group.add(keyLight);
+    // ------------------------------------------------
+    // 🖱️ SPACE ZOOM
+    // ------------------------------------------------
 
-    const fillLight = new THREE.DirectionalLight(0x88aaff, 1.5);
-    fillLight.position.set(-6, -2, 5);
-    this.group.add(fillLight);
+    this.zoom = 0;
 
-    const rimLight = new THREE.PointLight(0xffddaa, 3, 30);
-    rimLight.position.set(0, 2, 6);
-    this.group.add(rimLight);
+    this.zoomVelocity = 0;
 
-}
+    // ------------------------------------------------
+    // 🌀 FIBONACCI
+    // ------------------------------------------------
 
-this.container.add(this.group);
+    this.fibonacci = new FibonacciSystem(this.group);
 
-// ------------------------------------------------
-// 🖱️ SPACE ZOOM
-// ------------------------------------------------
+    this.fibonacci.group.position.z = -12;
 
-this.zoom = 0;
+    this.narrativeSpiral = new NarrativeSpiral(this.group);
 
-this.zoomVelocity = 0;
+    this.narrativeSpiral.group.visible = false;
 
-// ------------------------------------------------
-// 🌀 FIBONACCI
-// ------------------------------------------------
+    // ------------------------------------------------
+    // ⚙️ ENGINE SYSTEM
+    // ------------------------------------------------
 
-this.fibonacci = new FibonacciSystem(
-  this.group
-);
+    this.engine = new EngineSystem();
 
-this.fibonacci.group.position.z = -12;
+    this.engine.object.position.set(2.8, 0, -8);
 
-this.narrativeSpiral =   new NarrativeSpiral(
-  this.group
-);
+    this.group.add(this.engine.object);
 
-this.narrativeSpiral.group.visible = false;
+    // ------------------------------------------------
+    // 🫧 PLASMA BLOB
+    // ------------------------------------------------
 
-// ------------------------------------------------
-// ⚙️ ENGINE SYSTEM
-// ------------------------------------------------
+    this.plasmaBlob = new PlasmaBlob(this.container);
 
-this.engine = new EngineSystem();
+    this.plasmaBlob.setPosition(-1.8, 0.4, -6.5);
 
-this.engine.object.position.set(
-    2.8,
-    0,
-    -8
-);
+    this.plasmaBlob.applyPreset("nebula");
 
-this.group.add(this.engine.object);
+    // ------------------------------------------------
+    // 🎛️ PLASMA GUI
+    // ------------------------------------------------
 
-// ------------------------------------------------
-// 🫧 PLASMA BLOB
-// ------------------------------------------------
+    if (this.gui) {
+      this.plasmaFolder = this.gui.addFolder("🫧 Plasma");
 
-this.plasmaBlob =
-  new PlasmaBlob(this.container);
+      this.plasmaBlob.addGUI(this.plasmaFolder);
+    }
 
-this.plasmaBlob.setPosition(
-  -1.8,
-  0.4,
-  -6.5
-);
+    // ------------------------------------------------
+    // ⭐ STAR LAYERS
+    // ------------------------------------------------
 
-this.plasmaBlob.applyPreset(
-  "nebula"
-);
+    this.far = this.createLayer(800, 60, 0.02, 0x334488);
 
-// ------------------------------------------------
-// 🎛️ PLASMA GUI
-// ------------------------------------------------
+    this.mid = this.createLayer(500, 30, 0.03, 0xaaccff);
 
-if(this.gui){
+    this.near = this.createLayer(250, 15, 0.05, 0xaa8866);
 
-  this.plasmaFolder =
+    // ------------------------------------------------
+    // 🌠 GLOBAL MOTION
+    // ------------------------------------------------
 
-    this.gui.addFolder(
-      "🫧 Plasma"
+    this.worldRotation = 0;
+
+    this.cameraDrift = new THREE.Vector2();
+
+    this.delayedEnergy = 0;
+
+    this.mouseField = new THREE.Vector2();
+
+    this.mouseVelocity = new THREE.Vector2();
+
+    // ------------------------------------------------
+    // 🌀 COMMUNICATION SYSTEM
+    // ------------------------------------------------
+
+    this.communication = {
+      connection: 0,
+
+      signal: 0,
+
+      resonance: 0,
+
+      coherence: 0,
+    };
+
+    this.createCommunicationField();
+
+    console.log("COMM FIELD CREATED");
+  }
+
+  // ------------------------------------------------
+  // 🌍 ENVIRONMENT
+  // ------------------------------------------------
+
+  getEnvironment() {
+    return {
+      world: true,
+
+      stars: false,
+
+      portal: false,
+
+      stage: true,
+    };
+  }
+
+  // ------------------------------------------------
+  // 🎥 CAMERA FEEL
+  // ------------------------------------------------
+
+  updateCamera(camera, state = {}) {
+    const follow = 0.06;
+
+    const px = state.parallax?.x || 0;
+
+    const py = state.parallax?.y || 0;
+
+    // ------------------------------------------------
+    // 🖱️ DRIFT
+    // ------------------------------------------------
+
+    this.cameraDrift.x += (px * 0.6 - this.cameraDrift.x) * follow;
+
+    this.cameraDrift.y += (py * 0.4 - this.cameraDrift.y) * follow;
+
+    // ------------------------------------------------
+    // 🚀 SPACE NAVIGATION
+    // ------------------------------------------------
+
+    camera.position.x += (this.cameraDrift.x - camera.position.x) * 0.08;
+
+    camera.position.y += (-this.cameraDrift.y - camera.position.y) * 0.08;
+
+    // ------------------------------------------------
+    // 🌌 ZOOM
+    // ------------------------------------------------
+
+    camera.position.z = 5;
+  }
+
+  // ------------------------------------------------
+  // ⭐ CREATE STAR LAYER
+  // ------------------------------------------------
+
+  createLayer(count, depth, size, color) {
+    const geometry = new THREE.BufferGeometry();
+
+    const positions = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+
+      positions[i3] = (Math.random() - 0.5) * 60;
+
+      positions[i3 + 1] = (Math.random() - 0.5) * 60;
+
+      positions[i3 + 2] = (Math.random() - 0.5) * depth;
+    }
+
+    geometry.setAttribute(
+      "position",
+
+      new THREE.BufferAttribute(positions, 3),
     );
 
-  this.plasmaBlob.addGUI(
-    this.plasmaFolder
-  );
+    const material = new THREE.PointsMaterial({
+      size,
 
-}
+      color,
 
-// ------------------------------------------------
-// ⭐ STAR LAYERS
-// ------------------------------------------------
+      transparent: true,
 
-this.far = this.createLayer(
-  800,
-  60,
-  0.02,
-  0x334488
-);
+      opacity: 0.25,
 
-this.mid = this.createLayer(
-  500,
-  30,
-  0.03,
-  0xaaccff
-);
+      depthWrite: false,
 
-this.near = this.createLayer(
-  250,
-  15,
-  0.05,
-  0xaa8866
-);
+      blending: THREE.AdditiveBlending,
+    });
 
-// ------------------------------------------------
-// 🌠 GLOBAL MOTION
-// ------------------------------------------------
+    const points = new THREE.Points(geometry, material);
 
-this.worldRotation = 0;
+    this.group.add(points);
 
-this.cameraDrift =
-  new THREE.Vector2();
+    return {
+      points,
 
-this.delayedEnergy = 0;
+      depth,
 
-this.mouseField = new THREE.Vector2();
+      baseSize: size,
+    };
+  }
 
-this.mouseVelocity = new THREE.Vector2();
+  // ------------------------------------------------
+  // 🔄 UPDATE
+  // ------------------------------------------------
 
-// ------------------------------------------------
-// 🌀 COMMUNICATION SYSTEM
-// ------------------------------------------------
+  update(state) {
+    this.time += 0.016;
 
-this.communication = {
+    // ------------------------------------------------
+    // 🌌 COSMIC BREATH
+    // ------------------------------------------------
 
-  connection: 0,
+    const breath = 1.0 + Math.sin(this.time * 0.25) * 0.18;
 
-  signal: 0,
+    const p = state.progress ?? 0;
 
-  resonance: 0,
+    const intensity = state.intensity ?? 0;
 
-  coherence: 0
+    const audio = state.audio || {};
 
-};
+    this.engine.update(0.016);
 
-this.createCommunicationField();
+    const response = 1.0 + Math.sin(this.time * 0.25 - 1.0) * 0.35;
 
-console.log(
-  "COMM FIELD CREATED"
-);
+    // this.narrativeSpiral.group.scale.setScalar(
+    //   response
+    // );
 
-}
+    this.engine.update(0.016);
 
-// ------------------------------------------------
-// 🌍 ENVIRONMENT
-// ------------------------------------------------
+    // No breathing.
+    // The Engine exists.
+    // It does not react.
 
-getEnvironment(){
+    if (audio.kick) {
+      this.kickPulse = 1;
+    }
 
-return {
+    // ------------------------------------------------
+    // 🖱️ SPACE ZOOM INPUT
+    // ------------------------------------------------
 
-  world: true,
+    const wheel = state.wheel?.delta || 0;
 
-  stars: false,
+    console.log("WHEEL", state.wheel);
 
-  portal: false,
+    this.zoomVelocity += wheel * 1.0;
 
-  stage: true
+    // ------------------------------------------------
+    // 🌊 ZOOM DAMPING
+    // ------------------------------------------------
 
-};
+    this.zoomVelocity *= 0.9;
 
-}
+    // ------------------------------------------------
+    // 🌌 APPLY ZOOM
+    // ------------------------------------------------
 
-// ------------------------------------------------
-// 🎥 CAMERA FEEL
-// ------------------------------------------------
+    this.zoom += this.zoomVelocity;
 
-updateCamera(camera, state = {}){
+    // ------------------------------------------------
+    // 🌫️ BREATHING
+    // ------------------------------------------------
 
-const follow = 0.06;
+    this.zoom += Math.sin(this.time * 0.3) * 0.003;
 
-const px =
-  state.parallax?.x || 0;
+    // ------------------------------------------------
+    // 🛑 LIMITS
+    // ------------------------------------------------
 
-const py =
-  state.parallax?.y || 0;
+    this.zoom = THREE.MathUtils.clamp(
+      this.zoom,
 
-// ------------------------------------------------
-// 🖱️ DRIFT
-// ------------------------------------------------
+      -30,
 
-this.cameraDrift.x +=
-
-  (
-    (px * 0.6) -
-    this.cameraDrift.x
-  ) * follow;
-
-this.cameraDrift.y +=
-
-  (
-    (py * 0.4) -
-    this.cameraDrift.y
-  ) * follow;
-
-// ------------------------------------------------
-// 🚀 SPACE NAVIGATION
-// ------------------------------------------------
-
-camera.position.x +=
-
-  (
-    this.cameraDrift.x -
-    camera.position.x
-  ) * 0.08;
-
-camera.position.y +=
-
-  (
-    -this.cameraDrift.y -
-    camera.position.y
-  ) * 0.08;
-
-// ------------------------------------------------
-// 🌌 ZOOM
-// ------------------------------------------------
-
-camera.position.z = 5;
-
-}
-
-// ------------------------------------------------
-// ⭐ CREATE STAR LAYER
-// ------------------------------------------------
-
-createLayer(count, depth, size, color){
-
-const geometry =
-  new THREE.BufferGeometry();
-
-const positions =
-  new Float32Array(
-    count * 3
-  );
-
-for(let i = 0; i < count; i++){
-
-  const i3 = i * 3;
-
-  positions[i3] =
-
-    (Math.random() - 0.5) *
-    60;
-
-  positions[i3 + 1] =
-
-    (Math.random() - 0.5) *
-    60;
-
-  positions[i3 + 2] =
-
-    (Math.random() - 0.5) *
-    depth;
-
-}
-
-geometry.setAttribute(
-
-  "position",
-
-  new THREE.BufferAttribute(
-    positions,
-    3
-  )
-
-);
-
-const material =
-  new THREE.PointsMaterial({
-
-    size,
-
-    color,
-
-    transparent: true,
-
-    opacity: 0.25,
-
-    depthWrite: false,
-
-    blending:
-      THREE.AdditiveBlending
-
-  });
-
-const points =
-  new THREE.Points(
-    geometry,
-    material
-  );
-
-this.group.add(points);
-
-return {
-
-  points,
-
-  depth,
-
-  baseSize: size
-
-};
-
-}
-
-// ------------------------------------------------
-// 🔄 UPDATE
-// ------------------------------------------------
-
-update(state){
-
-this.time += 0.016;
-
-// ------------------------------------------------
-// 🌌 COSMIC BREATH
-// ------------------------------------------------
-
-const breath =
-
-  1.0 +
-
-  Math.sin(
-
-    this.time * 0.25
-
-  ) * 0.18;
-
-const p =
-  state.progress ?? 0;
-
-const intensity =
-  state.intensity ?? 0;
-
-const audio = state.audio || {};  
-
-this.engine.update(0.016);
-
-const response =
-
-  1.0 +
-
-  Math.sin(
-
-    this.time * 0.25 - 1.0
-
-  ) * 0.35;
-
-// this.narrativeSpiral.group.scale.setScalar(
-//   response
-// );
-
-this.engine.update(0.016);
-
-// No breathing.
-// The Engine exists.
-// It does not react.
-
-if(audio.kick){
-
-  this.kickPulse = 1;
-
-}
-
-// ------------------------------------------------
-// 🖱️ SPACE ZOOM INPUT
-// ------------------------------------------------
-
-const wheel =
-  state.wheel?.delta || 0;
-
-console.log(
-  "WHEEL",
-  state.wheel
-);
-
-this.zoomVelocity +=
-  wheel * 1.0; 
-
-// ------------------------------------------------
-// 🌊 ZOOM DAMPING
-// ------------------------------------------------
-
-this.zoomVelocity *= 0.9;
-
-// ------------------------------------------------
-// 🌌 APPLY ZOOM
-// ------------------------------------------------
-
-this.zoom +=
-  this.zoomVelocity;
-
-
-// ------------------------------------------------
-// 🌫️ BREATHING
-// ------------------------------------------------
-
-this.zoom +=
-
-  Math.sin(
-    this.time * 0.3
-  ) * 0.003;
-
-// ------------------------------------------------
-// 🛑 LIMITS
-// ------------------------------------------------
-
-this.zoom =
-  THREE.MathUtils.clamp(
-
-    this.zoom,
-
-    -30,
-
-    6
-
-  );
-
-// ------------------------------------------------
-// 🌌 DEPTH FACTOR
-// ------------------------------------------------
-
-const depthFactor =
-
-  THREE.MathUtils.clamp(
-
-    Math.abs(this.zoom) / 30,
-
-    0,
-
-    1
-
-  );
-
-// ------------------------------------------------
-// 🎧 AUDIO
-// ------------------------------------------------
-
-const energy =
-
-  Math.pow(
-    audio.energy || 0,
-    0.65
-  );
-
-this.delayedEnergy =
-
-  THREE.MathUtils.lerp(
-
-    this.delayedEnergy,
-
-    energy,
-
-    0.12
-
-  );
-
-const bass =
-  audio.bass || 0;
-
-const mid =
-  audio.mid || 0;
-
-const high =
-  audio.high || 0;
-
-// ------------------------------------------------
-// 🌀 FIBONACCI INTERACTION
-// ------------------------------------------------
-
-const targetMouseX =
-  state.parallax?.x || 0;
-
-const targetMouseY =
-  state.parallax?.y || 0;
-
-// ------------------------------------------------
-// 🌌 INTERACTION INERTIA
-// ------------------------------------------------
-
-this.mouseVelocity.x +=
-
-  (
-
-    targetMouseX -
-
-    this.mouseField.x
-
-  ) * 0.015;
-
-this.mouseVelocity.y +=
-
-  (
-
-    targetMouseY -
-
-    this.mouseField.y
-
-  ) * 0.015;
-
-
-// ------------------------------------------------
-// 🌀 DAMPING
-// ------------------------------------------------
-
-this.mouseVelocity.multiplyScalar(0.965);
-
-
-// ------------------------------------------------
-// 🌠 APPLY
-// ------------------------------------------------
-
-this.mouseField.add(
-  this.mouseVelocity
-);
-
-
-// ------------------------------------------------
-// 🖱️ FIBONACCI FIELD INPUT
-// ------------------------------------------------
-
-this.fibonacci.setMouse(
-
-  this.mouseField.x,
-
-  this.mouseField.y
-
-);
-
-// ------------------------------------------------
-// ⚡ AUDIO-DRIVEN MORPH
-// ------------------------------------------------
-
-const delta =
-
-  0.008 +
-
-  this.delayedEnergy * 0.08 +
-
-  bass * 0.04;
-
-  this.fibonacci.update(
-  delta,
-  audio
-);
-
-// ------------------------------------------------
-// 🔥 SCALE PULSE
-// ------------------------------------------------
-
-
-const fibBaseScale = 3.0;
-
-const fibAudioScale =
-  this.delayedEnergy * 0.48 +
-  bass * 0.7 +
-  this.kickPulse * 0.8;
-
-this.fibonacci.group.scale.setScalar(
-
-  fibBaseScale +
-
-  fibAudioScale
-
-);
-
-// ------------------------------------------------
-// 🌀 ROTATION FEEL
-// ------------------------------------------------
-
-this.fibonacci.group.rotation.y +=
-
-  0.00012 +
-
-  this.delayedEnergy * 0.01;
-
-
-// ------------------------------------------------
-// 🌌 WORLD ROTATION
-// ------------------------------------------------
-
-// this.group.rotation.z =
-//   Math.sin(
-//     this.time * 0.15
-//   ) * 0.03;
-
-// this.group.rotation.y =
-  this.worldRotation;
-
-// ------------------------------------------------
-// 🫧 PLASMA UPDATE
-// ------------------------------------------------
-
-this.plasmaBlob.update(
-  audio,
-  this.time
-);
-
-if(this.plasmaBlob?._mesh){
-
-  this.plasmaBlob._mesh.scale.setScalar(
-
-    this.plasmaBlob.cfg.scale *
-
-    breath
-
-  );
-
-}
-
-// ------------------------------------------------
-// 🌌 CINEMATIC PLASMA FLOAT
-// ------------------------------------------------
-
-const driftY =
-
-  Math.sin(
-
-    this.time * 0.22
-
-  ) *
-
-  (
-
-    0.18 +
-
-    this.delayedEnergy * 0.25
-
-  ) +
-
-  this.mouseField.y * 0.08;
-
-// ------------------------------------------------
-// 🌌 STABLE POSITION
-// ------------------------------------------------
-
-this.plasmaBlob.setPosition(
-
-  -1.6,
-
-  driftY + 0.3,
-
-  -6.5
-
-);
-
-// ------------------------------------------------
-// 🚀 VELOCITY SYSTEM
-// ------------------------------------------------
-
-const targetSpeed =
-  (p - 0.5) * 3;
-
-this.velocity +=
-
-  (
-    targetSpeed -
-    this.velocity
-  ) * 0.05;
-
-this.velocity *= 0.985;
-
-this.velocity +=
-  intensity * 0.35;
-
-const forward =
-  this.velocity;
-
-// ------------------------------------------------
-// 🌌 DEPTH SPEED
-// ------------------------------------------------
-
-const depthSpeed =
-  1 + depthFactor * 4;
-
-// ------------------------------------------------
-// ⭐ STAR MOVEMENT
-// ------------------------------------------------
-
-this.updateLayer(
-  this.far,
-  forward * 0.2 * depthSpeed
-);
-
-this.updateLayer(
-  this.mid,
-  forward * 0.6 * depthSpeed
-);
-
-this.updateLayer(
-  this.near,
-  forward * 1.5 * depthSpeed
-);
-
-// ------------------------------------------------
-// 🌫️ DEPTH ATMOSPHERE
-// ------------------------------------------------
-
-const fog =
-
-  0.9 +
-
-  Math.sin(
-    this.time * 0.2
-  ) * 0.05 +
-
-  depthFactor * 0.15;
-
-this.far.points.material.opacity =
-  0.04 * fog;
-
-this.mid.points.material.opacity =
-
-  (
-    0.14 +
-    energy * 0.05
-  ) * fog;
-
-this.near.points.material.opacity =
-
-  (
-    0.18 +
-    energy * 0.12
-  ) * fog;
-
-// ------------------------------------------------
-// ✨ STAR PULSE
-// ------------------------------------------------
-
-const starPulse =
-
-  1 +
-
-  Math.sin(
-    this.time * 2.0
-  ) * 0.03 +
-
-  high * 0.25;
-
-this.near.points.material.size =
-
-  this.near.baseSize *
-
-  starPulse;
-
-this.mid.points.material.size =
-
-  this.mid.baseSize *
-
-  (
-    1 +
-    high * 0.08
-  );
-
-this.far.points.material.size =
-
-  this.far.baseSize *
-
-  (
-    1 +
-    depthFactor * 0.4
-  );
-
-this.near.points.material.size *=
-
-  1 +
-  depthFactor * 0.6;
-
-// ------------------------------------------------
-// 💥 ENERGY FLASH
-// ------------------------------------------------
-
-if(energy > 0.35){
-
-  this.near.points.material.opacity +=
-    energy * 0.15;
-
-}
-
-// ------------------------------------------------
-// 🌠 CINEMATIC DEPTH BREATHING
-// ------------------------------------------------
-
-const blobPos =
-  this.plasmaBlob._mesh.position;
-
-  const fibPos =
-  this.fibonacci.group.position;
-
-const distance =
-  fibPos.distanceTo(blobPos);
-
-const connection =
-
-    THREE.MathUtils.clamp(
-
-        1.0 - distance / 6.0,
-
-        0,
-
-        1
-
+      6,
     );
 
-this.communication.connection = connection;
+    // ------------------------------------------------
+    // 🌌 DEPTH FACTOR
+    // ------------------------------------------------
 
-// ------------------------------------------------
-// ENGINE RELATIONSHIP
-// ------------------------------------------------
+    const depthFactor = THREE.MathUtils.clamp(
+      Math.abs(this.zoom) / 30,
 
-//this.engine.targetRelationshipEnergy = connection;
+      0,
 
-this.engine.targetRelationshipEnergy = connection;
+      1,
+    );
 
-// ------------------------------------------------
-// 📡 FIBONACCI SIGNAL
-// ------------------------------------------------
+    // ------------------------------------------------
+    // 🎧 AUDIO
+    // ------------------------------------------------
 
-const signal =
+    const energy = Math.pow(audio.energy || 0, 0.65);
 
-  (
-    bass * 0.5 +
-    mid * 0.3 +
-    high * 0.2
-  ) *
+    this.delayedEnergy = THREE.MathUtils.lerp(
+      this.delayedEnergy,
 
-  connection;
+      energy,
 
-this.communication.signal +=
+      0.12,
+    );
 
-  (
-    signal -
-    this.communication.signal
-  ) * 0.05;  
+    const bass = audio.bass || 0;
 
-console.log(
+    const mid = audio.mid || 0;
 
-  "COMM",
+    const high = audio.high || 0;
 
-  this.communication
+    // ------------------------------------------------
+    // 🌀 FIBONACCI INTERACTION
+    // ------------------------------------------------
 
-);
+    const targetMouseX = state.parallax?.x || 0;
 
-//if(this.plasmaBlob._mesh){
-//
-  //const pulse =
+    const targetMouseY = state.parallax?.y || 0;
+
+    // ------------------------------------------------
+    // 🌌 INTERACTION INERTIA
+    // ------------------------------------------------
+
+    this.mouseVelocity.x += (targetMouseX - this.mouseField.x) * 0.015;
+
+    this.mouseVelocity.y += (targetMouseY - this.mouseField.y) * 0.015;
+
+    // ------------------------------------------------
+    // 🌀 DAMPING
+    // ------------------------------------------------
+
+    this.mouseVelocity.multiplyScalar(0.965);
+
+    // ------------------------------------------------
+    // 🌠 APPLY
+    // ------------------------------------------------
+
+    this.mouseField.add(this.mouseVelocity);
+
+    // ------------------------------------------------
+    // 🖱️ FIBONACCI FIELD INPUT
+    // ------------------------------------------------
+
+    this.fibonacci.setMouse(
+      this.mouseField.x,
+
+      this.mouseField.y,
+    );
+
+    // ------------------------------------------------
+    // ⚡ AUDIO-DRIVEN MORPH
+    // ------------------------------------------------
+
+    const delta = 0.008 + this.delayedEnergy * 0.08 + bass * 0.04;
+
+    this.fibonacci.update(delta, audio);
+
+    // ------------------------------------------------
+    // 🔥 SCALE PULSE
+    // ------------------------------------------------
+
+    const fibBaseScale = 3.0;
+
+    const fibAudioScale =
+      this.delayedEnergy * 0.48 + bass * 0.7 + this.kickPulse * 0.8;
+
+    this.fibonacci.group.scale.setScalar(fibBaseScale + fibAudioScale);
+
+    // ------------------------------------------------
+    // 🌀 ROTATION FEEL
+    // ------------------------------------------------
+
+    this.fibonacci.group.rotation.y += 0.00012 + this.delayedEnergy * 0.01;
+
+    // ------------------------------------------------
+    // 🌌 WORLD ROTATION
+    // ------------------------------------------------
+
+    // this.group.rotation.z =
+    //   Math.sin(
+    //     this.time * 0.15
+    //   ) * 0.03;
+
+    // this.group.rotation.y =
+    this.worldRotation;
+
+    // ------------------------------------------------
+    // 🫧 PLASMA UPDATE
+    // ------------------------------------------------
+
+    this.plasmaBlob.update(audio, this.time);
+
+    if (this.plasmaBlob?._mesh) {
+      this.plasmaBlob._mesh.scale.setScalar(this.plasmaBlob.cfg.scale * breath);
+    }
+
+    // ------------------------------------------------
+    // 🌌 CINEMATIC PLASMA FLOAT
+    // ------------------------------------------------
+
+    const driftY =
+      Math.sin(this.time * 0.22) * (0.18 + this.delayedEnergy * 0.25) +
+      this.mouseField.y * 0.08;
+
+    // ------------------------------------------------
+    // 🌌 STABLE POSITION
+    // ------------------------------------------------
+
+    this.plasmaBlob.setPosition(
+      -1.6,
+
+      driftY + 0.3,
+
+      -6.5,
+    );
+
+    // ------------------------------------------------
+    // 🚀 VELOCITY SYSTEM
+    // ------------------------------------------------
+
+    const targetSpeed = (p - 0.5) * 3;
+
+    this.velocity += (targetSpeed - this.velocity) * 0.05;
+
+    this.velocity *= 0.985;
+
+    this.velocity += intensity * 0.35;
+
+    const forward = this.velocity;
+
+    // ------------------------------------------------
+    // 🌌 DEPTH SPEED
+    // ------------------------------------------------
+
+    const depthSpeed = 1 + depthFactor * 4;
+
+    // ------------------------------------------------
+    // ⭐ STAR MOVEMENT
+    // ------------------------------------------------
+
+    this.updateLayer(this.far, forward * 0.2 * depthSpeed);
+
+    this.updateLayer(this.mid, forward * 0.6 * depthSpeed);
+
+    this.updateLayer(this.near, forward * 1.5 * depthSpeed);
+
+    // ------------------------------------------------
+    // 🌫️ DEPTH ATMOSPHERE
+    // ------------------------------------------------
+
+    const fog = 0.9 + Math.sin(this.time * 0.2) * 0.05 + depthFactor * 0.15;
+
+    this.far.points.material.opacity = 0.04 * fog;
+
+    this.mid.points.material.opacity = (0.14 + energy * 0.05) * fog;
+
+    this.near.points.material.opacity = (0.18 + energy * 0.12) * fog;
+
+    // ------------------------------------------------
+    // ✨ STAR PULSE
+    // ------------------------------------------------
+
+    const starPulse = 1 + Math.sin(this.time * 2.0) * 0.03 + high * 0.25;
+
+    this.near.points.material.size = this.near.baseSize * starPulse;
+
+    this.mid.points.material.size = this.mid.baseSize * (1 + high * 0.08);
+
+    this.far.points.material.size = this.far.baseSize * (1 + depthFactor * 0.4);
+
+    this.near.points.material.size *= 1 + depthFactor * 0.6;
+
+    // ------------------------------------------------
+    // 💥 ENERGY FLASH
+    // ------------------------------------------------
+
+    if (energy > 0.35) {
+      this.near.points.material.opacity += energy * 0.15;
+    }
+
+    // ------------------------------------------------
+    // 🌠 CINEMATIC DEPTH BREATHING
+    // ------------------------------------------------
+
+    const blobPos = this.plasmaBlob._mesh.position;
+
+    const fibPos = this.fibonacci.group.position;
+
+    const distance = fibPos.distanceTo(blobPos);
+
+    const connection = THREE.MathUtils.clamp(
+      1.0 - distance / 6.0,
+
+      0,
+
+      1,
+    );
+
+    this.communication.connection = connection;
+
+    // ------------------------------------------------
+    // ENGINE RELATIONSHIP
+    // ------------------------------------------------
+
+    //this.engine.targetRelationshipEnergy = connection;
+
+    this.engine.targetRelationshipEnergy = connection;
+
+    // ------------------------------------------------
+    // 📡 FIBONACCI SIGNAL
+    // ------------------------------------------------
+
+    const signal = (bass * 0.5 + mid * 0.3 + high * 0.2) * connection;
+
+    this.communication.signal += (signal - this.communication.signal) * 0.05;
+
+    console.log(
+      "COMM",
+
+      this.communication,
+    );
+
+    //if(this.plasmaBlob._mesh){
+    //
+    //const pulse =
     //1.0 +
     //connection * 0.12;
 
-  //this.plasmaBlob._mesh.scale.setScalar(
+    //this.plasmaBlob._mesh.scale.setScalar(
     //pulse
-  //);
+    //);
 
-//}
+    //}
 
-// ------------------------------------------------
-// 🌀 ORBITAL RELATIONSHIP
-// ------------------------------------------------
+    // ------------------------------------------------
+    // 🌀 ORBITAL RELATIONSHIP
+    // ------------------------------------------------
 
-const orbitRadius =
+    const orbitRadius = 2.8 + this.delayedEnergy * 0.8;
 
-  2.8 +
+    const orbitSpeed = 0.04 + this.delayedEnergy * 0.08;
 
-  this.delayedEnergy * 0.8;
+    const orbitX = Math.cos(this.time * orbitSpeed) * orbitRadius;
 
-const orbitSpeed =
+    const orbitY = Math.sin(this.time * orbitSpeed * 0.7) * 0.8;
 
-  0.04 +
+    // ------------------------------------------------
+    // 🌌 CINEMATIC FOLLOW
+    // ------------------------------------------------
 
-  this.delayedEnergy * 0.08;
+    this.fibonacci.group.position.x +=
+      (blobPos.x + orbitX - this.fibonacci.group.position.x) * 0.012;
 
-const orbitX =
+    this.fibonacci.group.position.y +=
+      (blobPos.y + orbitY - this.fibonacci.group.position.y) * 0.01;
 
-  Math.cos(
-    this.time * orbitSpeed
-  ) * orbitRadius;
+    console.log("fibY:", this.fibonacci.group.position.y);
 
-const orbitY =
+    console.log(
+      "group",
+      this.group.position.x,
+      this.group.position.y,
+      this.group.position.z,
+    );
 
-  Math.sin(
-    this.time * orbitSpeed * 0.7
-  ) * 0.8;
+    // ------------------------------------------------
+    // 🌠 DEPTH
+    // ------------------------------------------------
 
+    this.fibonacci.group.position.z =
+      -11.5 + Math.sin(this.time * 0.12) * 0.12 + this.delayedEnergy * 0.25;
 
-// ------------------------------------------------
-// 🌌 CINEMATIC FOLLOW
-// ------------------------------------------------
+    // ------------------------------------------------
+    // 🌌 SPACE DRIFT
+    // ------------------------------------------------
 
-this.fibonacci.group.position.x +=
+    // ------------------------------------------------
+    // ✨ COMMUNICATION FIELD
+    // ------------------------------------------------
 
-  (
+    for (const p of this.communicationParticles) {
+      const t = this.time + p.userData.seed;
 
-    blobPos.x +
+      p.position.y += Math.sin(t) * 0.0008;
 
-    orbitX -
+      p.position.x += Math.cos(t * 0.7) * 0.0005;
+    }
 
-    this.fibonacci.group.position.x
+    // ------------------------------------------------
+    // ✨ COMMUNICATION PARTICLES
+    // ------------------------------------------------
 
-  ) * 0.012;
+    // ------------------------------------------------
+    // ✨ MAGNETIC COMMUNICATION
+    // ------------------------------------------------
 
-this.fibonacci.group.position.y +=
+    const storyPos = this.narrativeSpiral.group.position;
 
-  (
-
-    blobPos.y +
-
-    orbitY -
-
-    this.fibonacci.group.position.y
-
-  ) * 0.01;
-
-console.log(
-  "fibY:",
-  this.fibonacci.group.position.y
-);  
-
-console.log(
-  "group",
-  this.group.position.x,
-  this.group.position.y,
-  this.group.position.z
-);
-
-// ------------------------------------------------
-// 🌠 DEPTH
-// ------------------------------------------------
-
-this.fibonacci.group.position.z =
-
-  -11.5 +
-
-  Math.sin(
-    this.time * 0.12
-  ) * 0.12 +
-
-  this.delayedEnergy * 0.25;
-
-// ------------------------------------------------
-// 🌌 SPACE DRIFT
-// ------------------------------------------------
-
-// ------------------------------------------------
-// ✨ COMMUNICATION FIELD
-// ------------------------------------------------
-
-for(const p of this.communicationParticles){
-
-  const t =
-    this.time +
-    p.userData.seed;
-
-  p.position.y +=
-    Math.sin(t) * 0.0008;
-
-  p.position.x +=
-    Math.cos(t * 0.7) * 0.0005;
-
-}
-
-// ------------------------------------------------
-// ✨ COMMUNICATION PARTICLES
-// ------------------------------------------------
-
-// ------------------------------------------------
-// ✨ MAGNETIC COMMUNICATION
-// ------------------------------------------------
-
-const storyPos =
-  this.narrativeSpiral.group.position;
-
-for(const particle of this.communicationParticles){
-
-/*  
+    for (const particle of this.communicationParticles) {
+      /*  
   const target =
 
     particle.userData.direction > 0
@@ -1079,283 +701,155 @@ orbit.multiplyScalar(
 force.add(orbit);
 
   particle.userData.velocity.add(force);
-*/  
+*/
 
-particle.userData.velocity.x +=
+      particle.userData.velocity.x +=
+        Math.sin(this.time * 0.8 + particle.userData.seed) * 0.0004;
 
-  Math.sin(
+      particle.userData.velocity.y +=
+        Math.cos(this.time * 0.6 + particle.userData.seed) * 0.0004;
 
-    this.time * 0.8 +
+      particle.userData.velocity.multiplyScalar(0.995);
 
-    particle.userData.seed
+      particle.position.add(particle.userData.velocity);
 
-  ) * 0.0004;
+      particle.userData.velocity.multiplyScalar(0.97);
 
-particle.userData.velocity.y +=
+      particle.position.add(particle.userData.velocity);
 
-  Math.cos(
+      particle.position.x +=
+        Math.sin(this.time * 2.5 + particle.userData.seed) * 0.008;
 
-    this.time * 0.6 +
+      particle.position.y +=
+        Math.cos(this.time * 1.8 + particle.userData.seed) * 0.012;
 
-    particle.userData.seed
+      particle.position.y +=
+        Math.sin(this.time * 2 + particle.userData.seed) * 0.01;
 
-  ) * 0.0004;
+      particle.position.x +=
+        Math.cos(this.time * 1.7 + particle.userData.seed) * 0.005;
 
-  particle.userData.velocity.multiplyScalar(
-  0.995
-);
+      // const distance =
+      // particle.position.distanceTo(
+      //   target
+      // );
 
-particle.position.add(
-  particle.userData.velocity
-);
+      // if(distance < 0.3){
 
-  particle.userData.velocity.multiplyScalar(
-    0.97
-  );
+      //   if(particle.userData.direction > 0){
 
-  particle.position.add(
-    particle.userData.velocity
-  );
+      //     particle.position.copy(
+      //       blobPos
+      //     );
 
-  particle.position.x +=
+      //   }else{
 
-  Math.sin(
+      //     particle.position.copy(
+      //       storyPos
+      //     );
 
-    this.time * 2.5 +
+      //   }
 
-    particle.userData.seed
+      //   particle.userData.velocity.set(
+      //     0,
+      //     0,
+      //     0
+      //   );
 
-  ) * 0.008;
+      // }
+    }
 
-particle.position.y +=
+    this.group.position.z = this.zoom * 0.4;
+  }
 
-  Math.cos(
+  // ------------------------------------------------
+  // 🔁 STAR LAYER UPDATE
+  // ------------------------------------------------
 
-    this.time * 1.8 +
+  createCommunicationField() {
+    const geo = new THREE.SphereGeometry(0.02, 3, 3);
 
-    particle.userData.seed
+    for (let i = 0; i < 150; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color:
+          i % 2 === 0
+            ? 0x66ddff // Blob blue
+            : 0xffcc66, // Storyteller gold
 
-  ) * 0.012;
+        transparent: true,
 
-  particle.position.y +=
+        opacity: 1.0,
+      });
 
-  Math.sin(
+      const particle = new THREE.Mesh(geo, mat);
 
-    this.time * 2 +
+      particle.position.set(
+        THREE.MathUtils.randFloat(-1.5, 3.5),
 
-    particle.userData.seed
+        THREE.MathUtils.randFloat(-1.5, 1.5),
 
-  ) * 0.01;
-
-particle.position.x +=
-
-  Math.cos(
-
-    this.time * 1.7 +
-
-    particle.userData.seed
-
-  ) * 0.005;
-
-  // const distance =
-  // particle.position.distanceTo(
-  //   target
-  // );
-
-// if(distance < 0.3){
-
-//   if(particle.userData.direction > 0){
-
-//     particle.position.copy(
-//       blobPos
-//     );
-
-//   }else{
-
-//     particle.position.copy(
-//       storyPos
-//     );
-
-//   }
-
-//   particle.userData.velocity.set(
-//     0,
-//     0,
-//     0
-//   );
-
-// }
-
-}
-
-this.group.position.z =
-  this.zoom * 0.4;
-
-}
-
-// ------------------------------------------------
-// 🔁 STAR LAYER UPDATE
-// ------------------------------------------------
-
-createCommunicationField(){
-
-  const geo =
-    new THREE.SphereGeometry(
-      0.02,
-      3,
-      3
-    );
-
-  for(let i = 0; i < 150; i++){
-
-    const mat =
-  new THREE.MeshBasicMaterial({
-
-    color:
-
-      i % 2 === 0
-
-        ? 0x66ddff   // Blob blue
-
-        : 0xffcc66,  // Storyteller gold
-
-    transparent: true,
-
-    opacity: 1.0
-
-  });
-
-    const particle =
-      new THREE.Mesh(
-        geo,
-        mat
+        THREE.MathUtils.randFloat(-8, -6),
       );
 
-    particle.position.set(
+      particle.userData = {
+        seed: Math.random() * 100,
 
-      THREE.MathUtils.randFloat(
-        -1.5,
-        3.5
-      ),
+        velocity: new THREE.Vector3(),
 
-      THREE.MathUtils.randFloat(
-        -1.5,
-        1.5
-      ),
+        direction: i % 2 === 0 ? 1 : -1,
+      };
 
-      THREE.MathUtils.randFloat(
-        -8,
-        -6
-      )
+      this.group.add(particle);
 
-    );
-
-    particle.userData = {
-
-  seed:
-    Math.random() * 100,
-
-  velocity:
-    new THREE.Vector3(),
-
-  direction:
-    i % 2 === 0 ? 1 : -1
-
-};
-
-    this.group.add(
-      particle
-    );
-
-    this.communicationParticles.push(
-      particle
-    );
-
+      this.communicationParticles.push(particle);
+    }
   }
 
+  updateLayer(layer, speed) {
+    const pos = layer.points.geometry.attributes.position;
 
-}
+    const depth = layer.depth;
 
-updateLayer(layer, speed){
+    for (let i = 0; i < pos.count; i++) {
+      let z = pos.getZ(i);
 
-const pos =
+      const variance = 0.7 + Math.sin(i * 12.9898) * 0.3;
 
-  layer.points.geometry
-  .attributes.position;
+      z += speed * 0.02 * variance;
 
-const depth =
-  layer.depth;
+      if (z > depth * 0.5) {
+        z -= depth;
+      }
 
-for(let i = 0; i < pos.count; i++){
+      if (z < -depth * 0.5) {
+        z += depth;
+      }
 
-  let z =
-    pos.getZ(i);
+      pos.setZ(i, z);
+    }
 
-  const variance =
-
-    0.7 +
-
-    Math.sin(
-      i * 12.9898
-    ) * 0.3;
-
-  z +=
-
-    speed *
-
-    0.02 *
-
-    variance;
-
-  if(z > depth * 0.5){
-
-    z -= depth;
-
+    pos.needsUpdate = true;
   }
 
-  if(z < -depth * 0.5){
+  // ------------------------------------------------
+  // 🧹 CLEANUP
+  // ------------------------------------------------
 
-    z += depth;
+  destroy() {
+    this.plasmaFolder?.destroy();
 
+    this.fibonacci?.destroy();
+
+    this.plasmaBlob?.destroy();
+
+    [this.far, this.mid, this.near].forEach((layer) => {
+      this.group.remove(layer.points);
+
+      layer.points.geometry.dispose();
+
+      layer.points.material.dispose();
+    });
+
+    this.container.remove(this.group);
   }
-
-  pos.setZ(i, z);
-
-}
-
-pos.needsUpdate = true;
-
-}
-
-// ------------------------------------------------
-// 🧹 CLEANUP
-// ------------------------------------------------
-
-destroy(){
-
-this.plasmaFolder?.destroy();
-
-this.fibonacci?.destroy();
-
-this.plasmaBlob?.destroy();
-
-[this.far, this.mid, this.near]
-.forEach(layer => {
-
-  this.group.remove(
-    layer.points
-  );
-
-  layer.points.geometry.dispose();
-
-  layer.points.material.dispose();
-
-});
-
-this.container.remove(
-  this.group
-);
-
-}
-
 }
