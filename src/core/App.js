@@ -545,15 +545,17 @@ export class App {
   updateCamera() {
     const t = this.time;
 
-    this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
+    this.parallax = this.cinematicCamera.updateParallax(
+      this.mouse,
 
-    this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
+      this.cinematic.parallaxStrength,
+    );
 
     const px = this.parallax.x * this.cinematic.parallaxStrength;
 
     const py = this.parallax.y * this.cinematic.parallaxStrength;
 
-    const idle = this.cinematicCamera.getOffset();
+    const idle = this.cinematicCamera.getIdleOffset();
 
     this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px + idle.x;
 

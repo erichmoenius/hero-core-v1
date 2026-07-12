@@ -181,6 +181,16 @@ export default class CinematicCamera {
 
       0,
     );
+
+    return this.parallax;
+  }
+
+  // =====================================================
+  // IDLE
+  // =====================================================
+
+  getIdleOffset() {
+    return this.channels.cinematic;
   }
 
   // =====================================================
