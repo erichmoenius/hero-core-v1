@@ -1,9 +1,9 @@
 import * as THREE from "three";
 
+import CinematicCamera from "../systems/cinematic/CinematicCamera.js";
+
 export class Renderer {
-
-  constructor(){
-
+  constructor() {
     // ------------------------------------------------
     // SCENE + CAMERA
     // ------------------------------------------------
@@ -14,11 +14,16 @@ export class Renderer {
       60,
       window.innerWidth / window.innerHeight,
       0.1,
-      100
+      100,
     );
 
     this.camera.position.set(0, 0, 5);
 
+    this.cinematicCamera = new CinematicCamera(this.camera);
+
+    console.log(this.cinematicCamera);
+    console.log(this.cinematicCamera.constructor.name);
+    console.log(typeof this.cinematicCamera.update);
 
     // ------------------------------------------------
     // WEBGL RENDERER
@@ -26,12 +31,11 @@ export class Renderer {
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
-      alpha: true
+      alpha: true,
     });
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
 
     // ------------------------------------------------
     // RENDER TARGET (für Portal)
@@ -39,9 +43,8 @@ export class Renderer {
 
     this.renderTarget = new THREE.WebGLRenderTarget(
       window.innerWidth,
-      window.innerHeight
+      window.innerHeight,
     );
-
 
     // ------------------------------------------------
     // CANVAS SETUP
@@ -59,13 +62,11 @@ export class Renderer {
 
     document.body.appendChild(canvas);
 
-
     // ------------------------------------------------
     // RESIZE
     // ------------------------------------------------
 
     window.addEventListener("resize", () => {
-
       const w = window.innerWidth;
       const h = window.innerHeight;
 
@@ -74,32 +75,27 @@ export class Renderer {
 
       this.renderer.setSize(w, h);
       this.renderTarget.setSize(w, h);
-
     });
-
   }
-
 
   // ------------------------------------------------
   // RENDER PIPELINE
   // ------------------------------------------------
 
-  render(){
+  render() {
+    this.cinematicCamera.update();
 
     // PASS 1 → Scene in Texture (ohne Portal)
-    if(this.portal) this.portal.mesh.visible = false;
+    if (this.portal) this.portal.mesh.visible = false;
 
     this.renderer.setRenderTarget(this.renderTarget);
     this.renderer.clear();
     this.renderer.render(this.scene, this.camera);
 
-
     // PASS 2 → normale Szene
-    if(this.portal) this.portal.mesh.visible = true;
+    if (this.portal) this.portal.mesh.visible = true;
 
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.scene, this.camera);
-
   }
-
 }

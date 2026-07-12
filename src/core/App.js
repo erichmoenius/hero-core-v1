@@ -23,6 +23,7 @@ import { createParticleMaterial } from "../particles/ParticleShader.js";
 import AudioManager from "../audio/AudioManager.js";
 
 import { InteractionManager } from "../interactions/InteractionManager.js";
+import CinematicCamera from "../systems/cinematic/CinematicCamera.js";
 
 export class App {
   constructor() {
@@ -34,6 +35,14 @@ export class App {
 
     this.scene = this.renderer.scene;
     this.camera = this.renderer.camera;
+
+    // ------------------------------------------------
+    // 🎬 CINEMATIC CAMERA
+    // ------------------------------------------------
+
+    this.cinematicCamera = new CinematicCamera(this.camera);
+
+    console.log("🎬 CinematicCamera created");
 
     this.renderer.portal = null;
 
@@ -401,30 +410,6 @@ export class App {
   }
 
   // ------------------------------------------------
-  // 🎥 CAMERA
-  // ------------------------------------------------
-
-  updateCamera() {
-    const t = this.time;
-
-    this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
-
-    this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
-
-    const px = this.parallax.x * this.cinematic.parallaxStrength;
-
-    const py = this.parallax.y * this.cinematic.parallaxStrength;
-
-    this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px;
-
-    this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py;
-
-    this.camera.position.z = 5;
-
-    this.camera.lookAt(0, 0, -4);
-  }
-
-  // ------------------------------------------------
   // 🧠 STATE
   // ------------------------------------------------
 
@@ -554,6 +539,32 @@ export class App {
   }
 
   // ------------------------------------------------
+  // 🎥 CAMERA
+  // ------------------------------------------------
+
+  updateCamera() {
+    const t = this.time;
+
+    this.parallax.x += (this.mouse.x - this.parallax.x) * 0.08;
+
+    this.parallax.y += (this.mouse.y - this.parallax.y) * 0.08;
+
+    const px = this.parallax.x * this.cinematic.parallaxStrength;
+
+    const py = this.parallax.y * this.cinematic.parallaxStrength;
+
+    const idle = this.cinematicCamera.getOffset();
+
+    this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px + idle.x;
+
+    this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py + idle.y;
+
+    this.camera.position.z = 5;
+
+    this.camera.lookAt(0, 0, -4);
+  }
+
+  // ------------------------------------------------
   // 🔄 UPDATE
   // ------------------------------------------------
 
@@ -587,6 +598,8 @@ export class App {
     // ------------------------------------------------
 
     const state = this.buildState();
+
+    this.cinematicCamera.update(0.016);
 
     // ------------------------------------------------
     // 🎥 CAMERA

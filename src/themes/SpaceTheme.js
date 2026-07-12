@@ -8,6 +8,8 @@ import { NarrativeSpiral } from "../systems/NarrativeSpiral.js";
 
 import EngineSystem from "../systems/EngineSystem.js";
 
+import CinematicCamera from "../systems/cinematic/CinematicCamera.js";
+
 export class SpaceTheme {
   constructor(container, gui) {
     this.container = container;
@@ -130,6 +132,18 @@ export class SpaceTheme {
 
     this.cameraDrift = new THREE.Vector2();
 
+    this.cameraState = {
+      parallax: new THREE.Vector3(),
+
+      cinematic: new THREE.Vector3(),
+
+      focus: new THREE.Vector3(),
+
+      shake: new THREE.Vector3(),
+
+      final: new THREE.Vector3(),
+    };
+
     this.delayedEnergy = 0;
 
     this.mouseField = new THREE.Vector2();
@@ -194,9 +208,17 @@ export class SpaceTheme {
     // 🚀 SPACE NAVIGATION
     // ------------------------------------------------
 
-    camera.position.x += (this.cameraDrift.x - camera.position.x) * 0.08;
+    this.parallaxOffset.set(
+      this.cameraDrift.x,
 
-    camera.position.y += (-this.cameraDrift.y - camera.position.y) * 0.08;
+      -this.cameraDrift.y,
+
+      0,
+    );
+
+    camera.position.x += (this.parallaxOffset.x - camera.position.x) * 0.08;
+
+    camera.position.y += (this.parallaxOffset.y - camera.position.y) * 0.08;
 
     // ------------------------------------------------
     // 🌌 ZOOM
