@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 // =====================================================
-// CINEMATIC CAMERA
+// CAMERA DIRECTOR
 // =====================================================
 //
 // Hero Core Camera Director
@@ -31,7 +31,7 @@ import * as THREE from "three";
 //
 // =====================================================
 
-export default class CinematicCamera {
+export default class CameraDirector {
   constructor(camera) {
     this.camera = camera;
 
@@ -156,7 +156,7 @@ export default class CinematicCamera {
   // =====================================================
 
   update(delta = 0.016) {
-    console.log("🎥 CinematicCamera update");
+    console.log("🎥 CameraDirector update");
 
     this.time += delta;
 

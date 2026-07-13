@@ -8,7 +8,7 @@ import { NarrativeSpiral } from "../systems/NarrativeSpiral.js";
 
 import EngineSystem from "../systems/EngineSystem.js";
 
-import CinematicCamera from "../systems/cinematic/CinematicCamera.js";
+import CameraDirector from "../systems/cinematic/CameraDirector.js";
 
 export class SpaceTheme {
   constructor(container, gui) {

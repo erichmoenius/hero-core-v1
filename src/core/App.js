@@ -23,7 +23,7 @@ import { createParticleMaterial } from "../particles/ParticleShader.js";
 import AudioManager from "../audio/AudioManager.js";
 
 import { InteractionManager } from "../interactions/InteractionManager.js";
-import CinematicCamera from "../systems/cinematic/CinematicCamera.js";
+import CameraDirector from "../systems/cinematic/CameraDirector.js";
 
 export class App {
   constructor() {
@@ -40,9 +40,9 @@ export class App {
     // 🎬 CINEMATIC CAMERA
     // ------------------------------------------------
 
-    this.cinematicCamera = new CinematicCamera(this.camera);
+    this.cameraDirector = new CameraDirector(this.camera);
 
-    console.log("🎬 CinematicCamera created");
+    console.log("🎬 cameraDirector created");
 
     this.renderer.portal = null;
 
@@ -545,7 +545,7 @@ export class App {
   updateCamera() {
     const t = this.time;
 
-    this.parallax = this.cinematicCamera.updateParallax(
+    this.parallax = this.cameraDirector.updateParallax(
       this.mouse,
 
       this.cinematic.parallaxStrength,
@@ -555,17 +555,17 @@ export class App {
 
     const py = this.parallax.y * this.cinematic.parallaxStrength;
 
-    const idle = this.cinematicCamera.getIdleOffset();
+    const idle = this.cameraDirector.getIdleOffset();
 
-    this.cinematicCamera.applyPosition(
+    this.cameraDirector.applyPosition(
       Math.sin(t * 0.3) * 0.2 + px + idle.x,
       Math.cos(t * 0.2) * 0.2 + py + idle.y,
       5,
     );
 
-    this.cinematicCamera.setTarget(0, 0, -4);
+    this.cameraDirector.setTarget(0, 0, -4);
 
-    this.cinematicCamera.applyLookTarget();
+    this.cameraDirector.applyLookTarget();
   }
 
   // ------------------------------------------------
@@ -603,7 +603,7 @@ export class App {
 
     const state = this.buildState();
 
-    this.cinematicCamera.update(0.016);
+    this.cameraDirector.update(0.016);
 
     // ------------------------------------------------
     // 🎥 CAMERA
