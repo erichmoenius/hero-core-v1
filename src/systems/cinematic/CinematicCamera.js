@@ -56,6 +56,12 @@ export default class CinematicCamera {
     this.lookTarget = new THREE.Vector3(0, 0, 0);
 
     // ------------------------------------------------
+    // ACTIVE TARGET
+    // ------------------------------------------------
+
+    this.currentTarget = new THREE.Vector3(0, 0, -4);
+
+    // ------------------------------------------------
     // CAMERA OFFSET
     // ------------------------------------------------
 
@@ -191,6 +197,34 @@ export default class CinematicCamera {
 
   getIdleOffset() {
     return this.channels.cinematic;
+  }
+
+  // =====================================================
+  // CAMERA POSITION
+  // =====================================================
+
+  applyPosition(x, y, z) {
+    if (!this.camera) return;
+
+    this.camera.position.set(x, y, z);
+  }
+
+  // =====================================================
+  // LOOK TARGET
+  // =====================================================
+
+  applyLookTarget() {
+    if (!this.camera) return;
+
+    this.camera.lookAt(this.currentTarget);
+  }
+
+  // =====================================================
+  // TARGET
+  // =====================================================
+
+  setTarget(x, y, z) {
+    this.currentTarget.set(x, y, z);
   }
 
   // =====================================================

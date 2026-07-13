@@ -557,13 +557,15 @@ export class App {
 
     const idle = this.cinematicCamera.getIdleOffset();
 
-    this.camera.position.x = Math.sin(t * 0.3) * 0.2 + px + idle.x;
+    this.cinematicCamera.applyPosition(
+      Math.sin(t * 0.3) * 0.2 + px + idle.x,
+      Math.cos(t * 0.2) * 0.2 + py + idle.y,
+      5,
+    );
 
-    this.camera.position.y = Math.cos(t * 0.2) * 0.2 + py + idle.y;
+    this.cinematicCamera.setTarget(0, 0, -4);
 
-    this.camera.position.z = 5;
-
-    this.camera.lookAt(0, 0, -4);
+    this.cinematicCamera.applyLookTarget();
   }
 
   // ------------------------------------------------
