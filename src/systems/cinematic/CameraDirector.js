@@ -128,26 +128,38 @@ export default class CameraDirector {
   }
 
   // =====================================================
-  // STATES
+  // MODES
   // =====================================================
 
   setIdle() {
-    this.state = "idle";
+    this.mode = "idle";
   }
 
   focus(position, lookAt = position) {
-    this.state = "focus";
+    this.mode = "focus";
+
+    this.targetPosition.copy(position);
+    this.lookTarget.copy(lookAt);
+  }
+
+  inspect(position, lookAt = position) {
+    this.mode = "inspect";
 
     this.targetPosition.copy(position);
 
     this.lookTarget.copy(lookAt);
   }
 
+  travel(position, lookAt = position) {
+    this.inspect(position, lookAt);
+
+    this.mode = "travel";
+  }
+
   returnHome(position, lookAt) {
-    this.state = "return";
+    this.mode = "return";
 
     this.targetPosition.copy(position);
-
     this.lookTarget.copy(lookAt);
   }
 
