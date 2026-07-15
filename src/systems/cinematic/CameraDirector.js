@@ -41,6 +41,8 @@ export default class CameraDirector {
 
     this.mode = "explore";
 
+    this.journey = null;
+
     // explore
     // inspect
     // orbit
@@ -156,10 +158,19 @@ export default class CameraDirector {
     this.mode = "travel";
   }
 
+  beginJourney(journey) {
+    this.journey = journey;
+  }
+
+  isInJourney() {
+    return this.journey !== null;
+  }
+
   returnHome(position, lookAt) {
     this.mode = "return";
 
     this.targetPosition.copy(position);
+
     this.lookTarget.copy(lookAt);
   }
 

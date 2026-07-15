@@ -24,6 +24,7 @@ import AudioManager from "../audio/AudioManager.js";
 
 import { InteractionManager } from "../interactions/InteractionManager.js";
 import CameraDirector from "../systems/cinematic/CameraDirector.js";
+import JourneyDirector from "../systems/cinematic/JourneyDirector.js";
 
 export class App {
   constructor() {
@@ -42,7 +43,9 @@ export class App {
 
     this.cameraDirector = new CameraDirector(this.camera);
 
-    console.log("🎬 cameraDirector created");
+    this.journeyDirector = new JourneyDirector(this.cameraDirector);
+
+    console.log("🎬 Cinematic system initialized");
 
     this.renderer.portal = null;
 
