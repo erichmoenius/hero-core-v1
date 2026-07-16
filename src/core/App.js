@@ -140,6 +140,10 @@ export class App {
 
     this.themeManager.activate("space");
 
+    this.journeyDirector.setGateways(
+      this.themeManager.activeTheme.getGateways(),
+    );
+
     // ------------------------------------------------
     // ✨ PARTICLES
     // ------------------------------------------------

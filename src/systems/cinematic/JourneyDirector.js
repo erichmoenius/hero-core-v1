@@ -26,10 +26,16 @@ export default class JourneyDirector {
     this.cameraDirector = cameraDirector;
 
     this.activeJourney = null;
+
+    this.gateways = [];
   }
 
   begin(journey) {
     this.activeJourney = journey;
+  }
+
+  addGateway(gateway) {
+    this.gateways.push(gateway);
   }
 
   stop() {
@@ -38,6 +44,22 @@ export default class JourneyDirector {
 
   isPlaying() {
     return this.activeJourney !== null;
+  }
+
+  findGateway(position) {
+    for (const gateway of this.gateways) {
+      if (!gateway.enabled) continue;
+
+      if (gateway.contains(position)) {
+        return gateway;
+      }
+    }
+
+    return null;
+  }
+
+  setGateways(gateways) {
+    this.gateways = gateways;
   }
 
   update(delta = 0.016) {

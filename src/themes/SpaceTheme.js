@@ -10,6 +10,8 @@ import EngineSystem from "../systems/EngineSystem.js";
 
 import CameraDirector from "../systems/cinematic/CameraDirector.js";
 
+import Gateway from "../systems/cinematic/Gateway.js";
+
 export class SpaceTheme {
   constructor(container, gui) {
     this.container = container;
@@ -93,6 +95,10 @@ export class SpaceTheme {
     this.engine.object.position.set(2.8, 0, -8);
 
     this.group.add(this.engine.object);
+
+    this.gateways = [];
+
+    this.gateways.push(new Gateway(this.engine.object.position, 1.5));
 
     // ------------------------------------------------
     // 🫧 PLASMA BLOB
@@ -183,6 +189,10 @@ export class SpaceTheme {
 
       stage: true,
     };
+  }
+
+  getGateways() {
+    return this.gateways;
   }
 
   // ------------------------------------------------
