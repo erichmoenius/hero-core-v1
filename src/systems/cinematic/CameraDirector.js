@@ -197,6 +197,8 @@ export default class CameraDirector {
 
     this.applyLookTarget();
 
+    this.setPosition(this.time);
+
     this.applyComputedPosition();
   }
 
@@ -280,6 +282,10 @@ export default class CameraDirector {
   // =====================================================
   // TARGET
   // =====================================================
+
+  setLookTarget(x, y, z) {
+    return this.setTarget(x, y, z);
+  }
 
   setTarget(x, y, z) {
     this.currentTarget.set(x, y, z);

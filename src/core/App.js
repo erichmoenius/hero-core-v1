@@ -555,9 +555,7 @@ export class App {
       this.cinematic.parallaxStrength,
     );
 
-    this.cameraDirector.setPosition(this.time, this.cinematic.parallaxStrength);
-
-    this.cameraDirector.setTarget(0, 0, -4);
+    this.cameraDirector.setLookTarget(0, 0, -4);
   }
 
   // ------------------------------------------------
