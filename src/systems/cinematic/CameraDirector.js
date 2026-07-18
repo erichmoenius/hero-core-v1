@@ -55,6 +55,8 @@ export default class CameraDirector {
 
     this.targetPosition = new THREE.Vector3(0, 0, 5);
 
+    this.position = new THREE.Vector3(0, 0, 5);
+
     this.lookTarget = new THREE.Vector3(0, 0, 0);
 
     // ------------------------------------------------
@@ -192,11 +194,19 @@ export default class CameraDirector {
 
       0,
     );
+
+    this.applyLookTarget();
+
+    this.applyComputedPosition();
   }
 
   // =====================================================
   // PARALLAX
   // =====================================================
+
+  setParallax(mouse, strength = 1) {
+    return this.updateParallax(mouse, strength);
+  }
 
   updateParallax(mouse, strength = 1) {
     this.parallax.x += (mouse.x - this.parallax.x) * 0.08;
@@ -205,9 +215,7 @@ export default class CameraDirector {
 
     this.channels.parallax.set(
       this.parallax.x * strength,
-
       this.parallax.y * strength,
-
       0,
     );
 
@@ -223,8 +231,35 @@ export default class CameraDirector {
   }
 
   // =====================================================
+  // COMPUTE POSITION
+  // =====================================================
+
+  setPosition(time, parallaxStrength = 1) {
+    return this.computePosition(time, parallaxStrength);
+  }
+
+  computePosition(time, parallaxStrength = 1) {
+    const px = this.parallax.x * parallaxStrength;
+    const py = this.parallax.y * parallaxStrength;
+
+    const idle = this.getIdleOffset();
+
+    this.position.set(
+      Math.sin(time * 0.3) * 0.2 + px + idle.x,
+      Math.cos(time * 0.2) * 0.2 + py + idle.y,
+      this.position.z,
+    );
+
+    return this.position;
+  }
+
+  // =====================================================
   // CAMERA POSITION
   // =====================================================
+
+  applyComputedPosition() {
+    this.applyPosition(this.position.x, this.position.y, this.position.z);
+  }
 
   applyPosition(x, y, z) {
     if (!this.camera) return;
@@ -256,6 +291,10 @@ export default class CameraDirector {
 
   getOffset() {
     return this.getFinalOffset();
+  }
+
+  getPosition() {
+    return this.position;
   }
 
   // =====================================================

@@ -550,29 +550,14 @@ export class App {
   // ------------------------------------------------
 
   updateCamera() {
-    const t = this.time;
-
-    this.parallax = this.cameraDirector.updateParallax(
+    this.cameraDirector.setParallax(
       this.mouse,
-
       this.cinematic.parallaxStrength,
     );
 
-    const px = this.parallax.x * this.cinematic.parallaxStrength;
-
-    const py = this.parallax.y * this.cinematic.parallaxStrength;
-
-    const idle = this.cameraDirector.getIdleOffset();
-
-    this.cameraDirector.applyPosition(
-      Math.sin(t * 0.3) * 0.2 + px + idle.x,
-      Math.cos(t * 0.2) * 0.2 + py + idle.y,
-      5,
-    );
+    this.cameraDirector.setPosition(this.time, this.cinematic.parallaxStrength);
 
     this.cameraDirector.setTarget(0, 0, -4);
-
-    this.cameraDirector.applyLookTarget();
   }
 
   // ------------------------------------------------
@@ -612,18 +597,20 @@ export class App {
 
     this.cameraDirector.update(0.016);
 
+    const gateway = this.journeyDirector.findGateway(this.camera.position);
+
+    console.log(
+      "Camera:",
+      this.camera.position,
+      "Engine:",
+      this.themeManager.activeTheme.getGateways()[0].position,
+    );
+
     // ------------------------------------------------
     // 🎥 CAMERA
     // ------------------------------------------------
 
     this.updateCamera();
-
-    console.log(
-      "camera",
-      this.camera.position.x,
-      this.camera.position.y,
-      this.camera.position.z,
-    );
 
     // ------------------------------------------------
     // 🎨 THEMES
@@ -640,17 +627,6 @@ export class App {
     // ------------------------------------------------
 
     if (this.interactionManager) {
-      console.log(
-        "APP MOUSE",
-        this.mouse.x,
-        this.mouse.y,
-        "PARALLAX",
-        this.parallax.x,
-        this.parallax.y,
-        "SCROLL",
-        window.scrollY,
-      );
-
       this.interactionManager.update(this.mouse, state.audio, this.time);
     }
 
