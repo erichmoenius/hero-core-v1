@@ -21,6 +21,8 @@ export default class CameraDirector {
 
     this.mode = CameraMode.EXPLORE;
 
+    this.previousMode = CameraMode.EXPLORE;
+
     this.journey = null;
 
     // ------------------------------------------------
@@ -115,30 +117,29 @@ export default class CameraDirector {
   // MODES
   // =====================================================
 
-  setIdle() {
-    this.mode = "idle";
+  setMode(mode) {
+    if (this.mode === mode) return;
+
+    this.previousMode = this.mode;
+
+    this.mode = mode;
   }
 
-  // Removed during CameraDirector refactor.
-  // INSPECT now covers this use case.
-  // focus(position, lookAt = position) {
-  //   this.mode = "focus";
-  //   this.targetPosition.copy(position);
-  //   this.lookTarget.copy(lookAt);
-  // }
+  isMode(mode) {
+    return this.mode === mode;
+  }
 
   inspect(position, lookAt = position) {
-    this.mode = "inspect";
+    this.setMode(CameraMode.INSPECT);
 
     this.targetPosition.copy(position);
-
     this.lookTarget.copy(lookAt);
   }
 
   travel(position, lookAt = position) {
     this.inspect(position, lookAt);
 
-    this.mode = "travel";
+    this.setMode(CameraMode.TRAVEL);
   }
 
   beginJourney(journey) {
@@ -150,10 +151,9 @@ export default class CameraDirector {
   }
 
   returnHome(position, lookAt) {
-    this.mode = "return";
+    this.setMode(CameraMode.RETURN);
 
     this.targetPosition.copy(position);
-
     this.lookTarget.copy(lookAt);
   }
 
@@ -161,9 +161,7 @@ export default class CameraDirector {
   // UPDATE
   // =====================================================
 
-  update(delta = 0.016) {
-    this.time += delta;
-
+  updateExplore(delta) {
     const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
 
     this.channels.cinematic.set(0, floatY, 0);
@@ -173,6 +171,40 @@ export default class CameraDirector {
     this.setPosition(this.time);
 
     this.applyComputedPosition();
+  }
+
+  updateInspect(delta) {
+    // TODO: Inspect behavior
+  }
+
+  updateTravel(delta) {
+    // TODO: Travel behavior
+  }
+
+  updateReturn(delta) {
+    // TODO: Return behavior
+  }
+
+  update(delta = 0.016) {
+    this.time += delta;
+
+    switch (this.mode) {
+      case CameraMode.EXPLORE:
+        this.updateExplore(delta);
+        break;
+
+      case CameraMode.INSPECT:
+        this.updateInspect(delta);
+        break;
+
+      case CameraMode.TRAVEL:
+        this.updateTravel(delta);
+        break;
+
+      case CameraMode.RETURN:
+        this.updateReturn(delta);
+        break;
+    }
   }
 
   // =====================================================
