@@ -1,35 +1,15 @@
 import * as THREE from "three";
 
 // =====================================================
-// CAMERA DIRECTOR
+// CAMERA MODES
 // =====================================================
-//
-// Hero Core Camera Director
-//
-// Responsibilities:
-//
-// • Smooth cinematic camera movement
-// • Camera inertia
-// • Floating idle motion
-// • Camera target transitions
-// • Focus Mode
-// • Future DaVinci fly-throughs
-//
-// This class NEVER knows:
-//
-// ❌ Engine
-// ❌ Blob
-// ❌ Storyteller
-// ❌ Themes
-//
-// It only knows:
-//
-// ✔ Camera
-// ✔ Target Position
-// ✔ Look Target
-// ✔ Camera State
-//
-// =====================================================
+
+export const CameraMode = {
+  EXPLORE: "explore",
+  INSPECT: "inspect",
+  TRAVEL: "travel",
+  RETURN: "return",
+};
 
 export default class CameraDirector {
   constructor(camera) {
@@ -39,15 +19,9 @@ export default class CameraDirector {
     // CAMERA MODE
     // ------------------------------------------------
 
-    this.mode = "explore";
+    this.mode = CameraMode.EXPLORE;
 
     this.journey = null;
-
-    // explore
-    // inspect
-    // orbit
-    // travel
-    // emerge
 
     // ------------------------------------------------
     // TARGETS
@@ -100,6 +74,12 @@ export default class CameraDirector {
     this.lookVelocity = new THREE.Vector3();
 
     // ------------------------------------------------
+    // TIME
+    // ------------------------------------------------
+
+    this.time = 0;
+
+    // ------------------------------------------------
     // TEMP VECTORS
     // (avoid allocations every frame)
     // ------------------------------------------------
@@ -139,12 +119,13 @@ export default class CameraDirector {
     this.mode = "idle";
   }
 
-  focus(position, lookAt = position) {
-    this.mode = "focus";
-
-    this.targetPosition.copy(position);
-    this.lookTarget.copy(lookAt);
-  }
+  // Removed during CameraDirector refactor.
+  // INSPECT now covers this use case.
+  // focus(position, lookAt = position) {
+  //   this.mode = "focus";
+  //   this.targetPosition.copy(position);
+  //   this.lookTarget.copy(lookAt);
+  // }
 
   inspect(position, lookAt = position) {
     this.mode = "inspect";
@@ -181,19 +162,11 @@ export default class CameraDirector {
   // =====================================================
 
   update(delta = 0.016) {
-    console.log("🎥 CameraDirector update");
-
     this.time += delta;
 
     const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
 
-    this.channels.cinematic.set(
-      0,
-
-      floatY,
-
-      0,
-    );
+    this.channels.cinematic.set(0, floatY, 0);
 
     this.applyLookTarget();
 
