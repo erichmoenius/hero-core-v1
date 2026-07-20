@@ -617,6 +617,18 @@ export default class EngineSystem {
   }
 
   // =====================================================
+  // CAMERA
+  // =====================================================
+
+  getInspectionPose() {
+    return {
+      position: this.object.position.clone().add(new THREE.Vector3(0, 0, 5)),
+
+      lookAt: this.object.position.clone(),
+    };
+  }
+
+  // =====================================================
   // PUBLIC
   // =====================================================
 

@@ -20,8 +20,9 @@ export default class CameraDirector {
     // ------------------------------------------------
 
     this.mode = CameraMode.EXPLORE;
-
     this.previousMode = CameraMode.EXPLORE;
+
+    this.inspectTarget = null;
 
     this.journey = null;
 
@@ -104,6 +105,8 @@ export default class CameraDirector {
 
     this.floatStrength = 0.1;
 
+    this.inspectParallaxStrength = 0.25;
+
     this.floatSpeed = 0.18;
 
     // ------------------------------------------------
@@ -129,11 +132,19 @@ export default class CameraDirector {
     return this.mode === mode;
   }
 
-  inspect(position, lookAt = position) {
+  inspect(target, lookAt = null) {
     this.setMode(CameraMode.INSPECT);
 
-    this.targetPosition.copy(position);
-    this.lookTarget.copy(lookAt);
+    // New API: inspection pose
+    if (target?.position && target?.lookAt) {
+      this.targetPosition.copy(target.position);
+      this.lookTarget.copy(target.lookAt);
+      return;
+    }
+
+    // Legacy API
+    this.targetPosition.copy(target);
+    this.lookTarget.copy(lookAt ?? target);
   }
 
   travel(position, lookAt = position) {
@@ -174,7 +185,28 @@ export default class CameraDirector {
   }
 
   updateInspect(delta) {
-    // TODO: Inspect behavior
+    const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
+
+    this.channels.cinematic.set(0, floatY, 0);
+
+    this.applyLookTarget();
+
+    // this.setPosition(this.time, this.inspectParallaxStrength);
+    const px = this.parallax.x * this.inspectParallaxStrength;
+    const py = this.parallax.y * this.inspectParallaxStrength;
+
+    this.position.copy(this.targetPosition);
+
+    this.position.x += px;
+    this.position.y += py;
+
+    console.log("Camera Position:", this.position);
+
+    console.log("Target Position:", this.targetPosition);
+
+    console.log("Look Target:", this.lookTarget);
+
+    this.applyComputedPosition();
   }
 
   updateTravel(delta) {
@@ -187,6 +219,8 @@ export default class CameraDirector {
 
   update(delta = 0.016) {
     this.time += delta;
+
+    this.currentTarget.lerp(this.lookTarget, this.lookDamping);
 
     switch (this.mode) {
       case CameraMode.EXPLORE:
@@ -280,6 +314,8 @@ export default class CameraDirector {
 
   applyLookTarget() {
     if (!this.camera) return;
+
+    console.log("Looking at:", this.currentTarget.toArray());
 
     this.camera.lookAt(this.currentTarget);
   }

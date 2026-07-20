@@ -1,7 +1,4 @@
 import * as THREE from "three";
-
-import CameraDirector from "../systems/cinematic/CameraDirector.js";
-
 export class Renderer {
   constructor() {
     // ------------------------------------------------
@@ -18,12 +15,6 @@ export class Renderer {
     );
 
     this.camera.position.set(0, 0, 5);
-
-    this.cameraDirector = new CameraDirector(this.camera);
-
-    console.log(this.cameraDirector);
-    console.log(this.cameraDirector.constructor.name);
-    console.log(typeof this.cameraDirector.update);
 
     // ------------------------------------------------
     // WEBGL RENDERER
@@ -83,8 +74,6 @@ export class Renderer {
   // ------------------------------------------------
 
   render() {
-    this.cameraDirector.update();
-
     // PASS 1 → Scene in Texture (ohne Portal)
     if (this.portal) this.portal.mesh.visible = false;
 

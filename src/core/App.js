@@ -412,9 +412,18 @@ export class App {
         if (e.code === "Digit2") {
           this.themeManager.activate("space");
         }
-      },
-    );
-  }
+
+        // TEMP DEBUG
+        if (e.code === "KeyI") {
+          const engine = this.themeManager.activeTheme?.engine;
+
+          if (engine?.object) {
+            this.cameraDirector.inspect(engine.getInspectionPose());
+          }
+        }
+      }, // callback ends
+    ); // addEventListener ends
+  } // setupThemeSwitching ends
 
   // ------------------------------------------------
   // 🧠 STATE
@@ -555,7 +564,7 @@ export class App {
       this.cinematic.parallaxStrength,
     );
 
-    this.cameraDirector.setLookTarget(0, 0, -4);
+    // this.cameraDirector.setLookTarget(0, 0, -4);
   }
 
   // ------------------------------------------------

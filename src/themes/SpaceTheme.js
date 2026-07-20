@@ -226,15 +226,8 @@ export class SpaceTheme {
       0,
     );
 
-    camera.position.x += (this.parallaxOffset.x - camera.position.x) * 0.08;
-
-    camera.position.y += (this.parallaxOffset.y - camera.position.y) * 0.08;
-
-    // ------------------------------------------------
-    // 🌌 ZOOM
-    // ------------------------------------------------
-
-    camera.position.z = 5;
+    // Camera ownership moved to CameraDirector.
+    // Legacy movement intentionally disabled.
   }
 
   // ------------------------------------------------
@@ -310,13 +303,18 @@ export class SpaceTheme {
 
     this.engine.update(0.016);
 
+    console.log(
+      "Engine object:",
+      this.engine.object.position,
+      "Core:",
+      this.engine.core.object.position,
+    );
+
     const response = 1.0 + Math.sin(this.time * 0.25 - 1.0) * 0.35;
 
     // this.narrativeSpiral.group.scale.setScalar(
     //   response
     // );
-
-    this.engine.update(0.016);
 
     // No breathing.
     // The Engine exists.
