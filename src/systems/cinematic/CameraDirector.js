@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CameraPose } from "./CameraPose";
 
 // =====================================================
 // CAMERA MODES
@@ -44,6 +45,9 @@ export default class CameraDirector {
     // ------------------------------------------------
 
     this.currentTarget = new THREE.Vector3(0, 0, 0);
+
+    // Future flight system
+    this.currentPose = new CameraPose();
 
     // ------------------------------------------------
     // CAMERA OFFSET
@@ -185,11 +189,8 @@ export default class CameraDirector {
   // =====================================================
 
   updateExplore(delta) {
-    console.log("EXPLORE POSITION", this.position.toArray());
-
-    console.log("EXPLORE START");
-    console.log("position", this.position.toArray());
-    console.log("camera", this.camera.position.toArray());
+    if (this.previousMode === CameraMode.RETURN) {
+    }
 
     const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
 
@@ -218,12 +219,6 @@ export default class CameraDirector {
     this.position.x += px;
     this.position.y += py;
 
-    console.log("Camera Position:", this.position);
-
-    console.log("Target Position:", this.targetPosition);
-
-    console.log("Look Target:", this.lookTarget);
-
     this.applyComputedPosition();
   }
 
@@ -245,15 +240,7 @@ export default class CameraDirector {
 
       this.basePosition.copy(this.targetPosition);
 
-      console.log("RETURN DONE");
-      console.log("position", this.position.toArray());
-      console.log("camera", this.camera.position.toArray());
-
       this.setMode(CameraMode.EXPLORE);
-
-      console.log("MODE", this.mode);
-      console.log("position", this.position.toArray());
-      console.log("camera", this.camera.position.toArray());
     }
     this.applyComputedPosition();
   }
@@ -263,8 +250,6 @@ export default class CameraDirector {
 
     // this.currentTarget.lerp(this.lookTarget, this.lookDamping);
     this.currentTarget.copy(this.lookTarget);
-
-    console.log("Camera mode:", this.mode);
 
     switch (this.mode) {
       case CameraMode.EXPLORE:
@@ -342,6 +327,10 @@ export default class CameraDirector {
   // =====================================================
 
   applyComputedPosition() {
+    // Keep the current cinematic pose synchronized
+    this.currentPose.position.copy(this.position);
+    this.currentPose.lookTarget.copy(this.currentTarget);
+
     this.applyPosition(this.position.x, this.position.y, this.position.z);
   }
 
@@ -358,9 +347,7 @@ export default class CameraDirector {
   applyLookTarget() {
     if (!this.camera) return;
 
-    console.log("Looking at:", this.currentTarget.toArray());
-
-    // this.camera.lookAt(this.currentTarget);
+    //this.camera.lookAt(this.currentTarget);
   }
 
   // =====================================================
