@@ -74,6 +74,7 @@ export class Renderer {
   // ------------------------------------------------
 
   render() {
+    console.log("RENDER");
     // PASS 1 → Scene in Texture (ohne Portal)
     if (this.portal) this.portal.mesh.visible = false;
 

@@ -421,9 +421,14 @@ export class App {
             this.cameraDirector.inspect(engine.getInspectionPose());
           }
         }
-      }, // callback ends
-    ); // addEventListener ends
-  } // setupThemeSwitching ends
+
+        // TEMP DEBUG
+        if (e.code === "Escape") {
+          this.cameraDirector.returnHome();
+        }
+      },
+    );
+  }
 
   // ------------------------------------------------
   // 🧠 STATE
@@ -564,7 +569,7 @@ export class App {
       this.cinematic.parallaxStrength,
     );
 
-    // this.cameraDirector.setLookTarget(0, 0, -4);
+    this.cameraDirector.setLookTarget(0, 0, -4);
   }
 
   // ------------------------------------------------
@@ -596,56 +601,15 @@ export class App {
 
     this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
-    // ------------------------------------------------
-    // 📦 STATE
-    // ------------------------------------------------
-
     const state = this.buildState();
-
-    this.cameraDirector.update(0.016);
-
-    const gateway = this.journeyDirector.findGateway(this.camera.position);
-
-    console.log(
-      "Camera:",
-      this.camera.position,
-      "Engine:",
-      this.themeManager.activeTheme.getGateways()[0].position,
-    );
-
-    // ------------------------------------------------
-    // 🎥 CAMERA
-    // ------------------------------------------------
 
     this.updateCamera();
 
-    // ------------------------------------------------
-    // 🎨 THEMES
-    // ------------------------------------------------
-
-    try {
-      this.themeManager.update(state);
-    } catch (err) {
-      console.error("Theme crash:", err);
-    }
-
-    // ------------------------------------------------
-    // 🖱️ INTERACTION
-    // ------------------------------------------------
-
-    if (this.interactionManager) {
-      this.interactionManager.update(this.mouse, state.audio, this.time);
-    }
-
-    // ------------------------------------------------
-    // 🌍 ENVIRONMENT
-    // ------------------------------------------------
+    this.cameraDirector.update();
 
     this.updateEnvironment();
 
-    this.world.update();
-
-    this.stars.update();
+    this.themeManager.update(state);
 
     // ------------------------------------------------
     // ✨ PARTICLES

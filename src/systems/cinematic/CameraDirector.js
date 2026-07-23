@@ -31,16 +31,19 @@ export default class CameraDirector {
     // ------------------------------------------------
 
     this.targetPosition = new THREE.Vector3(0, 0, 5);
-
     this.position = new THREE.Vector3(0, 0, 5);
-
+    this.basePosition = this.position.clone();
     this.lookTarget = new THREE.Vector3(0, 0, 0);
+
+    // Home camera pose
+    this.homePosition = this.targetPosition.clone();
+    this.homeLookTarget = this.lookTarget.clone();
 
     // ------------------------------------------------
     // ACTIVE TARGET
     // ------------------------------------------------
 
-    this.currentTarget = new THREE.Vector3(0, 0, -4);
+    this.currentTarget = new THREE.Vector3(0, 0, 0);
 
     // ------------------------------------------------
     // CAMERA OFFSET
@@ -161,11 +164,20 @@ export default class CameraDirector {
     return this.journey !== null;
   }
 
-  returnHome(position, lookAt) {
+  // returnHome(position, lookAt) {
+  //   this.setMode(CameraMode.RETURN);
+
+  //   this.targetPosition.copy(position);
+  //   this.lookTarget.copy(lookAt);
+  // }
+
+  returnHome() {
+    this.basePosition.copy(this.homePosition);
+
     this.setMode(CameraMode.RETURN);
 
-    this.targetPosition.copy(position);
-    this.lookTarget.copy(lookAt);
+    this.targetPosition.copy(this.basePosition);
+    this.lookTarget.copy(this.homeLookTarget);
   }
 
   // =====================================================
@@ -173,6 +185,12 @@ export default class CameraDirector {
   // =====================================================
 
   updateExplore(delta) {
+    console.log("EXPLORE POSITION", this.position.toArray());
+
+    console.log("EXPLORE START");
+    console.log("position", this.position.toArray());
+    console.log("camera", this.camera.position.toArray());
+
     const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
 
     this.channels.cinematic.set(0, floatY, 0);
@@ -214,13 +232,39 @@ export default class CameraDirector {
   }
 
   updateReturn(delta) {
-    // TODO: Return behavior
+    const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
+
+    this.channels.cinematic.set(0, floatY, 0);
+
+    this.applyLookTarget();
+
+    this.position.lerp(this.targetPosition, 0.08);
+
+    if (this.position.distanceTo(this.targetPosition) < 0.01) {
+      this.position.copy(this.targetPosition);
+
+      this.basePosition.copy(this.targetPosition);
+
+      console.log("RETURN DONE");
+      console.log("position", this.position.toArray());
+      console.log("camera", this.camera.position.toArray());
+
+      this.setMode(CameraMode.EXPLORE);
+
+      console.log("MODE", this.mode);
+      console.log("position", this.position.toArray());
+      console.log("camera", this.camera.position.toArray());
+    }
+    this.applyComputedPosition();
   }
 
   update(delta = 0.016) {
     this.time += delta;
 
-    this.currentTarget.lerp(this.lookTarget, this.lookDamping);
+    // this.currentTarget.lerp(this.lookTarget, this.lookDamping);
+    this.currentTarget.copy(this.lookTarget);
+
+    console.log("Camera mode:", this.mode);
 
     switch (this.mode) {
       case CameraMode.EXPLORE:
@@ -285,11 +329,10 @@ export default class CameraDirector {
 
     const idle = this.getIdleOffset();
 
-    this.position.set(
-      Math.sin(time * 0.3) * 0.2 + px + idle.x,
-      Math.cos(time * 0.2) * 0.2 + py + idle.y,
-      this.position.z,
-    );
+    this.position.copy(this.basePosition);
+
+    this.position.x += Math.sin(time * 0.3) * 0.2 + px + idle.x;
+    this.position.y += Math.cos(time * 0.2) * 0.2 + py + idle.y;
 
     return this.position;
   }
@@ -317,7 +360,7 @@ export default class CameraDirector {
 
     console.log("Looking at:", this.currentTarget.toArray());
 
-    this.camera.lookAt(this.currentTarget);
+    // this.camera.lookAt(this.currentTarget);
   }
 
   // =====================================================

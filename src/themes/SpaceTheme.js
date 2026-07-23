@@ -790,6 +790,12 @@ force.add(orbit);
     }
 
     this.group.position.z = this.zoom * 0.4;
+
+    console.log({
+      group: this.group.position.toArray(),
+      engine: this.engine.object.position.toArray(),
+      fib: this.fibonacci.group.position.toArray(),
+    });
   }
 
   // ------------------------------------------------
