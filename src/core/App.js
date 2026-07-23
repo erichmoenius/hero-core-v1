@@ -572,6 +572,33 @@ export class App {
     this.cameraDirector.setLookTarget(0, 0, -4);
   }
 
+  // =====================================================
+  // 🎬 HERO CORE FRAME CONTRACT
+  //
+  // Every frame MUST execute these phases:
+  //
+  // 1. INPUT
+  //    Mouse, keyboard, wheel, audio, scroll
+  //
+  // 2. STATE
+  //    Build shared immutable state
+  //
+  // 3. CAMERA
+  //    CameraDirector receives input and updates camera
+  //
+  // 4. WORLD
+  //    Environment, world systems, stars, gateways
+  //
+  // 5. THEME
+  //    Active theme receives state
+  //
+  // 6. UI
+  //    Debug GUI, Stats
+  //
+  // Never remove an entire phase.
+  // Move responsibilities INSIDE a phase only.
+  // =====================================================
+
   // ------------------------------------------------
   // 🔄 UPDATE
   // ------------------------------------------------
