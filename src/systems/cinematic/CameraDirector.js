@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { CameraPose } from "./CameraPose";
+import { FlightSystem } from "./FlightSystem";
+import { Flight } from "./Flight";
 
 // =====================================================
 // CAMERA MODES
@@ -48,6 +50,8 @@ export default class CameraDirector {
 
     // Future flight system
     this.currentPose = new CameraPose();
+
+    this.flightSystem = new FlightSystem();
 
     // ------------------------------------------------
     // CAMERA OFFSET
@@ -184,6 +188,19 @@ export default class CameraDirector {
     this.lookTarget.copy(this.homeLookTarget);
   }
 
+  travel(targetPose) {
+    console.log("Travel started");
+
+    const flight = new Flight();
+
+    flight.startPose.copy(this.currentPose);
+    flight.targetPose.copy(targetPose);
+
+    flight.duration = 2.0;
+
+    this.flightSystem.start(flight);
+  }
+
   // =====================================================
   // UPDATE
   // =====================================================
@@ -199,6 +216,8 @@ export default class CameraDirector {
     this.applyLookTarget();
 
     this.setPosition(this.time);
+
+    this.applyFlight();
 
     this.applyComputedPosition();
   }
@@ -220,6 +239,20 @@ export default class CameraDirector {
     this.position.y += py;
 
     this.applyComputedPosition();
+  }
+
+  applyFlight() {
+    const flight = this.flightSystem.flight;
+
+    if (!flight) return;
+
+    const t = this.flightSystem.getProgress();
+
+    this.position.lerpVectors(
+      flight.startPose.position,
+      flight.targetPose.position,
+      t,
+    );
   }
 
   updateTravel(delta) {
@@ -245,8 +278,25 @@ export default class CameraDirector {
     this.applyComputedPosition();
   }
 
+  // Main update(delta)
+
   update(delta = 0.016) {
     this.time += delta;
+
+    // Update cinematic flight system
+    this.flightSystem.update(delta);
+
+    const flight = this.flightSystem.flight;
+
+    if (flight) {
+      const t = this.flightSystem.getProgress();
+
+      this.currentPose.position.lerpVectors(
+        flight.startPose.position,
+        flight.targetPose.position,
+        t,
+      );
+    }
 
     // this.currentTarget.lerp(this.lookTarget, this.lookDamping);
     this.currentTarget.copy(this.lookTarget);

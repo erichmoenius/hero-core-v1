@@ -426,6 +426,16 @@ export class App {
         if (e.code === "Escape") {
           this.cameraDirector.returnHome();
         }
+
+        // TEMP DEBUG
+        if (e.code === "KeyT") {
+          const pose =
+            this.themeManager.activeTheme?.engine?.getInspectionPose();
+
+          if (pose) {
+            this.cameraDirector.travel(pose);
+          }
+        }
       },
     );
   }
