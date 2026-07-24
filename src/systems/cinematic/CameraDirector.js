@@ -25,6 +25,8 @@ export default class CameraDirector {
     this.mode = CameraMode.EXPLORE;
     this.previousMode = CameraMode.EXPLORE;
 
+    this.flightStyle = "linear";
+
     this.inspectTarget = null;
 
     this.journey = null;
@@ -271,14 +273,6 @@ export default class CameraDirector {
     const flight = this.flightSystem.flight;
 
     if (!flight) return;
-
-    const t = this.flightSystem.getProgress();
-
-    this.position.lerpVectors(
-      flight.startPose.position,
-      flight.targetPose.position,
-      t,
-    );
   }
 
   updateTravel(delta) {
@@ -317,10 +311,16 @@ export default class CameraDirector {
     if (flight) {
       const t = this.flightSystem.getProgress();
 
+      let progress = t;
+
+      if (this.flightStyle === "gravity") {
+        progress = Math.pow(t, 3);
+      }
+
       this.currentPose.position.lerpVectors(
         flight.startPose.position,
         flight.targetPose.position,
-        t,
+        progress,
       );
     }
 

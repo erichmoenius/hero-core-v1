@@ -439,6 +439,21 @@ export class App {
           console.log("Inspection pose:", pose);
 
           if (pose) {
+            this.cameraDirector.flightStyle = "linear";
+            this.cameraDirector.travel(pose);
+          }
+        }
+
+        if (e.code === "KeyG") {
+          console.log("G pressed");
+
+          const pose =
+            this.themeManager.activeTheme?.engine?.getInspectionPose();
+
+          console.log("Inspection pose:", pose);
+
+          if (pose) {
+            this.cameraDirector.flightStyle = "gravity";
             this.cameraDirector.travel(pose);
           }
         }
