@@ -531,7 +531,7 @@ export default class EngineSystem {
   createContainmentAssembly() {
     this.assembly = [];
 
-    const geometry = new THREE.BoxGeometry(0.18, 0.12, 0.1);
+    const geometry = new THREE.BoxGeometry(0.12, 0.08, 0.07);
 
     const material = new THREE.MeshPhysicalMaterial({
       color: 0x3a3632,
@@ -624,7 +624,7 @@ export default class EngineSystem {
     return {
       position: this.object.position.clone().add(new THREE.Vector3(0, 0, 5)),
 
-      lookAt: this.object.position.clone(),
+      lookTarget: this.object.position.clone(),
     };
   }
 

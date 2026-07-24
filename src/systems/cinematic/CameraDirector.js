@@ -146,10 +146,13 @@ export default class CameraDirector {
   inspect(target, lookAt = null) {
     this.setMode(CameraMode.INSPECT);
 
-    // New API: inspection pose
-    if (target?.position && target?.lookAt) {
+    // CameraPose API
+
+    if (target?.position && target?.lookTarget) {
       this.targetPosition.copy(target.position);
-      this.lookTarget.copy(target.lookAt);
+
+      this.lookTarget.copy(target.lookTarget);
+
       return;
     }
 
@@ -192,6 +195,29 @@ export default class CameraDirector {
     console.log("Travel started");
 
     const flight = new Flight();
+
+    console.log("currentPose", this.currentPose);
+    console.log("targetPose", targetPose);
+
+    if (!this.currentPose) {
+      throw new Error("currentPose is undefined");
+    }
+
+    if (!this.currentPose.position) {
+      throw new Error("currentPose.position is undefined");
+    }
+
+    if (!targetPose) {
+      throw new Error("targetPose is undefined");
+    }
+
+    console.log("currentPose.position:", this.currentPose.position);
+    console.log("currentPose.lookTarget:", this.currentPose.lookTarget);
+
+    console.log("targetPose.position:", targetPose.position);
+    console.log("targetPose.lookTarget:", targetPose.lookTarget);
+
+    debugger;
 
     flight.startPose.copy(this.currentPose);
     flight.targetPose.copy(targetPose);

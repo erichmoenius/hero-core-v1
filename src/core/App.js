@@ -405,6 +405,8 @@ export class App {
       "keydown",
 
       (e) => {
+        console.log("Key:", e.code);
+
         if (e.code === "Digit1") {
           this.themeManager.activate("movies");
         }
@@ -429,8 +431,12 @@ export class App {
 
         // TEMP DEBUG
         if (e.code === "KeyT") {
+          console.log("T pressed");
+
           const pose =
             this.themeManager.activeTheme?.engine?.getInspectionPose();
+
+          console.log("Inspection pose:", pose);
 
           if (pose) {
             this.cameraDirector.travel(pose);
