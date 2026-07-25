@@ -121,16 +121,10 @@ export default class CameraDirector {
     this.inspectParallaxStrength = 0.25;
 
     this.floatSpeed = 0.18;
-
-    // ------------------------------------------------
-    // TIME
-    // ------------------------------------------------
-
-    this.time = 0;
   }
 
   // =====================================================
-  // MODES
+  // PUBLIC API/MODES
   // =====================================================
 
   setMode(mode) {
@@ -219,8 +213,6 @@ export default class CameraDirector {
     console.log("targetPose.position:", targetPose.position);
     console.log("targetPose.lookTarget:", targetPose.lookTarget);
 
-    debugger;
-
     flight.startPose.copy(this.currentPose);
     flight.targetPose.copy(targetPose);
 
@@ -236,9 +228,6 @@ export default class CameraDirector {
   // =====================================================
 
   updateExplore(delta) {
-    if (this.previousMode === CameraMode.RETURN) {
-    }
-
     const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
 
     this.channels.cinematic.set(0, floatY, 0);
@@ -351,7 +340,7 @@ export default class CameraDirector {
   }
 
   // =====================================================
-  // PARALLAX
+  // CAMERA
   // =====================================================
 
   setParallax(mouse, strength = 1) {
@@ -443,7 +432,7 @@ export default class CameraDirector {
   }
 
   // =====================================================
-  // PUBLIC
+  // HELPERS
   // =====================================================
 
   getOffset() {
