@@ -188,13 +188,6 @@ export default class CameraDirector {
   }
 
   travel(targetPose) {
-    console.log("Travel started");
-
-    const flight = new Flight();
-
-    console.log("currentPose", this.currentPose);
-    console.log("targetPose", targetPose);
-
     if (!this.currentPose) {
       throw new Error("currentPose is undefined");
     }
@@ -207,20 +200,41 @@ export default class CameraDirector {
       throw new Error("targetPose is undefined");
     }
 
-    console.log("currentPose.position:", this.currentPose.position);
-    console.log("currentPose.lookTarget:", this.currentPose.lookTarget);
+    const flight = this.createFlight(targetPose);
 
-    console.log("targetPose.position:", targetPose.position);
-    console.log("targetPose.lookTarget:", targetPose.lookTarget);
+    this.logTravel(targetPose);
+
+    this.beginFlight(flight);
+  }
+
+  createFlight(targetPose) {
+    const flight = new Flight();
 
     flight.startPose.copy(this.currentPose);
     flight.targetPose.copy(targetPose);
 
     flight.duration = 2.0;
 
+    return flight;
+  }
+
+  beginFlight(flight) {
     this.setMode(CameraMode.TRAVEL);
 
     this.flightSystem.start(flight);
+  }
+
+  logTravel(targetPose) {
+    console.log("Travel started");
+
+    console.log("currentPose", this.currentPose);
+    console.log("targetPose", targetPose);
+
+    console.log("currentPose.position:", this.currentPose.position);
+    console.log("currentPose.lookTarget:", this.currentPose.lookTarget);
+
+    console.log("targetPose.position:", targetPose.position);
+    console.log("targetPose.lookTarget:", targetPose.lookTarget);
   }
 
   // =====================================================
