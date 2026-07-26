@@ -171,13 +171,6 @@ export default class CameraDirector {
     return this.journey !== null;
   }
 
-  // returnHome(position, lookAt) {
-  //   this.setMode(CameraMode.RETURN);
-
-  //   this.targetPosition.copy(position);
-  //   this.lookTarget.copy(lookAt);
-  // }
-
   returnHome() {
     this.basePosition.copy(this.homePosition);
 

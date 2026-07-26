@@ -1,748 +1,508 @@
 import * as THREE from "three";
 
 export class MouseTrail {
+  constructor(container) {
+    this.container = container;
 
-constructor(container){
+    // ------------------------------------------------
+    // ⚙️ STATE
+    // ------------------------------------------------
 
-this.container = container;
+    this.enabled = false;
 
-// ------------------------------------------------
-// ⚙️ STATE
-// ------------------------------------------------
+    this.style = "space";
 
-this.enabled = false;
+    // ------------------------------------------------
+    // 🎨 CONFIG
+    // ------------------------------------------------
 
-this.style = "space";
+    this.settings = {
+      maxParticles: 120,
 
-// ------------------------------------------------
-// 🎨 CONFIG
-// ------------------------------------------------
+      spawnThreshold: 0.35,
 
-this.settings = {
+      drag: 0.965,
 
-  maxParticles: 120,
+      inertia: 0.075,
 
-  spawnThreshold: 0.35,
+      elasticDamping: 0.78,
 
-  drag: 0.965,
+      turbulence: 0.008,
 
-  inertia: 0.075,
+      opacity: 0.5,
 
-  elasticDamping: 0.78,
+      lift: 0.004,
 
-  turbulence: 0.008,
+      ghostSize: 18,
 
-  opacity: 0.5,
+      breatheSpeed: 1.8,
 
-  lift: 0.004,
+      breatheAmount: 0.15,
 
-  ghostSize: 18,
+      velocityStretch: 1.8,
 
-  breatheSpeed: 1.8,
+      idlePulse: 0.025,
+    };
 
-  breatheAmount: 0.15,
+    // ------------------------------------------------
+    // 🖼️ CANVAS
+    // ------------------------------------------------
 
-  velocityStretch: 1.8,
+    this.canvas = document.createElement("canvas");
 
-  idlePulse: 0.025
+    this.canvas.style.position = "fixed";
 
-};
+    this.canvas.style.top = "0";
 
-// ------------------------------------------------
-// 🖼️ CANVAS
-// ------------------------------------------------
+    this.canvas.style.left = "0";
 
-this.canvas =
-  document.createElement("canvas");
+    this.canvas.style.top = "0";
 
-this.canvas.style.position =
-  "fixed";
+    this.canvas.style.left = "0";
 
-this.canvas.style.top = "0";
+    this.canvas.style.width = "100%";
 
-this.canvas.style.left = "0";
+    this.canvas.style.height = "100%";
 
-this.canvas.style.top = "0";
+    this.canvas.style.pointerEvents = "none";
 
-this.canvas.style.left = "0";
+    this.canvas.style.zIndex = "2";
 
-this.canvas.style.width = "100%";
+    this.canvas.style.mixBlendMode = "normal";
 
-this.canvas.style.height = "100%";
+    // ------------------------------------------------
+    // 🌌 CONTAINER SAFETY
+    // ------------------------------------------------
 
-this.canvas.style.pointerEvents =
-  "none";
+    const computed = getComputedStyle(this.container);
 
-this.canvas.style.zIndex = "2";
+    if (computed.position === "static") {
+      this.container.style.position = "relative";
+    }
 
-this.canvas.style.mixBlendMode =
-  "normal";
+    document.body.appendChild(this.canvas);
 
-// ------------------------------------------------
-// 🌌 CONTAINER SAFETY
-// ------------------------------------------------
+    this.ctx = this.canvas.getContext("2d");
 
-const computed =
-  getComputedStyle(this.container);
+    // ------------------------------------------------
+    // 📦 DATA
+    // ------------------------------------------------
 
-if(computed.position === "static"){
+    this.particles = [];
 
-  this.container.style.position =
-    "relative";
+    this.ghost = {
+      x: 0,
 
-}
+      y: 0,
+    };
 
-document.body.appendChild(
-  this.canvas
-);
+    this.ghostVelocity = {
+      x: 0,
 
-this.ctx =
-  this.canvas.getContext("2d");
+      y: 0,
+    };
 
-// ------------------------------------------------
-// 📦 DATA
-// ------------------------------------------------
+    // ------------------------------------------------
+    // 📐 SIZE
+    // ------------------------------------------------
 
-this.particles = [];
+    this.resize = this.resize.bind(this);
 
-this.ghost = {
+    window.addEventListener("resize", this.resize);
 
-  x: 0,
-
-  y: 0
-
-};
-
-this.ghostVelocity = {
-
-  x: 0,
-
-  y: 0
-
-};
-
-// ------------------------------------------------
-// 📐 SIZE
-// ------------------------------------------------
-
-this.resize =
-  this.resize.bind(this);
-
-window.addEventListener(
-  "resize",
-  this.resize
-);
-
-this.resize();
-
-}
-
-// ------------------------------------------------
-// 🎛️ ENABLE
-// ------------------------------------------------
-
-enable(){
-
-this.enabled = true;
-
-this.canvas.style.display =
-  "block";
-
-}
-
-// ------------------------------------------------
-// ⛔ DISABLE
-// ------------------------------------------------
-
-disable(){
-
-this.enabled = false;
-
-this.canvas.style.display =
-  "none";
-
-}
-
-// ------------------------------------------------
-// 🎨 STYLE
-// ------------------------------------------------
-
-setStyle(style = "space"){
-
-this.style = style;
-
-}
-
-// ------------------------------------------------
-// 📐 RESIZE
-// ------------------------------------------------
-
-resize(){
-
-const rect =
-  this.container.getBoundingClientRect();
-
-const dpr =
-  window.devicePixelRatio || 1;
-
-this.width =
-  window.innerWidth;
-
-this.height =
-  window.innerHeight;
-
-this.canvas.width =
-  rect.width * dpr;
-
-this.canvas.height =
-  rect.height * dpr;
-
-this.ctx.setTransform(
-  dpr,
-  0,
-  0,
-  dpr,
-  0,
-  0
-);
-
-this.ghost.x =
-  this.width * 0.5;
-
-this.ghost.y =
-  this.height * 0.5;
-
-}
-
-// ------------------------------------------------
-// 🔄 UPDATE
-// ------------------------------------------------
-
-update(mouse, audio = {}, time = 0){
-
-if(!this.enabled) return;
-
-// ------------------------------------------------
-// 🖱️ NORMALIZED → PIXELS
-// ------------------------------------------------
-
-const px =
-  (mouse.x * 0.5 + 0.5) *
-  this.width;
-
-const py =
-  (mouse.y * 0.5 + 0.5) *
-  this.height;
-
-console.log(
-  "trail",
-  px,
-  py,
-  "scroll",
-  window.scrollY
-);
-
-// ------------------------------------------------
-// 🌌 GHOST INERTIA
-// ------------------------------------------------
-
-const dx =
-  px - this.ghost.x;
-
-const dy =
-  py - this.ghost.y;
-
-this.ghostVelocity.x +=
-
-  dx * this.settings.inertia;
-
-this.ghostVelocity.y +=
-
-  dy * this.settings.inertia;
-
-this.ghostVelocity.x *=
-
-  this.settings.elasticDamping;
-
-this.ghostVelocity.y *=
-
-  this.settings.elasticDamping;
-
-this.ghost.x +=
-  this.ghostVelocity.x;
-
-this.ghost.y +=
-  this.ghostVelocity.y;
-
-// ------------------------------------------------
-// ⚡ SPEED
-// ------------------------------------------------
-
-const speed = Math.sqrt(
-
-  this.ghostVelocity.x ** 2 +
-
-  this.ghostVelocity.y ** 2
-
-);
-
-// ------------------------------------------------
-// 🎧 AUDIO
-// ------------------------------------------------
-
-const energy =
-  audio.energy || 0;
-
-// ------------------------------------------------
-// 🌫️ CINEMATIC FADE
-// ------------------------------------------------
-
-this.ctx.clearRect(
-  0,
-  0,
-  this.width,
-  this.height
-);
-
-// ------------------------------------------------
-// ✨ SPAWN
-// ------------------------------------------------
-
-if(speed > this.settings.spawnThreshold){
-
-  this.spawn(
-
-    this.ghost.x,
-
-    this.ghost.y,
-
-    this.ghostVelocity.x,
-
-    this.ghostVelocity.y,
-
-    energy
-
-  );
-
-}
-
-// ------------------------------------------------
-// ✨ PARTICLES
-// ------------------------------------------------
-
-for(
-
-  let i =
-    this.particles.length - 1;
-
-  i >= 0;
-
-  i--
-
-){
-
-  const p =
-    this.particles[i];
-
-  // turbulence
-
-  p.vx +=
-
-    Math.sin(
-      time + p.seed
-    ) *
-
-    this.settings.turbulence;
-
-  p.vy +=
-
-    Math.cos(
-      time + p.seed
-    ) *
-
-    this.settings.turbulence;
-
-  // lift
-
-  p.vy -=
-    this.settings.lift;
-
-  // drag
-
-  p.vx *=
-    this.settings.drag;
-
-  p.vy *=
-    this.settings.drag;
-
-  // movement
-
-  p.x += p.vx;
-
-  p.y += p.vy;
-
-  // life
-
-  p.life -= p.decay;
-
-  if(p.life <= 0){
-
-    this.particles.splice(i,1);
-
-    continue;
-
+    this.resize();
   }
 
-  this.drawParticle(
-    p,
-    time
-  );
+  // ------------------------------------------------
+  // 🎛️ ENABLE
+  // ------------------------------------------------
 
-}
+  enable() {
+    this.enabled = true;
 
-// ------------------------------------------------
-// 🌟 GHOST
-// ------------------------------------------------
+    this.canvas.style.display = "block";
+  }
 
-this.drawGhost(
-  energy,
-  time,
-  speed
-);
+  // ------------------------------------------------
+  // ⛔ DISABLE
+  // ------------------------------------------------
 
-}
+  disable() {
+    this.enabled = false;
 
-// ------------------------------------------------
-// ✨ SPAWN
-// ------------------------------------------------
+    this.canvas.style.display = "none";
+  }
 
-spawn(x, y, vx, vy, energy){
+  // ------------------------------------------------
+  // 🎨 STYLE
+  // ------------------------------------------------
 
-if(
+  setStyle(style = "space") {
+    this.style = style;
+  }
 
-  this.particles.length >=
-  this.settings.maxParticles
+  // ------------------------------------------------
+  // 📐 RESIZE
+  // ------------------------------------------------
 
-){
+  resize() {
+    const rect = this.container.getBoundingClientRect();
 
-  this.particles.shift();
+    const dpr = window.devicePixelRatio || 1;
 
-}
+    this.width = window.innerWidth;
 
-const angle =
+    this.height = window.innerHeight;
 
-  Math.random() *
-  Math.PI * 2;
+    this.canvas.width = rect.width * dpr;
 
-const speed =
+    this.canvas.height = rect.height * dpr;
 
-  0.12 +
-  Math.random() * 0.25;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-this.particles.push({
+    this.ghost.x = this.width * 0.5;
 
-  x,
+    this.ghost.y = this.height * 0.5;
+  }
 
-  y,
+  // ------------------------------------------------
+  // 🔄 UPDATE
+  // ------------------------------------------------
 
-  vx:
+  update(state) {
+    const mouse = state.mouse;
+    const audio = state.audio;
+    const time = state.time;
 
-    vx * 0.04 +
+    if (!this.enabled) return;
 
-    Math.cos(angle) * speed,
+    if (!this.enabled) return;
 
-  vy:
+    // ------------------------------------------------
+    // 🖱️ NORMALIZED → PIXELS
+    // ------------------------------------------------
 
-    vy * 0.04 +
+    const px = (mouse.x * 0.5 + 0.5) * this.width;
 
-    Math.sin(angle) * speed,
+    const py = (mouse.y * 0.5 + 0.5) * this.height;
 
-  radius:
-    2 + Math.random() * 6,
+    console.log("trail", px, py, "scroll", window.scrollY);
 
-  life: 1,
+    // ------------------------------------------------
+    // 🌌 GHOST INERTIA
+    // ------------------------------------------------
 
-  decay:
-    0.008 +
-    Math.random() * 0.008,
+    const dx = px - this.ghost.x;
 
-  energy,
+    const dy = py - this.ghost.y;
 
-  seed:
-    Math.random() * 1000
+    this.ghostVelocity.x += dx * this.settings.inertia;
 
-});
+    this.ghostVelocity.y += dy * this.settings.inertia;
 
-}
+    this.ghostVelocity.x *= this.settings.elasticDamping;
 
-// ------------------------------------------------
-// ✨ DRAW PARTICLE
-// ------------------------------------------------
+    this.ghostVelocity.y *= this.settings.elasticDamping;
 
-drawParticle(p, time){
+    this.ghost.x += this.ghostVelocity.x;
 
-const ctx = this.ctx;
+    this.ghost.y += this.ghostVelocity.y;
 
-// ------------------------------------------------
-// 🌬️ VELOCITY STRETCH
-// ------------------------------------------------
+    // ------------------------------------------------
+    // ⚡ SPEED
+    // ------------------------------------------------
 
-const velocity = Math.sqrt(
+    const speed = Math.sqrt(
+      this.ghostVelocity.x ** 2 + this.ghostVelocity.y ** 2,
+    );
 
-  p.vx ** 2 +
-  p.vy ** 2
+    // ------------------------------------------------
+    // 🎧 AUDIO
+    // ------------------------------------------------
 
-);
+    const energy = audio.energy || 0;
 
-const stretch =
+    // ------------------------------------------------
+    // 🌫️ CINEMATIC FADE
+    // ------------------------------------------------
 
-  1 +
+    this.ctx.clearRect(0, 0, this.width, this.height);
 
-  velocity *
+    // ------------------------------------------------
+    // ✨ SPAWN
+    // ------------------------------------------------
 
-  this.settings.velocityStretch;
+    if (speed > this.settings.spawnThreshold) {
+      this.spawn(
+        this.ghost.x,
 
-// ------------------------------------------------
-// 💓 BREATHING
-// ------------------------------------------------
+        this.ghost.y,
 
-const breathe =
+        this.ghostVelocity.x,
 
-  1 +
+        this.ghostVelocity.y,
 
-  Math.sin(
+        energy,
+      );
+    }
 
-    time *
+    // ------------------------------------------------
+    // ✨ PARTICLES
+    // ------------------------------------------------
 
-    this.settings.breatheSpeed +
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
 
-    p.seed
+      // turbulence
 
-  ) *
+      p.vx += Math.sin(time + p.seed) * this.settings.turbulence;
 
-  this.settings.breatheAmount;
+      p.vy += Math.cos(time + p.seed) * this.settings.turbulence;
 
-// ------------------------------------------------
-// ✨ FINAL VALUES
-// ------------------------------------------------
+      // lift
 
-const alpha =
+      p.vy -= this.settings.lift;
 
-  p.life *
+      // drag
 
-  this.settings.opacity *
+      p.vx *= this.settings.drag;
 
-  breathe;
+      p.vy *= this.settings.drag;
 
-const size =
+      // movement
 
-  p.radius *
+      p.x += p.vx;
 
-  stretch *
+      p.y += p.vy;
 
-  breathe;
+      // life
 
-// ------------------------------------------------
-// 🌌 DRAW
-// ------------------------------------------------
+      p.life -= p.decay;
 
-ctx.globalCompositeOperation =
-  "lighter";
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
 
-const g =
-  ctx.createRadialGradient(
+        continue;
+      }
 
-    p.x,
-    p.y,
-    0,
+      this.drawParticle(p, time);
+    }
 
-    p.x,
-    p.y,
+    // ------------------------------------------------
+    // 🌟 GHOST
+    // ------------------------------------------------
 
-    size * 2
+    this.drawGhost(energy, time, speed);
+  }
 
-  );
+  // ------------------------------------------------
+  // ✨ SPAWN
+  // ------------------------------------------------
 
-g.addColorStop(
+  spawn(x, y, vx, vy, energy) {
+    if (this.particles.length >= this.settings.maxParticles) {
+      this.particles.shift();
+    }
 
-  0,
+    const angle = Math.random() * Math.PI * 2;
 
-  `rgba(180,220,255,${alpha})`
+    const speed = 0.12 + Math.random() * 0.25;
 
-);
+    this.particles.push({
+      x,
 
-g.addColorStop(
+      y,
 
-  0.4,
+      vx: vx * 0.04 + Math.cos(angle) * speed,
 
-  `rgba(100,150,255,${alpha * 0.18})`
+      vy: vy * 0.04 + Math.sin(angle) * speed,
 
-);
+      radius: 2 + Math.random() * 6,
 
-g.addColorStop(
+      life: 1,
 
-  1,
+      decay: 0.008 + Math.random() * 0.008,
 
-  `rgba(0,0,0,0)`
+      energy,
 
-);
+      seed: Math.random() * 1000,
+    });
+  }
 
-ctx.beginPath();
+  // ------------------------------------------------
+  // ✨ DRAW PARTICLE
+  // ------------------------------------------------
 
-ctx.arc(
+  drawParticle(p, time) {
+    const ctx = this.ctx;
 
-  p.x,
-  p.y,
+    // ------------------------------------------------
+    // 🌬️ VELOCITY STRETCH
+    // ------------------------------------------------
 
-  size * 2,
+    const velocity = Math.sqrt(p.vx ** 2 + p.vy ** 2);
 
-  0,
-  Math.PI * 2
+    const stretch = 1 + velocity * this.settings.velocityStretch;
 
-);
+    // ------------------------------------------------
+    // 💓 BREATHING
+    // ------------------------------------------------
 
-ctx.fillStyle = g;
+    const breathe =
+      1 +
+      Math.sin(time * this.settings.breatheSpeed + p.seed) *
+        this.settings.breatheAmount;
 
-ctx.fill();
+    // ------------------------------------------------
+    // ✨ FINAL VALUES
+    // ------------------------------------------------
 
-ctx.globalCompositeOperation =
-  "source-over";
+    const alpha = p.life * this.settings.opacity * breathe;
 
-}
+    const size = p.radius * stretch * breathe;
 
-// ------------------------------------------------
-// 🌟 DRAW GHOST
-// ------------------------------------------------
+    // ------------------------------------------------
+    // 🌌 DRAW
+    // ------------------------------------------------
 
-drawGhost(energy = 0, time = 0, speed = 0){
+    ctx.globalCompositeOperation = "lighter";
 
-const ctx =
-  this.ctx;
+    const g = ctx.createRadialGradient(
+      p.x,
+      p.y,
+      0,
 
-// ------------------------------------------------
-// 💓 IDLE BREATH
-// ------------------------------------------------
+      p.x,
+      p.y,
 
-const idlePulse =
+      size * 2,
+    );
 
-  1 +
+    g.addColorStop(
+      0,
 
-  Math.sin(
+      `rgba(180,220,255,${alpha})`,
+    );
 
-    time *
+    g.addColorStop(
+      0.4,
 
-    1.5
+      `rgba(100,150,255,${alpha * 0.18})`,
+    );
 
-  ) *
+    g.addColorStop(
+      1,
 
-  this.settings.idlePulse;
+      `rgba(0,0,0,0)`,
+    );
 
-// ------------------------------------------------
-// 🌌 GLOW SIZE
-// ------------------------------------------------
+    ctx.beginPath();
 
-const size =
+    ctx.arc(
+      p.x,
+      p.y,
 
-  this.settings.ghostSize *
+      size * 2,
 
-  idlePulse *
+      0,
+      Math.PI * 2,
+    );
 
-  (1 + speed * 0.02);
+    ctx.fillStyle = g;
 
-// ------------------------------------------------
-// ✨ DRAW
-// ------------------------------------------------
+    ctx.fill();
 
-ctx.globalCompositeOperation =
-  "lighter";
+    ctx.globalCompositeOperation = "source-over";
+  }
 
-const glow =
-  ctx.createRadialGradient(
+  // ------------------------------------------------
+  // 🌟 DRAW GHOST
+  // ------------------------------------------------
 
-    this.ghost.x,
-    this.ghost.y,
-    0,
+  drawGhost(energy = 0, time = 0, speed = 0) {
+    const ctx = this.ctx;
 
-    this.ghost.x,
-    this.ghost.y,
+    // ------------------------------------------------
+    // 💓 IDLE BREATH
+    // ------------------------------------------------
 
-    size
+    const idlePulse = 1 + Math.sin(time * 1.5) * this.settings.idlePulse;
 
-  );
+    // ------------------------------------------------
+    // 🌌 GLOW SIZE
+    // ------------------------------------------------
 
-glow.addColorStop(
+    const size = this.settings.ghostSize * idlePulse * (1 + speed * 0.02);
 
-  0,
+    // ------------------------------------------------
+    // ✨ DRAW
+    // ------------------------------------------------
 
-  `rgba(160,210,255,${
-    0.04 + energy * 0.04
-  })`
+    ctx.globalCompositeOperation = "lighter";
 
-);
+    const glow = ctx.createRadialGradient(
+      this.ghost.x,
+      this.ghost.y,
+      0,
 
-glow.addColorStop(
+      this.ghost.x,
+      this.ghost.y,
 
-  0.5,
+      size,
+    );
 
-  `rgba(90,140,255,0.015)`
+    glow.addColorStop(
+      0,
 
-);
+      `rgba(160,210,255,${0.04 + energy * 0.04})`,
+    );
 
-glow.addColorStop(
+    glow.addColorStop(
+      0.5,
 
-  1,
+      `rgba(90,140,255,0.015)`,
+    );
 
-  `rgba(0,0,0,0)`
+    glow.addColorStop(
+      1,
 
-);
+      `rgba(0,0,0,0)`,
+    );
 
-ctx.beginPath();
+    ctx.beginPath();
 
-ctx.arc(
+    ctx.arc(
+      this.ghost.x,
+      this.ghost.y,
 
-  this.ghost.x,
-  this.ghost.y,
+      size,
 
-  size,
+      0,
+      Math.PI * 2,
+    );
 
-  0,
-  Math.PI * 2
+    ctx.fillStyle = glow;
 
-);
+    ctx.fill();
 
-ctx.fillStyle = glow;
+    ctx.globalCompositeOperation = "source-over";
+  }
 
-ctx.fill();
+  // ------------------------------------------------
+  // 🧹 CLEANUP
+  // ------------------------------------------------
 
-ctx.globalCompositeOperation =
-  "source-over";
+  destroy() {
+    window.removeEventListener(
+      "resize",
 
-}
+      this.resize,
+    );
 
-// ------------------------------------------------
-// 🧹 CLEANUP
-// ------------------------------------------------
+    if (this.canvas?.parentNode) {
+      this.canvas.parentNode.removeChild(this.canvas);
+    }
 
-destroy(){
-
-window.removeEventListener(
-
-  "resize",
-
-  this.resize
-
-);
-
-if(this.canvas?.parentNode){
-
-  this.canvas.parentNode.removeChild(
-    this.canvas
-  );
-
-}
-
-this.particles = [];
-
-}
-
+    this.particles = [];
+  }
 }

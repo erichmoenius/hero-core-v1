@@ -3,9 +3,7 @@ import { FibonacciPresence } from "./FibonacciPresence.js";
 import { GravityField } from "./GravityField.js";
 
 export class InteractionManager {
-
-  constructor(container, gui = null){
-
+  constructor(container, gui = null) {
     this.container = container;
     this.gui = gui;
 
@@ -22,115 +20,83 @@ export class InteractionManager {
     // ------------------------------------------------
 
     this.interactions = {
-
       off: null,
 
-      trail:
-        new MouseTrail(
-          this.container
-        ),
+      trail: new MouseTrail(this.container),
 
-      fibonacci:
-        new FibonacciPresence(
-          this.container
-        ),
+      fibonacci: new FibonacciPresence(this.container),
 
-      gravity:
-        new GravityField(
-          this.container
-        )
-
+      gravity: new GravityField(this.container),
     };
 
     // ------------------------------------------------
     // 🛑 SAFE STARTUP
     // ------------------------------------------------
 
-    Object.values(this.interactions).forEach(
-      interaction => {
-
-        interaction?.disable?.();
-
-      }
-    );
+    Object.values(this.interactions).forEach((interaction) => {
+      interaction?.disable?.();
+    });
 
     // ------------------------------------------------
     // 🎛️ GUI SETTINGS
     // ------------------------------------------------
 
     this.settings = {
-
-      mode: "off"
-
+      mode: "off",
     };
 
     // ------------------------------------------------
     // 🎛️ GUI
     // ------------------------------------------------
 
-    if(this.gui){
-
+    if (this.gui) {
       this.setupGUI();
-
     }
-
   }
 
   // ------------------------------------------------
   // 🎛️ GUI
   // ------------------------------------------------
 
-  setupGUI(){
+  setupGUI() {
+    const folder = this.gui.addFolder("🖱️ Interactions");
 
-    const folder =
-      this.gui.addFolder(
-        "🖱️ Interactions"
-      );
+    folder
+      .add(
+        this.settings,
 
-    folder.add(
+        "mode",
 
-      this.settings,
+        {
+          Off: "off",
 
-      "mode",
+          Trail: "trail",
 
-      {
+          Fibonacci: "fibonacci",
 
-        Off: "off",
-
-        Trail: "trail",
-
-        Fibonacci: "fibonacci",
-
-        Gravity: "gravity"
-
-      }
-
-    ).onChange((value)=>{
-
-      this.setMode(value);
-
-    });
+          Gravity: "gravity",
+        },
+      )
+      .onChange((value) => {
+        this.setMode(value);
+      });
 
     folder.open();
-
   }
 
   // ------------------------------------------------
   // 🔄 SET MODE
   // ------------------------------------------------
 
-  setMode(mode = "off"){
-
-    if(this.mode === mode) return;
+  setMode(mode = "off") {
+    if (this.mode === mode) return;
 
     // ------------------------------------------------
     // ⛔ DISABLE CURRENT
     // ------------------------------------------------
 
-    if(this.activeInteraction){
-
+    if (this.activeInteraction) {
       this.activeInteraction.disable();
-
     }
 
     // ------------------------------------------------
@@ -145,77 +111,48 @@ export class InteractionManager {
     // 🌌 ACTIVATE NEW
     // ------------------------------------------------
 
-    this.activeInteraction =
-      this.interactions[mode] || null;
+    this.activeInteraction = this.interactions[mode] || null;
 
-    if(this.activeInteraction){
-
+    if (this.activeInteraction) {
       this.activeInteraction.enable();
-
     }
 
     // ------------------------------------------------
     // 📝 DEBUG
     // ------------------------------------------------
 
-    console.log(
-
-      `🎛️ Interaction Mode: ${mode}`
-
-    );
-
+    console.log(`🎛️ Interaction Mode: ${mode}`);
   }
 
   // ------------------------------------------------
   // 🔄 UPDATE
   // ------------------------------------------------
 
-  update(mouse, audio, time){
+  update(state) {
+    if (!this.activeInteraction) return;
 
-    if(!this.activeInteraction) return;
-
-    this.activeInteraction.update(
-
-      mouse,
-
-      audio,
-
-      time
-
-    );
-
+    this.activeInteraction.update(state);
   }
 
   // ------------------------------------------------
   // 🎨 STYLE
   // ------------------------------------------------
 
-  setStyle(style){
+  setStyle(style) {
+    if (!this.activeInteraction) return;
 
-    if(!this.activeInteraction) return;
-
-    if(this.activeInteraction.setStyle){
-
+    if (this.activeInteraction.setStyle) {
       this.activeInteraction.setStyle(style);
-
     }
-
   }
 
   // ------------------------------------------------
   // 🧹 DESTROY
   // ------------------------------------------------
 
-  destroy(){
-
-    Object.values(this.interactions).forEach(
-      interaction => {
-
-        interaction?.destroy?.();
-
-      }
-    );
-
+  destroy() {
+    Object.values(this.interactions).forEach((interaction) => {
+      interaction?.destroy?.();
+    });
   }
-
 }

@@ -478,6 +478,8 @@ export class App {
 
       time: this.time,
 
+      mouse: this.mouse,
+
       parallax: this.parallax,
 
       flight: this.flight,
@@ -660,6 +662,8 @@ export class App {
     this.intensity = THREE.MathUtils.clamp(this.intensity, 0, 1);
 
     const state = this.buildState();
+
+    this.interactionManager.update(state);
 
     this.updateCamera();
 
