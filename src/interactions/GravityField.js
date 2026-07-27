@@ -257,15 +257,6 @@ export class GravityField {
 
     const px = (mouse.x * 0.5 + 0.5) * this.width;
 
-    console.log(
-      "mouse",
-      mouse.x.toFixed(2),
-      "px",
-      Math.round(px),
-      "width",
-      this.width,
-    );
-
     const py = (mouse.y * 0.5 + 0.5) * this.height;
 
     // ------------------------------------------------
@@ -328,13 +319,6 @@ export class GravityField {
       const gy = this.ghost.y - p.y;
 
       const dist = Math.sqrt(gx * gx + gy * gy);
-
-      console.log(
-        "ghostX",
-        Math.round(this.ghost.x),
-        "radius",
-        this.settings.gravityRadius,
-      );
 
       if (dist < this.settings.gravityRadius) {
         const norm = dist / this.settings.gravityRadius;

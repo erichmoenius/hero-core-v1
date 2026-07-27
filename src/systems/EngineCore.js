@@ -1,19 +1,26 @@
 import * as THREE from "three";
-
+import PlasmaTrail from "./PlasmaTrail.js";
 export default class EngineCore {
   constructor() {
-    console.log("ENGINE CORE CONSTRUCTED");
+    console.log("EngineCore constructor");
 
     this.group = new THREE.Group();
 
     this.time = 0;
+    this.ringPulse = 0;
+    this.spark = 0;
 
     // ------------------------------------------------
     // CONTAINMENT SHELL
     // ------------------------------------------------
 
     this.shell = new THREE.Mesh(
-      new THREE.SphereGeometry(0.34, 64, 64),
+      new THREE.CapsuleGeometry(
+        0.008, // radius
+        0.025, // body length
+        4, // cap segments
+        8, // radial segments
+      ),
 
       new THREE.MeshPhysicalMaterial({
         color: 0x181b1f,
@@ -84,6 +91,10 @@ export default class EngineCore {
 
     this.group.add(this.accretionRing);
 
+    this.plasmaTrail = new PlasmaTrail();
+
+    this.accretionRing.add(this.plasmaTrail.object);
+
     // ------------------------------------------------
     // RING IMPERFECTION
     // ------------------------------------------------
@@ -102,8 +113,11 @@ export default class EngineCore {
 
     this.orbitParticles = [];
 
-    for (let i = 0; i < 180; i++) {
-      const size = 0.015 + Math.random() * 0.015;
+    for (let i = 0; i < 120; i++) {
+      const size =
+        Math.random() < 0.75
+          ? 0.006 + Math.random() * 0.008
+          : 0.02 + Math.random() * 0.02;
 
       let geometry;
 
@@ -174,12 +188,23 @@ export default class EngineCore {
 
       let color;
 
+      // if (family < 0.25) {
+      //   color = 0xfff3d1;
+      // } else if (family < 0.8) {
+      //   color = 0xe6bf67;
+      // } else {
+      //   color = 0x8d6b3f;
+      // }
+
       if (family < 0.25) {
-        color = 0xfff3d1;
+        // Pale Silver
+        color = 0xe8edf5;
       } else if (family < 0.8) {
-        color = 0xe6bf67;
+        // Titanium Gray
+        color = 0x8f949d;
       } else {
-        color = 0x8d6b3f;
+        // Dark Iron
+        color = 0x50545c;
       }
 
       const brightness = 0.45 + Math.random() * 0.45;
@@ -188,8 +213,10 @@ export default class EngineCore {
         color: new THREE.Color(color).multiplyScalar(brightness),
 
         roughness: 0.92,
-
         metalness: 0.12,
+
+        transparent: true,
+        opacity: 1.0,
       });
 
       // ------------------------------------------------
@@ -217,13 +244,11 @@ export default class EngineCore {
 
         speed:
           THREE.MathUtils.lerp(
-            0.9,
-
-            0.2,
-
-            (radius - 0.32) / 0.35,
+            1.8,
+            0.15,
+            THREE.MathUtils.clamp((radius - 0.18) / 0.75, 0, 1),
           ) +
-          Math.random() * 0.05,
+          Math.random() * 0.08,
 
         height:
           family < 0.25
@@ -237,6 +262,8 @@ export default class EngineCore {
         driftSpeed: 0.15 + Math.random() * 0.2,
 
         driftAmount: 0.015 + Math.random() * 0.02,
+
+        consume: Math.random() < 0.04,
       };
 
       this.group.add(particle);
@@ -361,13 +388,6 @@ export default class EngineCore {
 
       THREE.MathUtils.degToRad(8),
     );
-
-    //TEMPORARY DEBUG
-    const axes = new THREE.AxesHelper(5);
-    this.group.add(axes);
-
-    console.log("ENGINE CORE GROUP", this.group);
-    console.log("ENGINE CORE CHILDREN", this.group.children);
   }
 
   update(delta) {
@@ -376,6 +396,28 @@ export default class EngineCore {
     const breathe = 1 + Math.sin(this.time * 0.45) * 0.008;
 
     this.shell.scale.setScalar(breathe);
+
+    this.ringPulse = Math.max(0, (this.ringPulse || 0) - delta * 1.5);
+
+    this.plasmaTrail.update(delta);
+
+    // // TEMPORARY DEBUG
+    // this.spark += delta * 2.0;
+
+    // // if (this.sparkMesh) {
+    // //   this.sparkMesh.visible = true;
+
+    // //   const angle = this.spark;
+    // //   const radius = 0.4;
+
+    // //   this.sparkMesh.position.set(
+    // //     Math.cos(angle) * radius,
+    // //     Math.sin(angle) * radius,
+    // //     0,
+    // //   );
+
+    // //   this.sparkMesh.rotation.z = angle;
+    // // }
 
     // ------------------------------------------------
     // EVENT HORIZON
@@ -408,7 +450,12 @@ export default class EngineCore {
         THREE.MathUtils.degToRad(18) + Math.cos(this.time * 0.18) * 0.015;
 
       this.accretionRing.material.emissiveIntensity =
-        0.12 + Math.sin(this.time * 0.35) * 0.02;
+        0.12 + Math.sin(this.time * 0.35) * 0.02 + (this.ringPulse || 0) * 0.25;
+
+      const ringScale =
+        1 + Math.sin(this.time * 0.45) * 0.008 + (this.ringPulse || 0) * 0.05;
+
+      this.accretionRing.scale.setScalar(ringScale);
 
       // ------------------------------------------------
       // PHOTON ARC
@@ -420,6 +467,20 @@ export default class EngineCore {
 
       if (this.orbitParticles) {
         this.orbitParticles.forEach((particle) => {
+          if (!particle.visible) {
+            particle.userData.respawnTimer -= delta;
+
+            if (particle.userData.respawnTimer <= 0) {
+              particle.userData.radius = THREE.MathUtils.randFloat(0.85, 0.95);
+              particle.userData.angle = Math.random() * Math.PI * 2;
+              particle.userData.consume = Math.random() < 0.08;
+
+              particle.visible = true;
+            }
+
+            return;
+          }
+
           const radiusFactor = THREE.MathUtils.inverseLerp(
             0.18,
 
@@ -438,9 +499,28 @@ export default class EngineCore {
 
           particle.userData.angle +=
             delta * particle.userData.speed * orbitalSpeed;
-          particle.rotation.x += delta * 0.1;
 
+          particle.rotation.x += delta * 0.1;
           particle.rotation.y += delta * 0.06;
+
+          if (particle.userData.consume) {
+            const gravity = THREE.MathUtils.inverseLerp(
+              0.95,
+              0.18,
+              particle.userData.radius,
+            );
+
+            const pull = THREE.MathUtils.lerp(0.003, 0.03, gravity);
+
+            particle.userData.radius -= delta * pull;
+          }
+
+          if (particle.userData.consume && particle.userData.radius < 0.18) {
+            particle.visible = false;
+            particle.userData.respawnTimer = 2.0;
+
+            this.ringPulse = 1.0;
+          }
 
           const animatedRadius =
             particle.userData.radius +
@@ -450,13 +530,30 @@ export default class EngineCore {
             ) *
               particle.userData.driftAmount;
 
+          const wobble =
+            Math.sin(this.time * 0.35 + particle.userData.drift * 2.0) * 0.012;
+
           particle.position.set(
-            Math.cos(particle.userData.angle) * animatedRadius,
+            Math.cos(particle.userData.angle + wobble) * animatedRadius,
 
-            particle.userData.height,
+            particle.userData.height +
+              Math.sin(
+                this.time * particle.userData.driftSpeed +
+                  particle.userData.drift,
+              ) *
+                particle.userData.driftAmount *
+                0.35,
 
-            Math.sin(particle.userData.angle) * animatedRadius,
+            Math.sin(particle.userData.angle + wobble) * animatedRadius,
           );
+
+          const fade = THREE.MathUtils.smoothstep(
+            particle.userData.radius,
+            0.18,
+            0.45,
+          );
+
+          particle.material.opacity = fade;
         });
       }
     }

@@ -19,6 +19,7 @@ import * as THREE from "three";
 import EngineCore from "./EngineCore";
 export default class EngineSystem {
   constructor() {
+    console.log("EngineSystem constructor");
     this.group = new THREE.Group();
     this.group.name = "Engine";
 
@@ -43,9 +44,15 @@ export default class EngineSystem {
       clearcoatRoughness: 0.85,
     });
 
+    console.log("Creating EngineCore...");
+
     this.core = new EngineCore();
 
+    console.log("Created:", this.core);
+
     this.group.add(this.core.object);
+
+    console.log("Added EngineCore to EngineSystem");
 
     this.createLights();
 
