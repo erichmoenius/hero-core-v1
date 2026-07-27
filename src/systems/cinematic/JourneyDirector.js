@@ -21,6 +21,16 @@
 //
 // =====================================================
 
+const JourneyPhase = {
+  IDLE: "IDLE",
+  START: "START",
+  APPROACH: "APPROACH",
+  HORIZON: "HORIZON",
+  SINGULARITY: "SINGULARITY",
+  WORMHOLE: "WORMHOLE",
+  ARRIVAL: "ARRIVAL",
+  RETURN: "RETURN",
+};
 export default class JourneyDirector {
   constructor(cameraDirector) {
     this.cameraDirector = cameraDirector;
@@ -28,10 +38,18 @@ export default class JourneyDirector {
     this.activeJourney = null;
 
     this.gateways = [];
+
+    this.phase = "IDLE";
+    this.phaseTime = 0;
   }
 
   begin(journey) {
     this.activeJourney = journey;
+
+    this.phase = "START";
+    this.phaseTime = 0;
+
+    console.log("Journey started");
   }
 
   addGateway(gateway) {
@@ -40,6 +58,9 @@ export default class JourneyDirector {
 
   stop() {
     this.activeJourney = null;
+
+    this.phase = "IDLE";
+    this.phaseTime = 0;
   }
 
   isPlaying() {
@@ -64,5 +85,7 @@ export default class JourneyDirector {
 
   update(delta = 0.016) {
     if (!this.activeJourney) return;
+
+    this.phaseTime += delta;
   }
 }
