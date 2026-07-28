@@ -160,7 +160,7 @@ export class App {
       this.gui,
     );
 
-    this.interactionManager.setMode("Off");
+    this.interactionManager.setMode("off");
 
     // ------------------------------------------------
     // 🖱️ INPUT
@@ -392,6 +392,16 @@ export class App {
 
       (e) => {
         this.wheel.delta += e.deltaY * 0.001;
+      },
+    );
+
+    window.addEventListener(
+      "pointerdown",
+
+      (e) => {
+        if (e.button !== 0) return;
+
+        this.journeyDirector.begin("engine");
       },
     );
   }
@@ -668,6 +678,8 @@ export class App {
     this.updateCamera();
 
     this.cameraDirector.update();
+
+    this.journeyDirector.update();
 
     this.updateEnvironment();
 

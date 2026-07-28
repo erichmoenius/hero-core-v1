@@ -44,20 +44,17 @@ export default class EngineSystem {
       clearcoatRoughness: 0.85,
     });
 
-    console.log("Creating EngineCore...");
+    console.log("✅ EngineCore ready");
 
     this.core = new EngineCore();
 
-    console.log("Created:", this.core);
-
     this.group.add(this.core.object);
-
-    console.log("Added EngineCore to EngineSystem");
 
     this.createLights();
 
     this.createRings();
 
+    // console.log("Created:", this.core);
     // this.createRepairPlates();
     // this.createContainmentAssembly();
   }

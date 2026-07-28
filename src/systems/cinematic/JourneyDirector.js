@@ -46,7 +46,8 @@ export default class JourneyDirector {
   begin(journey) {
     this.activeJourney = journey;
 
-    this.phase = "START";
+    this.phase = JourneyPhase.START;
+
     this.phaseTime = 0;
 
     console.log("Journey started");
@@ -87,5 +88,12 @@ export default class JourneyDirector {
     if (!this.activeJourney) return;
 
     this.phaseTime += delta;
+
+    if (this.phase === JourneyPhase.START && this.phaseTime >= 2) {
+      this.phase = JourneyPhase.APPROACH;
+      this.phaseTime = 0;
+
+      console.log("Journey → APPROACH");
+    }
   }
 }
