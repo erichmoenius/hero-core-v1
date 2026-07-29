@@ -28,6 +28,8 @@ export default class Gateway {
 
     this.radius = radius;
 
+    this.entryPose = null;
+
     this.enabled = true;
 
     this.journey = null;

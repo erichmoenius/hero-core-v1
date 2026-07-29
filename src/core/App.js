@@ -401,7 +401,13 @@ export class App {
       (e) => {
         if (e.button !== 0) return;
 
-        this.journeyDirector.begin("engine");
+        const gateway = this.themeManager.activeTheme.getGateways()[0];
+
+        this.cameraDirector.travel(gateway.entryPose);
+
+        this.journeyDirector.begin(gateway.journey);
+
+        console.log(this.themeManager.activeTheme.engine);
       },
     );
   }
@@ -679,7 +685,7 @@ export class App {
 
     this.cameraDirector.update();
 
-    this.journeyDirector.update();
+    this.journeyDirector.update(this.cameraDirector.getPosition());
 
     this.updateEnvironment();
 

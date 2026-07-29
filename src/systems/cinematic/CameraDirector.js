@@ -245,6 +245,8 @@ export default class CameraDirector {
 
     this.applyFlight();
 
+    console.log("Camera position:", this.position.toArray());
+
     this.applyComputedPosition();
   }
 

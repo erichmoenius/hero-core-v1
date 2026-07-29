@@ -98,7 +98,16 @@ export class SpaceTheme {
 
     this.gateways = [];
 
-    this.gateways.push(new Gateway(this.engine.object.position, 1.5));
+    const gateway = new Gateway(this.engine.object.position, 1.5);
+
+    gateway.entryPose = {
+      position: this.engine.object.position.clone(),
+      lookTarget: this.engine.object.position.clone(),
+    };
+
+    gateway.journey = "engine";
+
+    this.gateways.push(gateway);
 
     // ------------------------------------------------
     // 🫧 PLASMA BLOB

@@ -72,6 +72,13 @@ export default class JourneyDirector {
     for (const gateway of this.gateways) {
       if (!gateway.enabled) continue;
 
+      console.log(
+        "Gateway position:",
+        gateway.position,
+        "radius:",
+        gateway.radius,
+      );
+
       if (gateway.contains(position)) {
         return gateway;
       }
@@ -84,10 +91,27 @@ export default class JourneyDirector {
     this.gateways = gateways;
   }
 
-  update(delta = 0.016) {
+  update(cameraPosition, delta = 0.016) {
     if (!this.activeJourney) return;
 
     this.phaseTime += delta;
+
+    const gateway = this.findGateway(cameraPosition);
+
+    console.log(
+      "Gateway position:",
+      gateway?.position,
+      "radius:",
+      gateway?.radius,
+    );
+
+    console.log("Gateways:", this.gateways.length);
+    console.log("Camera:", cameraPosition);
+    console.log("Gateway found:", gateway);
+
+    if (gateway) {
+      console.log("🌀 Gateway detected");
+    }
 
     if (this.phase === JourneyPhase.START && this.phaseTime >= 2) {
       this.phase = JourneyPhase.APPROACH;
