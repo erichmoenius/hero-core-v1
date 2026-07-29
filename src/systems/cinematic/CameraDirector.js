@@ -55,6 +55,14 @@ export default class CameraDirector {
 
     this.flightSystem = new FlightSystem();
 
+    this.flightSystem.onFinished = () => {
+      console.error("🎉 FLIGHT FINISHED");
+
+      this.inspectTarget = this.currentTarget;
+
+      this.setMode(CameraMode.INSPECT);
+    };
+
     // ------------------------------------------------
     // CAMERA OFFSET
     // ------------------------------------------------
@@ -324,6 +332,8 @@ export default class CameraDirector {
         flight.targetPose.position,
         progress,
       );
+
+      this.targetPosition.copy(this.currentPose.position);
     }
 
     // this.currentTarget.lerp(this.lookTarget, this.lookDamping);

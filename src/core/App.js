@@ -401,9 +401,15 @@ export class App {
       (e) => {
         if (e.button !== 0) return;
 
+        console.log("LMB");
+
         const gateway = this.themeManager.activeTheme.getGateways()[0];
 
+        console.log("Before travel");
+
         this.cameraDirector.travel(gateway.entryPose);
+
+        console.log("After travel");
 
         this.journeyDirector.begin(gateway.journey);
 

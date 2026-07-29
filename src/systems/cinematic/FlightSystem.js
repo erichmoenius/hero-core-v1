@@ -3,6 +3,8 @@ import { Flight } from "./Flight";
 export class FlightSystem {
   constructor() {
     this.flight = null;
+
+    this.onFinished = null;
   }
 
   createFlight() {
@@ -29,6 +31,10 @@ export class FlightSystem {
 
     if (this.flight.elapsed >= this.flight.duration) {
       this.stop();
+
+      if (this.onFinished) {
+        this.onFinished();
+      }
     }
   }
 
