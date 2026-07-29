@@ -12,6 +12,8 @@ import CameraDirector from "../systems/cinematic/CameraDirector.js";
 
 import Gateway from "../systems/cinematic/Gateway.js";
 
+import { CameraPose } from "../systems/cinematic/CameraPose";
+
 export class SpaceTheme {
   constructor(container, gui) {
     this.container = container;
@@ -100,10 +102,12 @@ export class SpaceTheme {
 
     const gateway = new Gateway(this.engine.object.position, 1.5);
 
-    gateway.entryPose = {
-      position: this.engine.object.position.clone(),
-      lookTarget: this.engine.object.position.clone(),
-    };
+    const entryPose = new CameraPose();
+
+    entryPose.position.copy(this.engine.object.position);
+    entryPose.lookTarget.copy(this.engine.object.position);
+
+    gateway.entryPose = entryPose;
 
     gateway.journey = "engine";
 
