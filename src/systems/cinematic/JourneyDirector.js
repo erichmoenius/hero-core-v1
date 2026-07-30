@@ -43,6 +43,18 @@ export default class JourneyDirector {
     this.phaseTime = 0;
   }
 
+  getPhase() {
+    return this.phase;
+  }
+
+  getJourney() {
+    return this.activeJourney;
+  }
+
+  isActive() {
+    return this.activeJourney !== null;
+  }
+
   begin(journey) {
     this.activeJourney = journey;
 
@@ -96,28 +108,28 @@ export default class JourneyDirector {
 
     this.phaseTime += delta;
 
-    const gateway = this.findGateway(cameraPosition);
-
     console.log(
-      "Gateway position:",
-      gateway?.position,
-      "radius:",
-      gateway?.radius,
+      "Journey:",
+      this.activeJourney,
+      "Phase:",
+      this.phase,
+      "Time:",
+      this.phaseTime.toFixed(2),
     );
-
-    console.log("Gateways:", this.gateways.length);
-    console.log("Camera:", cameraPosition);
-    console.log("Gateway found:", gateway);
-
-    if (gateway) {
-      console.log("🌀 Gateway detected");
-    }
 
     if (this.phase === JourneyPhase.START && this.phaseTime >= 2) {
       this.phase = JourneyPhase.APPROACH;
       this.phaseTime = 0;
 
       console.log("Journey → APPROACH");
+    }
+
+    if (this.phase === JourneyPhase.APPROACH && this.phaseTime >= 3) {
+      this.phase = JourneyPhase.HORIZON;
+
+      this.phaseTime = 0;
+
+      console.log("Journey → HORIZON");
     }
   }
 }

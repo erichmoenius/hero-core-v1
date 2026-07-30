@@ -20,6 +20,8 @@ export class SpaceTheme {
 
     this.gui = gui;
 
+    this.journeyDirector = null;
+
     this.time = 0;
 
     this.velocity = 0;
@@ -301,6 +303,16 @@ export class SpaceTheme {
 
   update(state) {
     this.time += 0.016;
+
+    console.log("JourneyDirector:", this.journeyDirector);
+
+    if (this.journeyDirector?.isActive()) {
+      const phase = this.journeyDirector.getPhase();
+
+      console.log("Journey phase:", phase);
+    }
+
+    // existing code continues...
 
     // ------------------------------------------------
     // 🌌 COSMIC BREATH

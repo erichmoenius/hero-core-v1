@@ -61,6 +61,10 @@ export default class CameraDirector {
       this.inspectTarget = this.currentTarget;
 
       this.setMode(CameraMode.INSPECT);
+
+      if (this.journey) {
+        this.journey.begin("engine");
+      }
     };
 
     // ------------------------------------------------
@@ -169,6 +173,16 @@ export default class CameraDirector {
     this.inspect(position, lookAt);
 
     this.setMode(CameraMode.TRAVEL);
+  }
+
+  cancelTravel() {
+    this.setMode(CameraMode.EXPLORE);
+  }
+
+  cancel() {
+    this.flightSystem.stop();
+
+    this.cancelTravel();
   }
 
   beginJourney(journey) {

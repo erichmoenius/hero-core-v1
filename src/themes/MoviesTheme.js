@@ -274,4 +274,8 @@ export class MoviesTheme {
 
     this.folder?.destroy();
   }
+
+  getGateways() {
+    return [];
+  }
 }

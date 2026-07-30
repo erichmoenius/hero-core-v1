@@ -140,6 +140,8 @@ export class App {
 
     this.themeManager.activate("space");
 
+    this.themeManager.activeTheme.journeyDirector = this.journeyDirector;
+
     this.journeyDirector.setGateways(
       this.themeManager.activeTheme.getGateways(),
     );
@@ -405,6 +407,11 @@ export class App {
 
         const gateway = this.themeManager.activeTheme.getGateways()[0];
 
+        if (!gateway) {
+          console.log("No gateway in current theme.");
+          return;
+        }
+
         console.log("Before travel");
 
         this.cameraDirector.travel(gateway.entryPose);
@@ -428,13 +435,30 @@ export class App {
 
       (e) => {
         console.log("Key:", e.code);
+        console.log("Camera mode:", this.cameraDirector.mode);
+        console.log("Journey active:", this.journeyDirector.isActive());
 
         if (e.code === "Digit1") {
+          this.cameraDirector.cancel();
+          this.journeyDirector.stop();
+
           this.themeManager.activate("movies");
+
+          this.themeManager.activeTheme.journeyDirector = this.journeyDirector;
+
+          this.journeyDirector.setGateways(
+            this.themeManager.activeTheme.getGateways(),
+          );
         }
 
         if (e.code === "Digit2") {
           this.themeManager.activate("space");
+
+          this.themeManager.activeTheme.journeyDirector = this.journeyDirector;
+
+          this.journeyDirector.setGateways(
+            this.themeManager.activeTheme.getGateways(),
+          );
         }
 
         // TEMP DEBUG
