@@ -45,6 +45,8 @@ export class App {
 
     this.journeyDirector = new JourneyDirector(this.cameraDirector);
 
+    this.cameraDirector.journeyDirector = this.journeyDirector;
+
     console.log("🎬 Cinematic system initialized");
 
     this.renderer.portal = null;

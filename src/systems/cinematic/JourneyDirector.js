@@ -131,5 +131,47 @@ export default class JourneyDirector {
 
       console.log("Journey → HORIZON");
     }
+
+    if (this.phase === JourneyPhase.HORIZON && this.phaseTime >= 3) {
+      this.phase = JourneyPhase.SINGULARITY;
+
+      this.phaseTime = 0;
+
+      console.log("Journey → SINGULARITY");
+    }
+
+    if (this.phase === JourneyPhase.SINGULARITY && this.phaseTime >= 4) {
+      this.phase = JourneyPhase.WORMHOLE;
+
+      this.phaseTime = 0;
+
+      console.log("Journey → WORMHOLE");
+    }
+
+    if (this.phase === JourneyPhase.WORMHOLE && this.phaseTime >= 4) {
+      this.phase = JourneyPhase.ARRIVAL;
+
+      this.phaseTime = 0;
+
+      console.log("Journey → ARRIVAL");
+    }
+
+    if (this.phase === JourneyPhase.ARRIVAL && this.phaseTime >= 3) {
+      this.phase = JourneyPhase.RETURN;
+
+      this.phaseTime = 0;
+
+      console.log("Journey → RETURN");
+    }
+
+    if (this.phase === JourneyPhase.RETURN && this.phaseTime >= 3) {
+      this.phase = JourneyPhase.IDLE;
+
+      this.phaseTime = 0;
+
+      this.activeJourney = null;
+
+      console.log("Journey Complete → IDLE");
+    }
   }
 }

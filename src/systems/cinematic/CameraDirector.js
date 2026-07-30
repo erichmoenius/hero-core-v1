@@ -273,6 +273,10 @@ export default class CameraDirector {
   }
 
   updateInspect(delta) {
+    if (this.journeyDirector) {
+      console.log("Camera Journey:", this.journeyDirector.getPhase());
+    }
+
     const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
 
     this.channels.cinematic.set(0, floatY, 0);
