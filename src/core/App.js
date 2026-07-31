@@ -25,6 +25,7 @@ import AudioManager from "../audio/AudioManager.js";
 import { InteractionManager } from "../interactions/InteractionManager.js";
 import CameraDirector from "../systems/cinematic/CameraDirector.js";
 import JourneyDirector from "../systems/cinematic/JourneyDirector.js";
+import TransitSystem from "../systems/transit/TransitSystem.js";
 
 export class App {
   constructor() {
@@ -45,7 +46,13 @@ export class App {
 
     this.journeyDirector = new JourneyDirector(this.cameraDirector);
 
+    this.transitSystem = new TransitSystem();
+
     this.cameraDirector.journeyDirector = this.journeyDirector;
+
+    this.cameraDirector.onFlightFinished = () => {
+      console.log("🎬 App: Flight complete");
+    };
 
     console.log("🎬 Cinematic system initialized");
 
@@ -650,7 +657,7 @@ export class App {
       this.cinematic.parallaxStrength,
     );
 
-    this.cameraDirector.setLookTarget(0, 0, -4);
+    this.cameraDirector.setLookTarget(2.8, 0, -8);
   }
 
   // =====================================================

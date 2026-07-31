@@ -107,6 +107,9 @@ export class SpaceTheme {
     const entryPose = new CameraPose();
 
     entryPose.position.copy(this.engine.object.position);
+
+    entryPose.position.z += 4;
+
     entryPose.lookTarget.copy(this.engine.object.position);
 
     gateway.entryPose = entryPose;
@@ -307,12 +310,8 @@ export class SpaceTheme {
     console.log("JourneyDirector:", this.journeyDirector);
 
     if (this.journeyDirector?.isActive()) {
-      const phase = this.journeyDirector.getPhase();
-
-      console.log("Journey phase:", phase);
+      console.log("Journey phase:", this.journeyDirector.getPhase());
     }
-
-    // existing code continues...
 
     // ------------------------------------------------
     // 🌌 COSMIC BREATH

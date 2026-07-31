@@ -31,13 +31,22 @@ export default class CameraDirector {
 
     this.journey = null;
 
+    this.onFlightFinished = null;
+
     // ------------------------------------------------
     // TARGETS
     // ------------------------------------------------
 
-    this.targetPosition = new THREE.Vector3(0, 0, 5);
+    // Current camera position (the only live camera position)
     this.position = new THREE.Vector3(0, 0, 5);
+
+    // Explore/home position
     this.basePosition = this.position.clone();
+
+    // Destination for smooth transitions
+    this.targetPosition = new THREE.Vector3(0, 0, 5);
+
+    // Camera look target
     this.lookTarget = new THREE.Vector3(0, 0, 0);
 
     // Home camera pose
@@ -56,15 +65,9 @@ export default class CameraDirector {
     this.flightSystem = new FlightSystem();
 
     this.flightSystem.onFinished = () => {
-      console.error("🎉 FLIGHT FINISHED");
+      console.log("🎉 Flight finished.");
 
-      this.inspectTarget = this.currentTarget;
-
-      this.setMode(CameraMode.INSPECT);
-
-      if (this.journey) {
-        this.journey.begin("engine");
-      }
+      this.onFlightFinished?.();
     };
 
     // ------------------------------------------------
@@ -434,6 +437,12 @@ export default class CameraDirector {
 
   applyComputedPosition() {
     // Keep the current cinematic pose synchronized
+    console.log(
+      "POSE",
+      this.currentPose.position.toArray(),
+      "LIVE",
+      this.position.toArray(),
+    );
     this.currentPose.position.copy(this.position);
     this.currentPose.lookTarget.copy(this.currentTarget);
 
@@ -454,6 +463,8 @@ export default class CameraDirector {
     if (!this.camera) return;
 
     //this.camera.lookAt(this.currentTarget);
+
+    console.log("Look target:", this.currentTarget.toArray());
   }
 
   // =====================================================

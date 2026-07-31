@@ -1,0 +1,37 @@
+export default class TransitSystem {
+  constructor() {
+    this.active = false;
+
+    this.type = null;
+  }
+
+  start(type) {
+    this.active = true;
+
+    this.type = type;
+
+    console.log("Transit started:", type);
+  }
+
+  stop() {
+    this.active = false;
+
+    this.type = null;
+
+    console.log("Transit stopped");
+  }
+
+  update(delta) {
+    if (!this.active) return;
+  }
+
+  isActive() {
+    return this.active;
+  }
+
+  getType() {
+    return this.type;
+  }
+}
+
+
