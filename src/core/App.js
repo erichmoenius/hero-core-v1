@@ -54,6 +54,12 @@ export class App {
       console.log("🎬 App: Flight complete");
     };
 
+    this.journeyDirector.onTransit = (type) => {
+      console.log("🌌 Transit requested:", type);
+
+      this.transitSystem.start(type);
+    };
+
     console.log("🎬 Cinematic system initialized");
 
     this.renderer.portal = null;

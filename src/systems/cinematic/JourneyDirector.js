@@ -146,6 +146,8 @@ export default class JourneyDirector {
       this.phaseTime = 0;
 
       console.log("Journey → WORMHOLE");
+
+      this.onTransit?.("wormhole");
     }
 
     if (this.phase === JourneyPhase.WORMHOLE && this.phaseTime >= 4) {

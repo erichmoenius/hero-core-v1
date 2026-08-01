@@ -307,7 +307,10 @@ export class SpaceTheme {
   update(state) {
     this.time += 0.016;
 
-    console.log("JourneyDirector:", this.journeyDirector);
+    console.log({
+      phase: this.journeyDirector?.getPhase(),
+      journey: this.journeyDirector?.getJourney(),
+    });
 
     if (this.journeyDirector?.isActive()) {
       console.log("Journey phase:", this.journeyDirector.getPhase());
