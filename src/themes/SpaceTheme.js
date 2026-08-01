@@ -100,6 +100,8 @@ export class SpaceTheme {
 
     this.group.add(this.engine.object);
 
+    this.wormholeAttached = false;
+
     this.gateways = [];
 
     const gateway = new Gateway(this.engine.object.position, 1.5);
@@ -314,6 +316,34 @@ export class SpaceTheme {
 
     if (this.journeyDirector?.isActive()) {
       console.log("Journey phase:", this.journeyDirector.getPhase());
+    }
+
+    // ------------------------------------------------
+    // 🌀 WORMHOLE
+    // ------------------------------------------------
+
+    if (!this.wormholeAttached && this.transitSystem?.isActive()) {
+      const wormhole = this.transitSystem.getObject();
+
+      if (wormhole) {
+        this.engine.object.add(wormhole);
+
+        this.wormholeAttached = true;
+
+        console.log("🌀 Wormhole attached to Engine");
+      }
+    }
+
+    if (this.wormholeAttached && !this.transitSystem?.isActive()) {
+      const wormhole = this.transitSystem?.getObject();
+
+      if (wormhole) {
+        this.engine.object.remove(wormhole);
+      }
+
+      this.wormholeAttached = false;
+
+      console.log("🌀 Wormhole detached");
     }
 
     // ------------------------------------------------

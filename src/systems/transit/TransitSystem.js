@@ -32,6 +32,8 @@ export default class TransitSystem {
 
   update(delta) {
     if (!this.active) return;
+
+    this.currentTransit?.update(delta);
   }
 
   isActive() {
@@ -40,5 +42,9 @@ export default class TransitSystem {
 
   getType() {
     return this.type;
+  }
+
+  getObject() {
+    return this.currentTransit?.getObject() ?? null;
   }
 }

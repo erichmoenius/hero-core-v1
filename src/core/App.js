@@ -60,6 +60,12 @@ export class App {
       this.transitSystem.start(type);
     };
 
+    this.journeyDirector.onTransitEnd = () => {
+      console.log("🌌 Transit ended");
+
+      this.transitSystem.stop();
+    };
+
     console.log("🎬 Cinematic system initialized");
 
     this.renderer.portal = null;
@@ -156,6 +162,8 @@ export class App {
     this.themeManager.activate("space");
 
     this.themeManager.activeTheme.journeyDirector = this.journeyDirector;
+
+    this.themeManager.activeTheme.transitSystem = this.transitSystem;
 
     this.journeyDirector.setGateways(
       this.themeManager.activeTheme.getGateways(),
@@ -731,6 +739,8 @@ export class App {
     this.cameraDirector.update();
 
     this.journeyDirector.update(this.cameraDirector.getPosition());
+
+    this.transitSystem.update(0.016);
 
     this.updateEnvironment();
 

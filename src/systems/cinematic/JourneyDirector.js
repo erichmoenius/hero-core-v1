@@ -173,6 +173,8 @@ export default class JourneyDirector {
 
       this.activeJourney = null;
 
+      this.onTransitEnd?.();
+
       console.log("Journey Complete → IDLE");
     }
   }
