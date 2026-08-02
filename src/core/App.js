@@ -467,7 +467,7 @@ export class App {
 
           this.themeManager.activate("movies");
 
-          this.themeManager.activeTheme.journeyDirector = this.journeyDirector;
+          this.initializeActiveTheme();
 
           this.journeyDirector.setGateways(
             this.themeManager.activeTheme.getGateways(),
@@ -477,7 +477,7 @@ export class App {
         if (e.code === "Digit2") {
           this.themeManager.activate("space");
 
-          this.themeManager.activeTheme.journeyDirector = this.journeyDirector;
+          this.initializeActiveTheme();
 
           this.journeyDirector.setGateways(
             this.themeManager.activeTheme.getGateways(),
@@ -528,6 +528,15 @@ export class App {
         }
       },
     );
+  }
+
+  initializeActiveTheme() {
+    const theme = this.themeManager.activeTheme;
+
+    if (!theme) return;
+
+    theme.journeyDirector = this.journeyDirector;
+    theme.transitSystem = this.transitSystem;
   }
 
   // ------------------------------------------------

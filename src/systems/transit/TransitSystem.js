@@ -23,6 +23,12 @@ export default class TransitSystem {
   }
 
   stop() {
+    this.currentTransit?.stop();
+
+    this.currentTransit?.dispose();
+
+    this.currentTransit = null;
+
     this.active = false;
 
     this.type = null;

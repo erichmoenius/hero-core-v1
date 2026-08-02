@@ -35,6 +35,12 @@ export default class WormholeTransit {
     console.log("🌀 Wormhole finished");
   }
 
+  dispose() {
+    this.group.clear();
+
+    console.log("🌀 Wormhole disposed");
+  }
+
   update(delta) {
     this.time += delta;
 
