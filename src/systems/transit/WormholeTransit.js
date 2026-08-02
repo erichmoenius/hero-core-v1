@@ -21,6 +21,34 @@ export default class WormholeTransit {
     this.ring = new THREE.Mesh(geometry, material);
 
     this.group.add(this.ring);
+
+    const haloGeometry = new THREE.TorusGeometry(0.82, 0.06, 16, 96);
+
+    const haloMaterial = new THREE.MeshBasicMaterial({
+      color: 0xa8e8ff,
+
+      transparent: true,
+
+      opacity: 0.22,
+
+      side: THREE.DoubleSide,
+
+      depthWrite: false,
+
+      blending: THREE.AdditiveBlending,
+    });
+
+    this.halo = new THREE.Mesh(haloGeometry, haloMaterial);
+
+    const coreGeometry = new THREE.SphereGeometry(0.32, 32, 32);
+
+    const coreMaterial = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+    });
+
+    this.core = new THREE.Mesh(coreGeometry, coreMaterial);
+
+    this.group.add(this.halo);
   }
 
   start() {
@@ -45,6 +73,14 @@ export default class WormholeTransit {
     this.time += delta;
 
     this.ring.rotation.z += delta * 0.6;
+
+    this.halo.rotation.z -= delta * 0.25;
+
+    const glow = 1 + Math.sin(this.time * 1.2) * 0.08;
+
+    this.halo.scale.setScalar(glow);
+
+    this.halo.material.opacity = 0.18 + Math.sin(this.time * 1.2) * 0.08;
 
     const pulse = 1 + Math.sin(this.time * 2.5) * 0.06;
 

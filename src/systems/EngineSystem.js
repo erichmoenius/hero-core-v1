@@ -26,7 +26,14 @@ export default class EngineSystem {
     this.time = 0;
 
     this.relationshipEnergy = 0;
+
     this.targetRelationshipEnergy = 0;
+
+    this.transitEnergy = 0;
+
+    this.transitEnergy = 0;
+
+    this.targetTransitEnergy = 0;
 
     this.rings = [];
 
@@ -58,143 +65,6 @@ export default class EngineSystem {
     // this.createRepairPlates();
     // this.createContainmentAssembly();
   }
-
-  // =====================================================
-  // CORE
-  // =====================================================
-
-  //     createCore() {
-
-  //     const geometry = new THREE.SphereGeometry(
-  //         0.38,
-  //         64,
-  //         64
-  //     );
-
-  //     const material = new THREE.MeshPhysicalMaterial({
-
-  //     color: 0x181b1f,
-
-  //     metalness: 0.95,
-
-  //     roughness: 0.88,
-
-  //     transparent: true,
-
-  //     opacity: 0.08,
-
-  //     depthWrite: false,
-
-  //     transmission: 0.15,
-
-  //     emissive: 0x050608,
-
-  //     emissiveIntensity: 0.01
-
-  // });
-
-  //         this.core = new THREE.Mesh(
-  //             geometry,
-  //             material
-  //         );
-
-  //     // Slight imperfection
-
-  //         this.core.position.set(
-  //             0.04,
-  //             -0.03,
-  //             0.02
-  //         );
-
-  //         this.group.add(this.core);
-
-  //         this.core.visible = false;
-
-  //     // ------------------------------------------------
-  //     // SINGULARITY
-  //     // ------------------------------------------------
-
-  //     this.singularity = new THREE.Mesh(
-
-  //     new THREE.SphereGeometry(
-
-  //         0.055,
-
-  //         32,
-
-  //         32
-
-  //     ),
-
-  //     new THREE.MeshStandardMaterial({
-
-  //         color: 0x030303,
-
-  //         metalness: 0,
-
-  //         roughness: 1
-
-  //     })
-
-  //     );
-
-  //     this.core.add(this.singularity);
-
-  //     const test = new THREE.Mesh(
-
-  //     new THREE.BoxGeometry(0.5, 0.5, 0.5),
-
-  //     new THREE.MeshBasicMaterial({
-
-  //         color: 0xff0000
-
-  //     })
-
-  // );
-
-  // this.core.add(test);
-
-  //     // ------------------------------------------------
-  //     // ACCRETION RING
-  //     // ------------------------------------------------
-
-  //     this.accretionRing = new THREE.Mesh(
-
-  //     new THREE.TorusGeometry(
-
-  //         0.095,
-
-  //         0.006,
-
-  //         16,
-
-  //         128
-
-  //     ),
-
-  //     new THREE.MeshBasicMaterial({
-
-  //         color: 0xffc86a,
-
-  //         transparent: true,
-
-  //         opacity: 1.0
-
-  //     })
-
-  //     );
-
-  //     this.accretionRing.rotation.x =
-
-  //     Math.PI * 0.5;
-
-  //     this.core.add(
-
-  //     this.accretionRing
-
-  //     );
-
-  // }
 
   // =====================================================
   // LIGHTING
@@ -571,49 +441,30 @@ export default class EngineSystem {
 
     this.relationshipEnergy = THREE.MathUtils.lerp(
       this.relationshipEnergy,
-
       this.targetRelationshipEnergy ?? 0,
-
       delta * 2,
     );
 
-    // ------------------------------------------------
-    // CORE BREATHING
-    // ------------------------------------------------
+    this.transitEnergy = THREE.MathUtils.lerp(
+      this.transitEnergy,
+      this.targetTransitEnergy ?? 0,
+      delta * 1.5,
+    );
 
-    const breathe = 1 + Math.sin(this.time * 0.45) * 0.008;
-
-    //this.core.scale.setScalar(breathe);
-
-    // ------------------------------------------------
-    // CORE HEARTBEAT
-    // ------------------------------------------------
-
-    // this.core.material.emissiveIntensity =
-
-    // 0.04 +
-
-    // this.relationshipEnergy * 0.08 +
-
-    // Math.sin(this.time * 0.3) * 0.01;
-
-    // this.core.material.emissiveIntensity =
-
-    // 0.005 +
-
-    // this.relationshipEnergy * 0.01;
+    this.core.setTransitEnergy(this.transitEnergy);
 
     this.core.update(delta);
 
-    //------------------------------------------------
+    // ------------------------------------------------
     // ANCIENT DRIFT
     // ------------------------------------------------
 
     this.group.rotation.y += delta * 0.003;
 
     this.rings.forEach((ring, index) => {
-      ring.rotation.z +=
-        delta * ring.userData.speed * (80 + this.relationshipEnergy * 40);
+      const speed = 80 + this.relationshipEnergy * 40 + this.transitEnergy * 30;
+
+      ring.rotation.z += delta * ring.userData.speed * speed;
 
       // Tiny independent motion
       ring.rotation.x += Math.sin(this.time * 0.08 + index) * 0.00002;

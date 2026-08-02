@@ -32,6 +32,8 @@ export class SpaceTheme {
 
     this.communicationParticles = [];
 
+    this.gravityDust = [];
+
     this.inspectEngine = false;
 
     // ------------------------------------------------
@@ -192,6 +194,8 @@ export class SpaceTheme {
 
     this.createCommunicationField();
 
+    this.createGravityDust();
+
     console.log("COMM FIELD CREATED");
   }
 
@@ -317,6 +321,10 @@ export class SpaceTheme {
     if (this.journeyDirector?.isActive()) {
       console.log("Journey phase:", this.journeyDirector.getPhase());
     }
+
+    const phase = this.journeyDirector?.getPhase();
+
+    this.engine.targetTransitEnergy = phase === "WORMHOLE" ? 1 : 0;
 
     // ------------------------------------------------
     // 🌀 WORMHOLE
@@ -582,11 +590,15 @@ export class SpaceTheme {
     // ⭐ STAR MOVEMENT
     // ------------------------------------------------
 
-    this.updateLayer(this.far, forward * 0.2 * depthSpeed);
+    const wormhole = this.journeyDirector?.getPhase() === "WORMHOLE";
 
-    this.updateLayer(this.mid, forward * 0.6 * depthSpeed);
+    const gravity = wormhole ? 3.0 : 1.0;
 
-    this.updateLayer(this.near, forward * 1.5 * depthSpeed);
+    this.updateLayer(this.far, forward * 0.2 * depthSpeed * gravity);
+
+    this.updateLayer(this.mid, forward * 0.6 * depthSpeed * gravity);
+
+    this.updateLayer(this.near, forward * 1.5 * depthSpeed * gravity);
 
     // ------------------------------------------------
     // 🌫️ DEPTH ATMOSPHERE
@@ -740,6 +752,9 @@ export class SpaceTheme {
 
     const storyPos = this.narrativeSpiral.group.position;
 
+    const enginePos = this.engine.object.position;
+    const journeyPhase = this.journeyDirector?.getPhase();
+
     for (const particle of this.communicationParticles) {
       /*  
   const target =
@@ -798,6 +813,14 @@ force.add(orbit);
 
       particle.userData.velocity.multiplyScalar(0.995);
 
+      if (journeyPhase === "WORMHOLE") {
+        const pull = enginePos.clone().sub(particle.position);
+
+        pull.normalize().multiplyScalar(0.003);
+
+        particle.userData.velocity.add(pull);
+      }
+
       particle.position.add(particle.userData.velocity);
 
       particle.userData.velocity.multiplyScalar(0.97);
@@ -846,6 +869,24 @@ force.add(orbit);
       // }
     }
 
+    // ------------------------------------------------
+    // 🌌 GRAVITY DUST
+    // ------------------------------------------------
+
+    if (journeyPhase === "WORMHOLE") {
+      for (const particle of this.gravityDust) {
+        const pull = enginePos.clone().sub(particle.position);
+
+        pull.normalize().multiplyScalar(0.002);
+
+        particle.userData.velocity.add(pull);
+
+        particle.userData.velocity.multiplyScalar(0.985);
+
+        particle.position.add(particle.userData.velocity);
+      }
+    }
+
     this.group.position.z = this.zoom * 0.4;
 
     console.log({
@@ -890,11 +931,41 @@ force.add(orbit);
         velocity: new THREE.Vector3(),
 
         direction: i % 2 === 0 ? 1 : -1,
+
+        captureStrength: Math.random(),
       };
 
       this.group.add(particle);
 
       this.communicationParticles.push(particle);
+    }
+  }
+
+  createGravityDust() {
+    const geometry = new THREE.SphereGeometry(0.01, 3, 3);
+
+    for (let i = 0; i < 300; i++) {
+      const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.5,
+      });
+
+      const particle = new THREE.Mesh(geometry, material);
+
+      particle.position.set(
+        THREE.MathUtils.randFloat(-8, 8),
+        THREE.MathUtils.randFloat(-5, 5),
+        THREE.MathUtils.randFloat(-10, -2),
+      );
+
+      particle.userData = {
+        velocity: new THREE.Vector3(),
+      };
+
+      this.group.add(particle);
+
+      this.gravityDust.push(particle);
     }
   }
 
@@ -909,6 +980,10 @@ force.add(orbit);
       const variance = 0.7 + Math.sin(i * 12.9898) * 0.3;
 
       z += speed * 0.02 * variance;
+
+      if (this.journeyDirector?.getPhase() === "WORMHOLE") {
+        z -= speed * 0.01;
+      }
 
       if (z > depth * 0.5) {
         z -= depth;

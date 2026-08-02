@@ -9,6 +9,7 @@ export default class EngineCore {
     this.time = 0;
     this.ringPulse = 0;
     this.spark = 0;
+    this.transitEnergy = 0;
 
     // ------------------------------------------------
     // CONTAINMENT SHELL
@@ -369,7 +370,10 @@ export default class EngineCore {
 
     this.photonArc.rotation.x = THREE.MathUtils.degToRad(68);
 
-    this.group.add(this.photonArc);
+    // this.group.add(this.photonArc);
+    // TODO:
+    // Replace with a physically-inspired gravitational lensing effect
+    // during close approach to the event horizon.
 
     // ------------------------------------------------
     // DEVELOPMENT SCALE
@@ -510,7 +514,9 @@ export default class EngineCore {
               particle.userData.radius,
             );
 
-            const pull = THREE.MathUtils.lerp(0.003, 0.03, gravity);
+            const pull =
+              THREE.MathUtils.lerp(0.003, 0.03, gravity) *
+              (1 + this.transitEnergy * 2);
 
             particle.userData.radius -= delta * pull;
           }
@@ -558,7 +564,9 @@ export default class EngineCore {
       }
     }
   }
-
+  setTransitEnergy(value) {
+    this.transitEnergy = value;
+  }
   get object() {
     return this.group;
   }
