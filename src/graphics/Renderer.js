@@ -38,6 +38,14 @@ export class Renderer {
     );
 
     // ------------------------------------------------
+    // CINEMATIC FADE
+    // ------------------------------------------------
+
+    this.fade = 0;
+    this.fadeTarget = 0;
+    this.fadeSpeed = 1;
+
+    // ------------------------------------------------
     // CANVAS SETUP
     // ------------------------------------------------
 
@@ -54,6 +62,30 @@ export class Renderer {
     document.body.appendChild(canvas);
 
     // ------------------------------------------------
+    // CINEMATIC CURTAIN
+    // ------------------------------------------------
+
+    this.fadeOverlay = document.createElement("div");
+
+    this.fadeOverlay.style.position = "fixed";
+    this.fadeOverlay.style.top = "0";
+    this.fadeOverlay.style.left = "0";
+    this.fadeOverlay.style.width = "100%";
+    this.fadeOverlay.style.height = "100%";
+
+    this.fadeOverlay.style.background = "black";
+
+    this.fadeOverlay.style.pointerEvents = "none";
+
+    this.fadeOverlay.style.opacity = "0";
+
+    this.fadeOverlay.style.transition = "opacity 1s linear";
+
+    this.fadeOverlay.style.zIndex = "9999";
+
+    document.body.appendChild(this.fadeOverlay);
+
+    // ------------------------------------------------
     // RESIZE
     // ------------------------------------------------
 
@@ -67,6 +99,25 @@ export class Renderer {
       this.renderer.setSize(w, h);
       this.renderTarget.setSize(w, h);
     });
+  }
+  // ------------------------------------------------
+  // CINEMATIC FADE API
+  // ------------------------------------------------
+
+  fadeOut(duration = 1) {
+    this.fadeOverlay.style.transition = `opacity ${duration}s linear`;
+
+    this.fadeOverlay.style.opacity = "1";
+  }
+
+  fadeIn(duration = 1) {
+    this.fadeOverlay.style.transition = `opacity ${duration}s linear`;
+
+    this.fadeOverlay.style.opacity = "0";
+  }
+
+  isBlack() {
+    return this.fade >= 0.99;
   }
 
   // ------------------------------------------------

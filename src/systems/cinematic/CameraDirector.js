@@ -65,6 +65,12 @@ export default class CameraDirector {
     this.flightSystem = new FlightSystem();
 
     this.flightSystem.onFinished = () => {
+      this.setMode(CameraMode.EXPLORE);
+
+      this.onFlightFinished?.();
+    };
+
+    this.flightSystem.onFinished = () => {
       console.log("🎉 Flight finished.");
 
       this.onFlightFinished?.();
@@ -427,6 +433,11 @@ export default class CameraDirector {
 
     this.position.x += Math.sin(time * 0.3) * 0.2 + px + idle.x;
     this.position.y += Math.cos(time * 0.2) * 0.2 + py + idle.y;
+
+    console.log("Base:", this.basePosition.toArray());
+    console.log("Parallax:", this.parallax);
+
+    console.log("Parallax:", this.parallax);
 
     return this.position;
   }

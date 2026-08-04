@@ -66,6 +66,26 @@ export class App {
       this.transitSystem.stop();
     };
 
+    this.journeyDirector.onVoidStart = () => {
+      console.log("🌑 VOID");
+
+      this.renderer.fadeOut(1);
+    };
+
+    this.journeyDirector.onBirth = () => {
+      console.log("✨ BIRTH");
+
+      this.themeManager.activate("movies");
+
+      const pose = this.themeManager.activeTheme?.getHomePose();
+
+      if (pose) {
+        this.cameraDirector.travel(pose);
+      }
+
+      this.renderer.fadeIn(3);
+    };
+
     console.log("🎬 Cinematic system initialized");
 
     this.renderer.portal = null;
@@ -482,6 +502,14 @@ export class App {
           this.journeyDirector.setGateways(
             this.themeManager.activeTheme.getGateways(),
           );
+        }
+
+        if (e.code === "Digit8") {
+          this.renderer.fadeOut(1);
+        }
+
+        if (e.code === "Digit9") {
+          this.renderer.fadeIn(4);
         }
 
         // TEMP DEBUG

@@ -30,6 +30,7 @@ const JourneyPhase = {
   WORMHOLE: "WORMHOLE",
   ARRIVAL: "ARRIVAL",
   RETURN: "RETURN",
+  VOID: "VOID",
 };
 export default class JourneyDirector {
   constructor(cameraDirector) {
@@ -151,19 +152,23 @@ export default class JourneyDirector {
     }
 
     if (this.phase === JourneyPhase.WORMHOLE && this.phaseTime >= 4) {
+      this.phase = JourneyPhase.VOID;
+
+      this.phaseTime = 0;
+
+      console.log("Journey → VOID");
+
+      this.onVoidStart?.();
+    }
+
+    if (this.phase === JourneyPhase.VOID && this.phaseTime >= 1) {
       this.phase = JourneyPhase.ARRIVAL;
 
       this.phaseTime = 0;
 
       console.log("Journey → ARRIVAL");
-    }
 
-    if (this.phase === JourneyPhase.ARRIVAL && this.phaseTime >= 3) {
-      this.phase = JourneyPhase.RETURN;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → RETURN");
+      this.onBirth?.();
     }
 
     if (this.phase === JourneyPhase.RETURN && this.phaseTime >= 3) {
