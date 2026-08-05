@@ -755,7 +755,7 @@ export class SpaceTheme {
     const enginePos = this.engine.object.position;
     const journeyPhase = this.journeyDirector?.getPhase();
 
-    const arrival = journeyPhase === "ARRIVAL";
+    const birth = journeyPhase === "BIRTH";
 
     for (const particle of this.communicationParticles) {
       /*  

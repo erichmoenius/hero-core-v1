@@ -22,6 +22,7 @@ import { createParticleMaterial } from "../particles/ParticleShader.js";
 
 import AudioManager from "../audio/AudioManager.js";
 
+import { ExploreDirector } from "../systems/cinematic/ExploreDirector.js";
 import { InteractionManager } from "../interactions/InteractionManager.js";
 import CameraDirector from "../systems/cinematic/CameraDirector.js";
 import JourneyDirector from "../systems/cinematic/JourneyDirector.js";
@@ -43,6 +44,8 @@ export class App {
     // ------------------------------------------------
 
     this.cameraDirector = new CameraDirector(this.camera);
+
+    this.exploreDirector = new ExploreDirector(this.cameraDirector);
 
     this.journeyDirector = new JourneyDirector(this.cameraDirector);
 
@@ -774,6 +777,8 @@ export class App {
     this.updateCamera();
 
     this.cameraDirector.update();
+
+    this.exploreDirector.update(0.016);
 
     this.journeyDirector.update(this.cameraDirector.getPosition());
 

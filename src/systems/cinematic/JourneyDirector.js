@@ -28,7 +28,7 @@ const JourneyPhase = {
   HORIZON: "HORIZON",
   SINGULARITY: "SINGULARITY",
   WORMHOLE: "WORMHOLE",
-  ARRIVAL: "ARRIVAL",
+  BIRTH: "BIRTH",
   RETURN: "RETURN",
   VOID: "VOID",
 };
@@ -162,11 +162,11 @@ export default class JourneyDirector {
     }
 
     if (this.phase === JourneyPhase.VOID && this.phaseTime >= 1) {
-      this.phase = JourneyPhase.ARRIVAL;
+      this.phase = JourneyPhase.BIRTH;
 
       this.phaseTime = 0;
 
-      console.log("Journey → ARRIVAL");
+      console.log("Journey → BIRTH");
 
       this.onBirth?.();
     }
