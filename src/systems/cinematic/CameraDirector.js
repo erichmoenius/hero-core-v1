@@ -277,6 +277,7 @@ export default class CameraDirector {
     this.applyFlight();
 
     console.log("Camera position:", this.position.toArray());
+    console.log("CameraMode.EXPLORE");
 
     this.applyComputedPosition();
   }
@@ -322,6 +323,8 @@ export default class CameraDirector {
     this.channels.cinematic.set(0, floatY, 0);
 
     this.applyLookTarget();
+
+    console.log("CameraMode.TRAVEL");
 
     this.position.lerp(this.targetPosition, 0.08);
 

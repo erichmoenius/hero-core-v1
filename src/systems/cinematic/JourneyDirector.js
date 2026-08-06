@@ -42,6 +42,7 @@ export default class JourneyDirector {
 
     this.phase = "IDLE";
     this.phaseTime = 0;
+    this.onJourneyFinished = null;
   }
 
   getPhase() {
@@ -169,6 +170,20 @@ export default class JourneyDirector {
       console.log("Journey → BIRTH");
 
       this.onBirth?.();
+    }
+
+    if (this.phase === JourneyPhase.BIRTH && this.phaseTime >= 3) {
+      this.phase = JourneyPhase.IDLE;
+
+      this.phaseTime = 0;
+
+      this.activeJourney = null;
+
+      this.onTransitEnd?.();
+
+      this.onJourneyFinished?.();
+
+      console.log("Journey Complete → EXPLORE");
     }
 
     if (this.phase === JourneyPhase.RETURN && this.phaseTime >= 3) {

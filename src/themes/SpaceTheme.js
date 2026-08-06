@@ -219,6 +219,15 @@ export class SpaceTheme {
     return this.gateways;
   }
 
+  getExplorableObjects() {
+    return [
+      this.blob,
+      this.engine,
+      this.fibonacci,
+      ...this.getGateways(),
+    ].filter(Boolean);
+  }
+
   // ------------------------------------------------
   // 🎥 CAMERA FEEL
   // ------------------------------------------------

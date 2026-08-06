@@ -13,6 +13,8 @@ export class ExploreDirector {
     this.cameraDirector = cameraDirector;
 
     this.mode = ExploreMode.FREE;
+    this.currentObject = null;
+    this.lastObject = null;
   }
 
   update(delta) {
@@ -40,7 +42,27 @@ export class ExploreDirector {
     this.updateInteraction(delta);
   }
 
-  updateDiscovery(delta) {}
+  updateDiscovery(delta) {
+    this.findExplorableObjects(delta);
+  }
+
+  findExplorableObjects(delta) {
+    if (!this.theme) {
+      this.currentObject = null;
+      return;
+    }
+
+    const objects = this.theme.getExplorableObjects();
+
+    this.currentObject = objects.length > 0 ? objects[0] : null;
+
+    //TEMP DEBUGGING
+    if (this.currentObject !== this.lastObject) {
+      this.lastObject = this.currentObject;
+
+      console.log("Exploring:", this.currentObject);
+    }
+  }
 
   updateInteraction(delta) {}
 
@@ -52,11 +74,17 @@ export class ExploreDirector {
     this.updateIdleMotion(delta);
   }
 
-  updateMouseLook(delta) {}
+  updateMouseLook(delta) {
+    // Camera steering lives here.
+  }
 
-  updateWheel(delta) {}
+  updateWheel(delta) {
+    // Forward/backward exploration lives here.
+  }
 
-  updateIdleMotion(delta) {}
+  updateIdleMotion(delta) {
+    // Breathing motion lives here.
+  }
 
   setMode(mode) {
     if (this.mode === mode) return;

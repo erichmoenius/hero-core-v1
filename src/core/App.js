@@ -24,7 +24,9 @@ import AudioManager from "../audio/AudioManager.js";
 
 import { ExploreDirector } from "../systems/cinematic/ExploreDirector.js";
 import { InteractionManager } from "../interactions/InteractionManager.js";
-import CameraDirector from "../systems/cinematic/CameraDirector.js";
+import CameraDirector, {
+  CameraMode,
+} from "../systems/cinematic/CameraDirector.js";
 import JourneyDirector from "../systems/cinematic/JourneyDirector.js";
 import TransitSystem from "../systems/transit/TransitSystem.js";
 
@@ -67,6 +69,12 @@ export class App {
       console.log("🌌 Transit ended");
 
       this.transitSystem.stop();
+    };
+
+    this.journeyDirector.onJourneyFinished = () => {
+      console.log("🌌 EXPLORE");
+
+      this.cameraDirector.setMode(CameraMode.EXPLORE);
     };
 
     this.journeyDirector.onVoidStart = () => {
@@ -567,7 +575,10 @@ export class App {
     if (!theme) return;
 
     theme.journeyDirector = this.journeyDirector;
+
     theme.transitSystem = this.transitSystem;
+
+    this.exploreDirector.setTheme(theme);
   }
 
   // ------------------------------------------------
