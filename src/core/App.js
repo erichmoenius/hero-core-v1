@@ -74,7 +74,7 @@ export class App {
     this.journeyDirector.onJourneyFinished = () => {
       console.log("🌌 EXPLORE");
 
-      this.cameraDirector.setMode(CameraMode.EXPLORE);
+      this.cameraDirector.finishTravel();
     };
 
     this.journeyDirector.onVoidStart = () => {

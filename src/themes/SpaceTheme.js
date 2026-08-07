@@ -8,6 +8,8 @@ import { NarrativeSpiral } from "../systems/NarrativeSpiral.js";
 
 import EngineSystem from "../systems/EngineSystem.js";
 
+import { EngineJourney } from "../systems/cinematic/EngineJourney.js";
+
 import CameraDirector from "../systems/cinematic/CameraDirector.js";
 
 import Gateway from "../systems/cinematic/Gateway.js";
@@ -118,7 +120,7 @@ export class SpaceTheme {
 
     gateway.entryPose = entryPose;
 
-    gateway.journey = "engine";
+    gateway.journey = new EngineJourney();
 
     this.gateways.push(gateway);
 

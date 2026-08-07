@@ -65,6 +65,18 @@ export default class CameraDirector {
     this.flightSystem = new FlightSystem();
 
     this.flightSystem.onFinished = () => {
+      if (this.mode === CameraMode.TRAVEL) {
+        this.finishTravel();
+      }
+    };
+
+    this.flightSystem.onFinished = () => {
+      if (this.mode === CameraMode.TRAVEL) {
+        this.finishTravel();
+      }
+    };
+
+    this.flightSystem.onFinished = () => {
       this.setMode(CameraMode.EXPLORE);
 
       this.onFlightFinished?.();
@@ -154,6 +166,13 @@ export default class CameraDirector {
     this.previousMode = this.mode;
 
     this.mode = mode;
+
+    if (
+      mode === CameraMode.EXPLORE &&
+      this.previousMode !== CameraMode.EXPLORE
+    ) {
+      this.basePosition.copy(this.position);
+    }
   }
 
   isMode(mode) {
@@ -324,18 +343,29 @@ export default class CameraDirector {
 
     this.applyLookTarget();
 
-    console.log("CameraMode.TRAVEL");
+    console.log("CameraMode.RETURN");
 
     this.position.lerp(this.targetPosition, 0.08);
 
     if (this.position.distanceTo(this.targetPosition) < 0.01) {
-      this.position.copy(this.targetPosition);
-
-      this.basePosition.copy(this.targetPosition);
-
-      this.setMode(CameraMode.EXPLORE);
+      this.finishReturn();
     }
+
     this.applyComputedPosition();
+  }
+
+  finishReturn() {
+    this.position.copy(this.targetPosition);
+
+    this.basePosition.copy(this.targetPosition);
+
+    this.setMode(CameraMode.EXPLORE);
+  }
+
+  finishTravel() {
+    this.basePosition.copy(this.position);
+
+    this.setMode(CameraMode.EXPLORE);
   }
 
   // Main update(delta)
@@ -368,6 +398,8 @@ export default class CameraDirector {
 
     // this.currentTarget.lerp(this.lookTarget, this.lookDamping);
     this.currentTarget.copy(this.lookTarget);
+
+    console.log("Camera mode:", this.mode);
 
     switch (this.mode) {
       case CameraMode.EXPLORE:

@@ -32,9 +32,7 @@ export class FlightSystem {
     if (this.flight.elapsed >= this.flight.duration) {
       this.stop();
 
-      if (this.onFinished) {
-        this.onFinished();
-      }
+      this.onFinished?.();
     }
   }
 

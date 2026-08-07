@@ -21,6 +21,8 @@
 //
 // =====================================================
 
+import { Journey } from "./Journey";
+
 const JourneyPhase = {
   IDLE: "IDLE",
   START: "START",
@@ -58,7 +60,13 @@ export default class JourneyDirector {
   }
 
   begin(journey) {
+    if (!(journey instanceof Journey)) {
+      throw new Error("JourneyDirector.begin() expects a Journey.");
+    }
+
     this.activeJourney = journey;
+
+    this.activeJourney.start();
 
     this.phase = JourneyPhase.START;
 
@@ -107,6 +115,8 @@ export default class JourneyDirector {
 
   update(cameraPosition, delta = 0.016) {
     if (!this.activeJourney) return;
+
+    this.activeJourney.update(delta);
 
     this.phaseTime += delta;
 
