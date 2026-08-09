@@ -48,7 +48,7 @@ export default class JourneyDirector {
   }
 
   getPhase() {
-    return this.phase;
+    return this.activeJourney?.phase ?? "IDLE";
   }
 
   getJourney() {
@@ -66,11 +66,41 @@ export default class JourneyDirector {
 
     this.activeJourney = journey;
 
+    this.activeJourney.onEvent = (event, data) => {
+      if (event === "wormhole") {
+        console.log("🚨 JourneyDirector → onTransit WORMHOLE");
+
+        this.onTransit?.("wormhole");
+      }
+
+      if (event === "void") {
+        console.log("Journey event → VOID");
+
+        this.onVoidStart?.();
+      }
+
+      if (event === "birth") {
+        console.log("Journey event → BIRTH");
+
+        this.onBirth?.();
+      }
+
+      if (event === "complete") {
+        console.log("Journey event → COMPLETE");
+
+        this.onTransitEnd?.();
+
+        this.onJourneyFinished?.();
+
+        this.activeJourney = null;
+
+        this.phase = JourneyPhase.IDLE;
+
+        this.phaseTime = 0;
+      }
+    };
+
     this.activeJourney.start();
-
-    this.phase = JourneyPhase.START;
-
-    this.phaseTime = 0;
 
     console.log("Journey started");
   }
@@ -118,39 +148,18 @@ export default class JourneyDirector {
 
     this.activeJourney.update(delta);
 
+    if (!this.activeJourney) return;
+
     this.phaseTime += delta;
 
     console.log(
       "Journey:",
       this.activeJourney,
       "Phase:",
-      this.phase,
+      this.activeJourney.phase,
       "Time:",
       this.phaseTime.toFixed(2),
     );
-
-    if (this.phase === JourneyPhase.START && this.phaseTime >= 2) {
-      this.phase = JourneyPhase.APPROACH;
-      this.phaseTime = 0;
-
-      console.log("Journey → APPROACH");
-    }
-
-    if (this.phase === JourneyPhase.APPROACH && this.phaseTime >= 3) {
-      this.phase = JourneyPhase.HORIZON;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → HORIZON");
-    }
-
-    if (this.phase === JourneyPhase.HORIZON && this.phaseTime >= 3) {
-      this.phase = JourneyPhase.SINGULARITY;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → SINGULARITY");
-    }
 
     if (this.phase === JourneyPhase.SINGULARITY && this.phaseTime >= 4) {
       this.phase = JourneyPhase.WORMHOLE;
@@ -158,8 +167,6 @@ export default class JourneyDirector {
       this.phaseTime = 0;
 
       console.log("Journey → WORMHOLE");
-
-      this.onTransit?.("wormhole");
     }
 
     if (this.phase === JourneyPhase.WORMHOLE && this.phaseTime >= 4) {
@@ -170,30 +177,6 @@ export default class JourneyDirector {
       console.log("Journey → VOID");
 
       this.onVoidStart?.();
-    }
-
-    if (this.phase === JourneyPhase.VOID && this.phaseTime >= 1) {
-      this.phase = JourneyPhase.BIRTH;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → BIRTH");
-
-      this.onBirth?.();
-    }
-
-    if (this.phase === JourneyPhase.BIRTH && this.phaseTime >= 3) {
-      this.phase = JourneyPhase.IDLE;
-
-      this.phaseTime = 0;
-
-      this.activeJourney = null;
-
-      this.onTransitEnd?.();
-
-      this.onJourneyFinished?.();
-
-      console.log("Journey Complete → EXPLORE");
     }
 
     if (this.phase === JourneyPhase.RETURN && this.phaseTime >= 3) {
