@@ -14,7 +14,9 @@ export class Journey {
     this.completed = true;
   }
 
-  cancel() {}
+  cancel() {
+    this.cancelled = true;
+  }
 
   emit(event, data) {
     if (this.onEvent) {

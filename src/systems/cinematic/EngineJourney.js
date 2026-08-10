@@ -8,7 +8,6 @@ export const EngineJourneyPhase = {
   WORMHOLE: "WORMHOLE",
   VOID: "VOID",
   BIRTH: "BIRTH",
-  RETURN: "RETURN",
 };
 
 export class EngineJourney extends Journey {
@@ -20,6 +19,8 @@ export class EngineJourney extends Journey {
   }
 
   update(delta) {
+    if (this.completed || this.cancelled) return;
+
     this.phaseTime += delta;
 
     if (this.phase === EngineJourneyPhase.START && this.phaseTime >= 2) {

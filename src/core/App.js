@@ -535,6 +535,8 @@ export class App {
         // TEMP DEBUG
         if (e.code === "Escape") {
           this.cameraDirector.returnHome();
+
+          this.journeyDirector.stop();
         }
 
         // TEMP DEBUG
