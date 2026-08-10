@@ -21,17 +21,7 @@
 //
 // =====================================================
 
-const JourneyPhase = {
-  IDLE: "IDLE",
-  START: "START",
-  APPROACH: "APPROACH",
-  HORIZON: "HORIZON",
-  SINGULARITY: "SINGULARITY",
-  WORMHOLE: "WORMHOLE",
-  ARRIVAL: "ARRIVAL",
-  RETURN: "RETURN",
-  VOID: "VOID",
-};
+import { Journey } from "./Journey";
 export default class JourneyDirector {
   constructor(cameraDirector) {
     this.cameraDirector = cameraDirector;
@@ -40,12 +30,11 @@ export default class JourneyDirector {
 
     this.gateways = [];
 
-    this.phase = "IDLE";
-    this.phaseTime = 0;
+    this.onJourneyFinished = null;
   }
 
   getPhase() {
-    return this.phase;
+    return this.activeJourney?.phase ?? "IDLE";
   }
 
   getJourney() {
@@ -57,13 +46,35 @@ export default class JourneyDirector {
   }
 
   begin(journey) {
+    if (!(journey instanceof Journey)) {
+      throw new Error("JourneyDirector.begin() expects a Journey.");
+    }
+
     this.activeJourney = journey;
 
-    this.phase = JourneyPhase.START;
+    this.activeJourney.onEvent = (event, data) => {
+      if (event === "wormhole") {
+        this.onTransit?.("wormhole");
+      }
 
-    this.phaseTime = 0;
+      if (event === "void") {
+        this.onVoidStart?.();
+      }
 
-    console.log("Journey started");
+      if (event === "birth") {
+        this.onBirth?.();
+      }
+
+      if (event === "complete") {
+        this.onTransitEnd?.();
+
+        this.onJourneyFinished?.();
+
+        this.activeJourney = null;
+      }
+    };
+
+    this.activeJourney.start();
   }
 
   addGateway(gateway) {
@@ -71,14 +82,11 @@ export default class JourneyDirector {
   }
 
   stop() {
+    if (this.activeJourney) {
+      this.activeJourney.cancel();
+    }
+
     this.activeJourney = null;
-
-    this.phase = "IDLE";
-    this.phaseTime = 0;
-  }
-
-  isPlaying() {
-    return this.activeJourney !== null;
   }
 
   findGateway(position) {
@@ -107,80 +115,8 @@ export default class JourneyDirector {
   update(cameraPosition, delta = 0.016) {
     if (!this.activeJourney) return;
 
-    this.phaseTime += delta;
+    this.activeJourney.update(delta);
 
-    console.log(
-      "Journey:",
-      this.activeJourney,
-      "Phase:",
-      this.phase,
-      "Time:",
-      this.phaseTime.toFixed(2),
-    );
-
-    if (this.phase === JourneyPhase.START && this.phaseTime >= 2) {
-      this.phase = JourneyPhase.APPROACH;
-      this.phaseTime = 0;
-
-      console.log("Journey → APPROACH");
-    }
-
-    if (this.phase === JourneyPhase.APPROACH && this.phaseTime >= 3) {
-      this.phase = JourneyPhase.HORIZON;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → HORIZON");
-    }
-
-    if (this.phase === JourneyPhase.HORIZON && this.phaseTime >= 3) {
-      this.phase = JourneyPhase.SINGULARITY;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → SINGULARITY");
-    }
-
-    if (this.phase === JourneyPhase.SINGULARITY && this.phaseTime >= 4) {
-      this.phase = JourneyPhase.WORMHOLE;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → WORMHOLE");
-
-      this.onTransit?.("wormhole");
-    }
-
-    if (this.phase === JourneyPhase.WORMHOLE && this.phaseTime >= 4) {
-      this.phase = JourneyPhase.VOID;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → VOID");
-
-      this.onVoidStart?.();
-    }
-
-    if (this.phase === JourneyPhase.VOID && this.phaseTime >= 1) {
-      this.phase = JourneyPhase.ARRIVAL;
-
-      this.phaseTime = 0;
-
-      console.log("Journey → ARRIVAL");
-
-      this.onBirth?.();
-    }
-
-    if (this.phase === JourneyPhase.RETURN && this.phaseTime >= 3) {
-      this.phase = JourneyPhase.IDLE;
-
-      this.phaseTime = 0;
-
-      this.activeJourney = null;
-
-      this.onTransitEnd?.();
-
-      console.log("Journey Complete → IDLE");
-    }
+    if (!this.activeJourney) return;
   }
 }
