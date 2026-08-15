@@ -47,6 +47,10 @@ export class App {
 
     this.cameraDirector = new CameraDirector(this.camera);
 
+    this.cameraDirector.onReturnHome = () => {
+      this.loadGUISettings();
+    };
+
     this.exploreDirector = new ExploreDirector(this.cameraDirector);
 
     this.journeyDirector = new JourneyDirector(this.cameraDirector);

@@ -312,7 +312,12 @@ export class FreeFlight {
       const depthSensitivity = 0.02;
 
       if (Math.abs(depthIntent) > 0.0001) {
-        this.flightDirection.z = depthIntent > 0 ? 1 : -1;
+        const zSensitivity = 0.05;
+
+        this.flightDirection.z = Math.max(
+          -1,
+          Math.min(1, depthIntent * zSensitivity),
+        );
       }
 
       console.log("🛩️ DEPTH", {
@@ -355,7 +360,9 @@ export class FreeFlight {
       this.pointer.dragging = false;
 
       // Phase 1.1 — stop flight on release
-      this.velocity.set(0, 0, 0);
+      this.velocity.x = 0;
+      this.velocity.y = 0;
+      this.velocity.z = 0;
 
       console.log("🛩️ FREEFLIGHT STOP — LMB RELEASE");
     };
@@ -541,11 +548,22 @@ export class FreeFlight {
         this.flightSpeed + this.speedRamp * delta,
       );
 
-      this.velocity.x = this.flightDirection.x * this.flightSpeed;
+      const directionLength = Math.hypot(
+        this.flightDirection.x,
+        this.flightDirection.y,
+        this.flightDirection.z,
+      );
 
-      this.velocity.y = this.flightDirection.y * this.flightSpeed;
+      if (directionLength > 0.0001) {
+        this.velocity.x =
+          (this.flightDirection.x / directionLength) * this.flightSpeed;
 
-      this.velocity.z = this.flightDirection.z * this.flightSpeed;
+        this.velocity.y =
+          (this.flightDirection.y / directionLength) * this.flightSpeed;
+
+        this.velocity.z =
+          (this.flightDirection.z / directionLength) * this.flightSpeed;
+      }
     }
 
     this.offset.x += this.velocity.x * delta;

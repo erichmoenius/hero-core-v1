@@ -443,6 +443,8 @@ export default class CameraDirector {
     this.basePosition.copy(this.targetPosition);
 
     this.setMode(CameraMode.EXPLORE);
+
+    this.onReturnHome?.();
   }
 
   finishTravel() {
