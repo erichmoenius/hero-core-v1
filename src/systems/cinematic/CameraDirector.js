@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { CameraPose } from "./CameraPose";
 import { FlightSystem } from "./FlightSystem";
 import { Flight } from "./Flight";
+import { FreeFlight } from "./FreeFlight";
 
 // =====================================================
 // CAMERA MODES
@@ -50,6 +51,7 @@ export default class CameraDirector {
     this.lookTarget = new THREE.Vector3(0, 0, 0);
 
     // Home camera pose
+
     this.homePosition = this.targetPosition.clone();
     this.homeLookTarget = this.lookTarget.clone();
 
@@ -59,35 +61,40 @@ export default class CameraDirector {
 
     this.currentTarget = new THREE.Vector3(0, 0, 0);
 
-    // Future flight system
-    this.currentPose = new CameraPose();
+    // ------------------------------------------------
+    // FUTURE FLIGHT SYSTEM
+    // ------------------------------------------------
 
+    this.currentPose = new CameraPose();
     this.flightSystem = new FlightSystem();
 
-    this.flightSystem.onFinished = () => {
-      if (this.mode === CameraMode.TRAVEL) {
-        this.finishTravel();
-      }
-    };
+    // ------------------------------------------------
+    // FREE FLIGHT
+    // ------------------------------------------------
 
-    this.flightSystem.onFinished = () => {
-      if (this.mode === CameraMode.TRAVEL) {
-        this.finishTravel();
-      }
-    };
+    this.freeFlight = new FreeFlight();
 
-    this.flightSystem.onFinished = () => {
-      this.setMode(CameraMode.EXPLORE);
+    // CameraDirector starts in EXPLORE mode.
+    // Activate FreeFlight explicitly for the initial state.
 
-      this.onFlightFinished?.();
-    };
+    this.freeFlight.start();
+
+    console.log("🛩️ CameraDirector → FreeFlight created");
+
+    // -------------------------------------------------
+    // FLIGHT FINISHED
+    // -------------------------------------------------
 
     this.flightSystem.onFinished = () => {
       console.log("🎉 Flight finished.");
 
+      if (this.mode === CameraMode.TRAVEL) {
+        this.finishTravel();
+      }
+
+      this.setMode(CameraMode.EXPLORE);
       this.onFlightFinished?.();
     };
-
     // ------------------------------------------------
     // CAMERA OFFSET
     // ------------------------------------------------
@@ -161,11 +168,30 @@ export default class CameraDirector {
   // =====================================================
 
   setMode(mode) {
-    if (this.mode === mode) return;
+    if (this.mode === mode) {
+      if (mode === CameraMode.EXPLORE) {
+        this.freeFlight.start();
+      }
+
+      return;
+    }
 
     this.previousMode = this.mode;
-
     this.mode = mode;
+
+    // -------------------------------------------------
+    // FREE FLIGHT
+    // -------------------------------------------------
+
+    if (mode === CameraMode.EXPLORE) {
+      this.freeFlight.start();
+    } else {
+      this.freeFlight.stop();
+    }
+
+    // -------------------------------------------------
+    // EXPLORE BASE POSITION
+    // -------------------------------------------------
 
     if (
       mode === CameraMode.EXPLORE &&
@@ -222,6 +248,16 @@ export default class CameraDirector {
   }
 
   returnHome() {
+    // -------------------------------------------------
+    // RESET FREE FLIGHT
+    // -------------------------------------------------
+
+    this.freeFlight.reset();
+
+    // -------------------------------------------------
+    // RETURN HOME
+    // -------------------------------------------------
+
     this.basePosition.copy(this.homePosition);
 
     this.setMode(CameraMode.RETURN);
@@ -289,14 +325,61 @@ export default class CameraDirector {
 
     this.channels.cinematic.set(0, floatY, 0);
 
+    // -------------------------------------------------
+    // FREE FLIGHT
+    // -------------------------------------------------
+
+    this.freeFlight.update(delta);
+
+    const flightOffset = this.freeFlight.getOffset();
+
+    // -------------------------------------------------
+    // LOOK TARGET
+    // -------------------------------------------------
+
     this.applyLookTarget();
 
-    this.setPosition(this.time);
+    // -------------------------------------------------
+    // BASE EXPLORE POSITION
+    // -------------------------------------------------
 
-    this.applyFlight();
+    this.setPosition(this.time, 0);
+
+    // -------------------------------------------------
+    // FREE FLIGHT OFFSET
+    // -------------------------------------------------
+
+    this.position.x += flightOffset.x;
+    console.log(
+      "🧪 X COMPONENTS",
+      "parallax:",
+      this.parallax.x,
+      "flight:",
+      flightOffset.x,
+      "position:",
+      this.position.x,
+    );
+    this.position.y += flightOffset.y;
+    this.position.z += flightOffset.z;
+
+    // -------------------------------------------------
+    // DEBUG
+    // -------------------------------------------------
+
+    console.log(
+      "FreeFlight offset:",
+      flightOffset.x,
+      flightOffset.y,
+      flightOffset.z,
+    );
 
     console.log("Camera position:", this.position.toArray());
+
     console.log("CameraMode.EXPLORE");
+
+    // -------------------------------------------------
+    // APPLY
+    // -------------------------------------------------
 
     this.applyComputedPosition();
   }
@@ -499,6 +582,13 @@ export default class CameraDirector {
     if (!this.camera) return;
 
     this.camera.position.set(x, y, z);
+
+    console.log(
+      "🎥 REAL CAMERA",
+      this.camera.position.x,
+      this.camera.position.y,
+      this.camera.position.z,
+    );
   }
 
   // =====================================================
