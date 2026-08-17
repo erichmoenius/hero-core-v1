@@ -25,9 +25,6 @@
 
 export class FreeFlight {
   constructor(target = window) {
-    console.warn("🛩️ FREEFLIGHT CONSTRUCTOR RUNNING");
-    console.count("🛩️ FREEFLIGHT CONSTRUCTOR");
-
     // -------------------------------------------------
     // TARGET
     // -------------------------------------------------
@@ -74,52 +71,17 @@ export class FreeFlight {
     // MOVEMENT
     // -------------------------------------------------
 
-    this.speed = 1.0;
-
     this.acceleration = 4.0;
-
     this.damping = 3.0;
-
-    this.maxSpeed = 3.0;
 
     // -------------------------------------------------
     // SUSTAINED FLIGHT
     // -------------------------------------------------
 
     this.flightSpeed = 1.5;
-
     this.minFlightSpeed = 0.35;
-    this.inspectSpeed = 0.5;
     this.maxFlightSpeed = 3.0;
-
     this.speedRamp = 1.5;
-
-    // -------------------------------------------------
-    // FLIGHT DIRECTION SMOOTHING
-    // -------------------------------------------------
-
-    this.directionSmoothing = 6.0;
-    this.zDirectionSmoothing = 2.5;
-
-    // -------------------------------------------------
-    // Z FLIGHT CONTROL
-    // -------------------------------------------------
-
-    this.zInput = 0;
-    this.zAcceleration = 3.0;
-    this.zMaxInput = 1.0;
-
-    this.flightDirection = {
-      x: 0,
-      y: 0,
-      z: 0,
-    };
-
-    this.targetFlightDirection = {
-      x: 0,
-      y: 0,
-      z: 0,
-    };
 
     // -------------------------------------------------
     // FLIGHT BOUNDS
@@ -178,64 +140,25 @@ export class FreeFlight {
   // ===================================================
 
   bindInput() {
-    console.log("🛩️ FreeFlight ready");
-
     this.onPointerDown = (event) => {
-      console.log("🛩️ FreeFlight POINTER DOWN");
-
       this.pointer.active = true;
       this.pointer.dragging = false;
 
       this.pointer.startX = event.clientX;
       this.pointer.startY = event.clientY;
 
-      console.log("🛩️ SET START", this.pointer.startX, this.pointer.startY);
-
       this.pointer.x = event.clientX;
       this.pointer.y = event.clientY;
 
       this.pointer.lastX = event.clientX;
       this.pointer.lastY = event.clientY;
-
-      console.log(
-        "🛩️ POINTER DOWN STATE",
-        "offset:",
-        this.offset.x,
-        this.offset.y,
-        this.offset.z,
-        "velocity:",
-        this.velocity.x,
-        this.velocity.y,
-        this.velocity.z,
-      );
     };
 
     this.onPointerMove = (event) => {
-      console.log(
-        "🛩️ MOVE",
-        "active:",
-        this.pointer.active,
-        "dragging:",
-        this.pointer.dragging,
-        "x:",
-        event.clientX,
-        "y:",
-        event.clientY,
-      );
       if (!this.pointer.active) return;
 
       this.pointer.x = event.clientX;
       this.pointer.y = event.clientY;
-
-      console.log(
-        "🛩️ CHECK START",
-        "start:",
-        this.pointer.startX,
-        this.pointer.startY,
-        "current:",
-        event.clientX,
-        event.clientY,
-      );
 
       const dx = event.clientX - this.pointer.startX;
 
@@ -246,14 +169,6 @@ export class FreeFlight {
       if (distance >= this.dragThreshold) {
         this.pointer.dragging = true;
       }
-
-      console.log(
-        "🛩️ DRAG",
-        "distance:",
-        distance,
-        "dragging:",
-        this.pointer.dragging,
-      );
 
       if (!this.pointer.dragging) return;
 
@@ -286,23 +201,6 @@ export class FreeFlight {
       this.input.y = moveY;
 
       // -------------------------------------------------
-      // HYBRID FLIGHT — MOVEMENT INTENT
-      // -------------------------------------------------
-
-      const sensitivity = 50.0;
-
-      // Screen-space movement
-
-      const intentX = moveX;
-      const intentY = -moveY;
-
-      // -------------------------------------------------
-      // GESTURE MAGNITUDE
-      // -------------------------------------------------
-
-      const magnitude = Math.sqrt(intentX * intentX + intentY * intentY);
-
-      // -------------------------------------------------
       // DEPTH INTENT
       // -------------------------------------------------
 
@@ -326,7 +224,6 @@ export class FreeFlight {
       // -------------------------------------------------
       // Z INPUT — DELIBERATE RADIAL GESTURE
       // -------------------------------------------------
-
       const planarMovement = Math.hypot(moveDX, moveDY);
 
       const radialMovement = Math.abs(depthIntent);
@@ -384,33 +281,6 @@ export class FreeFlight {
         );
       }
 
-      console.log("🛩️ DEPTH", {
-        radialDelta,
-        depthIntent,
-        velocityZ: this.velocity.z,
-      });
-
-      // -------------------------------------------------
-      // 3D INTENT
-      // -------------------------------------------------
-
-      console.log("🛩️ FLIGHT INTENT", {
-        x: this.velocity.x,
-        y: this.velocity.y,
-        z: this.velocity.z,
-        magnitude,
-      });
-
-      console.log(
-        "🛩️ HYBRID XYZ",
-        "x:",
-        this.velocity.x,
-        "y:",
-        this.velocity.y,
-        "z:",
-        this.velocity.z,
-      );
-
       // -------------------------------------------------
       // UPDATE LAST POINTER POSITION
       // -------------------------------------------------
@@ -435,7 +305,9 @@ export class FreeFlight {
       this.pointer.active = false;
       this.pointer.dragging = false;
 
-      this.velocity.set(0, 0, 0);
+      this.velocity.x = 0;
+      this.velocity.y = 0;
+      this.velocity.z = 0;
 
       console.log("🛩️ FREEFLIGHT CANCEL");
     };
@@ -602,28 +474,6 @@ export class FreeFlight {
 
     this.applyFlightBounds();
 
-    // // -------------------------------------------------
-    // // -------------------------------------------------
-    // // SMOOTH FLIGHT DIRECTION XY
-    // // -------------------------------------------------
-
-    // const directionBlend = 1 - Math.exp(-this.directionSmoothing * delta);
-
-    // this.flightDirection.x +=
-    //   (this.targetFlightDirection.x - this.flightDirection.x) * directionBlend;
-
-    // this.flightDirection.y +=
-    //   (this.targetFlightDirection.y - this.flightDirection.y) * directionBlend;
-
-    // // -------------------------------------------------
-    // // SMOOTH FLIGHT DIRECTION Z
-    // // -------------------------------------------------
-
-    // const zDirectionBlend = 1 - Math.exp(-this.zDirectionSmoothing * delta);
-
-    // this.flightDirection.z +=
-    //   (this.targetFlightDirection.z - this.flightDirection.z) * zDirectionBlend;
-
     // -------------------------------------------------
     // INPUT PHYSICS DIAGNOSTIC
     // -------------------------------------------------
@@ -741,12 +591,13 @@ export class FreeFlight {
 
     this.reset();
 
-    this.target.removeEventListener("pointerdown", this.onPointerDown);
-
-    this.target.removeEventListener("pointermove", this.onPointerMove);
-
-    this.target.removeEventListener("pointerup", this.onPointerUp);
-
-    this.target.removeEventListener("pointercancel", this.onPointerCancel);
+    this.target.removeEventListener("pointerdown", this.onPointerDown, true);
+    this.target.removeEventListener("pointermove", this.onPointerMove, true);
+    this.target.removeEventListener("pointerup", this.onPointerUp, true);
+    this.target.removeEventListener(
+      "pointercancel",
+      this.onPointerCancel,
+      true,
+    );
   }
 }
