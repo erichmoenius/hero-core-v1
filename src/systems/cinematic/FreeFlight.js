@@ -61,6 +61,16 @@ export class FreeFlight {
     };
 
     // -------------------------------------------------
+    // TARGET VELOCITY
+    // -------------------------------------------------
+
+    this.targetVelocity = {
+      x: 0,
+      y: 0,
+      z: 0,
+    };
+
+    // -------------------------------------------------
     // MOVEMENT
     // -------------------------------------------------
 
@@ -84,7 +94,28 @@ export class FreeFlight {
 
     this.speedRamp = 1.5;
 
+    // -------------------------------------------------
+    // FLIGHT DIRECTION SMOOTHING
+    // -------------------------------------------------
+
+    this.directionSmoothing = 6.0;
+    this.zDirectionSmoothing = 2.5;
+
+    // -------------------------------------------------
+    // Z FLIGHT CONTROL
+    // -------------------------------------------------
+
+    this.zInput = 0;
+    this.zAcceleration = 3.0;
+    this.zMaxInput = 1.0;
+
     this.flightDirection = {
+      x: 0,
+      y: 0,
+      z: 0,
+    };
+
+    this.targetFlightDirection = {
       x: 0,
       y: 0,
       z: 0,
@@ -116,6 +147,21 @@ export class FreeFlight {
 
       lastX: 0,
       lastY: 0,
+    };
+
+    // -------------------------------------------------
+    // FRAME INPUT INTENT
+    // -------------------------------------------------
+    //
+    // Raw pointer movement is collected here.
+    // Physics will consume it later in update().
+    //
+    // -------------------------------------------------
+
+    this.input = {
+      x: 0,
+      y: 0,
+      z: 0,
     };
 
     // -------------------------------------------------
@@ -233,6 +279,13 @@ export class FreeFlight {
       const moveY = moveDY / height;
 
       // -------------------------------------------------
+      // FRAME INPUT — XY
+      // -------------------------------------------------
+
+      this.input.x = moveX;
+      this.input.y = moveY;
+
+      // -------------------------------------------------
       // HYBRID FLIGHT — MOVEMENT INTENT
       // -------------------------------------------------
 
@@ -244,50 +297,13 @@ export class FreeFlight {
       const intentY = -moveY;
 
       // -------------------------------------------------
-      // APPLY MOVEMENT INTENT + Y DIAGNOSTICS
+      // GESTURE MAGNITUDE
       // -------------------------------------------------
-
-      const targetVelocityX = intentX * sensitivity;
-      const targetVelocityY = intentY * sensitivity;
-
-      const acceleration = 50.0;
-
-      this.velocity.x +=
-        (targetVelocityX - this.velocity.x) * acceleration * 0.016;
-
-      this.velocity.y +=
-        (targetVelocityY - this.velocity.y) * acceleration * 0.016;
-
-      console.log(
-        "🛩️ Y INPUT",
-        "moveDY:",
-        moveDY,
-        "moveY:",
-        moveY,
-        "intentY:",
-        intentY,
-        "velocityY:",
-        this.velocity.y,
-      );
-
-      // -------------------------------------------------
-      // CAPTURE FLIGHT DIRECTION
-      // -------------------------------------------------
-
-      const directionLength = Math.hypot(intentX, intentY);
-
-      if (directionLength > 0.0001) {
-        this.flightDirection.x = intentX / directionLength;
-
-        this.flightDirection.y = intentY / directionLength;
-      }
-
-      // Gesture magnitude
 
       const magnitude = Math.sqrt(intentX * intentX + intentY * intentY);
 
       // -------------------------------------------------
-      // DEPTH INTENT — TOWARD / AWAY FROM CENTER
+      // DEPTH INTENT
       // -------------------------------------------------
 
       const centerX = width / 2;
@@ -305,11 +321,59 @@ export class FreeFlight {
 
       const radialDelta = currentRadius - previousRadius;
 
-      // Toward center = forward
-      // Away from center = backward
       const depthIntent = -radialDelta;
 
-      const depthSensitivity = 0.02;
+      // -------------------------------------------------
+      // Z INPUT — DELIBERATE RADIAL GESTURE
+      // -------------------------------------------------
+
+      const planarMovement = Math.hypot(moveDX, moveDY);
+
+      const radialMovement = Math.abs(depthIntent);
+
+      const radiality =
+        planarMovement > 0.0001 ? radialMovement / planarMovement : 0;
+
+      const zThreshold = 1.0;
+
+      if (radialMovement > zThreshold && radiality > 0.7) {
+        this.input.z = Math.max(-1, Math.min(1, depthIntent / 20));
+      } else {
+        // Keep the last intentional Z input.
+        // Non-radial mouse movement must not cancel depth flight.
+      }
+
+      // -------------------------------------------------
+      // INPUT BUFFER DIAGNOSTIC
+      // -------------------------------------------------
+
+      console.log("🛩️ INPUT BUFFER", {
+        x: this.input.x,
+        y: this.input.y,
+        z: this.input.z,
+      });
+
+      console.log("🛩️ DEPTH", {
+        radialDelta,
+        depthIntent,
+        velocityZ: this.velocity.z,
+      });
+
+      // -------------------------------------------------
+      // CAPTURE FLIGHT DIRECTION
+      // -------------------------------------------------
+
+      const directionLength = Math.hypot(intentX, intentY);
+
+      if (directionLength > 0.0001) {
+        this.flightDirection.x = intentX / directionLength;
+
+        this.flightDirection.y = intentY / directionLength;
+      }
+
+      // -------------------------------------------------
+      // CAPTURE Z FLIGHT DIRECTION
+      // -------------------------------------------------
 
       if (Math.abs(depthIntent) > 0.0001) {
         const zSensitivity = 0.05;
@@ -538,6 +602,44 @@ export class FreeFlight {
 
     this.applyFlightBounds();
 
+    // // -------------------------------------------------
+    // // -------------------------------------------------
+    // // SMOOTH FLIGHT DIRECTION XY
+    // // -------------------------------------------------
+
+    // const directionBlend = 1 - Math.exp(-this.directionSmoothing * delta);
+
+    // this.flightDirection.x +=
+    //   (this.targetFlightDirection.x - this.flightDirection.x) * directionBlend;
+
+    // this.flightDirection.y +=
+    //   (this.targetFlightDirection.y - this.flightDirection.y) * directionBlend;
+
+    // // -------------------------------------------------
+    // // SMOOTH FLIGHT DIRECTION Z
+    // // -------------------------------------------------
+
+    // const zDirectionBlend = 1 - Math.exp(-this.zDirectionSmoothing * delta);
+
+    // this.flightDirection.z +=
+    //   (this.targetFlightDirection.z - this.flightDirection.z) * zDirectionBlend;
+
+    // -------------------------------------------------
+    // INPUT PHYSICS DIAGNOSTIC
+    // -------------------------------------------------
+
+    if (
+      Math.abs(this.input.x) > 0.0001 ||
+      Math.abs(this.input.y) > 0.0001 ||
+      Math.abs(this.input.z) > 0.0001
+    ) {
+      console.log("🛩️ UPDATE INPUT", {
+        x: this.input.x,
+        y: this.input.y,
+        z: this.input.z,
+      });
+    }
+
     // -------------------------------------------------
     // SUSTAINED FLIGHT
     // -------------------------------------------------
@@ -548,22 +650,31 @@ export class FreeFlight {
         this.flightSpeed + this.speedRamp * delta,
       );
 
-      const directionLength = Math.hypot(
-        this.flightDirection.x,
-        this.flightDirection.y,
-        this.flightDirection.z,
-      );
+      // -------------------------------------------------
+      // INPUT → TARGET VELOCITY XY
+      // -------------------------------------------------
 
-      if (directionLength > 0.0001) {
-        this.velocity.x =
-          (this.flightDirection.x / directionLength) * this.flightSpeed;
+      const inputLength = Math.hypot(this.input.x, this.input.y);
 
-        this.velocity.y =
-          (this.flightDirection.y / directionLength) * this.flightSpeed;
+      if (inputLength > 0.000001) {
+        const directionX = this.input.x / inputLength;
 
-        this.velocity.z =
-          (this.flightDirection.z / directionLength) * this.flightSpeed;
+        const directionY = -this.input.y / inputLength;
+
+        this.targetVelocity.x = directionX * this.flightSpeed;
+
+        this.targetVelocity.y = directionY * this.flightSpeed;
       }
+
+      this.targetVelocity.z = this.input.z * this.flightSpeed;
+
+      const blend = 1 - Math.exp(-this.acceleration * delta);
+
+      this.velocity.x += (this.targetVelocity.x - this.velocity.x) * blend;
+
+      this.velocity.y += (this.targetVelocity.y - this.velocity.y) * blend;
+
+      this.velocity.z += (this.targetVelocity.z - this.velocity.z) * blend;
     }
 
     this.offset.x += this.velocity.x * delta;
