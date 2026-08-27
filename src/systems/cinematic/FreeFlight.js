@@ -221,9 +221,18 @@ export class FreeFlight {
 
       const depthIntent = -radialDelta;
 
+      console.log(
+        "🧭 DEPTH",
+        "radialDelta:",
+        radialDelta.toFixed(2),
+        "depthIntent:",
+        depthIntent.toFixed(2),
+      );
+
       // -------------------------------------------------
       // Z INPUT — DELIBERATE RADIAL GESTURE
       // -------------------------------------------------
+
       const planarMovement = Math.hypot(moveDX, moveDY);
 
       const radialMovement = Math.abs(depthIntent);
@@ -233,11 +242,18 @@ export class FreeFlight {
 
       const zThreshold = 1.0;
 
-      if (radialMovement > zThreshold && radiality > 0.7) {
-        this.input.z = Math.max(-1, Math.min(1, depthIntent / 20));
-      } else {
-        // Keep the last intentional Z input.
-        // Non-radial mouse movement must not cancel depth flight.
+      // Soft radial confidence:
+      // 0 at radiality 0.7
+      // gradually reaches 1.0 toward perfect radial movement
+      const radialConfidence = Math.max(
+        0,
+        Math.min(1, (radiality - 0.7) / 0.3),
+      );
+
+      if (radialMovement > zThreshold && radialConfidence > 0) {
+        const rawZ = Math.max(-1, Math.min(1, depthIntent / 5));
+
+        this.input.z = rawZ * radialConfidence;
       }
 
       // -------------------------------------------------
@@ -268,7 +284,12 @@ export class FreeFlight {
       this.pointer.active = false;
       this.pointer.dragging = false;
 
-      // Phase 1.1 — stop flight on release
+      // Stop all flight intent
+      this.input.x = 0;
+      this.input.y = 0;
+      this.input.z = 0;
+
+      // Stop all current motion
       this.velocity.x = 0;
       this.velocity.y = 0;
       this.velocity.z = 0;
@@ -280,6 +301,12 @@ export class FreeFlight {
       this.pointer.active = false;
       this.pointer.dragging = false;
 
+      // Stop all flight intent
+      this.input.x = 0;
+      this.input.y = 0;
+      this.input.z = 0;
+
+      // Stop all current motion
       this.velocity.x = 0;
       this.velocity.y = 0;
       this.velocity.z = 0;
