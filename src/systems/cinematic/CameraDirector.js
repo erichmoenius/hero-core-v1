@@ -350,15 +350,6 @@ export default class CameraDirector {
     // -------------------------------------------------
 
     this.position.x += flightOffset.x;
-    console.log(
-      "🧪 X COMPONENTS",
-      "parallax:",
-      this.parallax.x,
-      "flight:",
-      flightOffset.x,
-      "position:",
-      this.position.x,
-    );
     this.position.y += flightOffset.y;
     this.position.z += flightOffset.z;
 
