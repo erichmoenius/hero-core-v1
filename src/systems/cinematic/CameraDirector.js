@@ -3,6 +3,7 @@ import { CameraPose } from "./CameraPose";
 import { FlightSystem } from "./FlightSystem";
 import { Flight } from "./Flight";
 import { FreeFlight } from "./FreeFlight";
+import { TravelerMode } from "./TravelerMode";
 
 // =====================================================
 // CAMERA MODES
@@ -68,11 +69,17 @@ export default class CameraDirector {
     this.currentPose = new CameraPose();
     this.flightSystem = new FlightSystem();
 
-    // ------------------------------------------------
-    // FREE FLIGHT
-    // ------------------------------------------------
+    // -------------------------------------------------
+    // TRAVELER MODE
+    // -------------------------------------------------
 
-    this.freeFlight = new FreeFlight();
+    this.travelerMode = new TravelerMode();
+
+    // -------------------------------------------------
+    // FREE FLIGHT
+    // -------------------------------------------------
+
+    this.freeFlight = new FreeFlight(this.travelerMode);
 
     // CameraDirector starts in EXPLORE mode.
     // Activate FreeFlight explicitly for the initial state.

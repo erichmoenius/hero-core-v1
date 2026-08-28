@@ -1,35 +1,64 @@
 // =====================================================
+//
 // FREE FLIGHT
+//
 // =====================================================
 //
 // Hero Core Free Flight
 //
+// STATUS: 🟢 GREEN — 🧊 FROZEN
+//
+// Proven:
+// • XY flight works
+// • Forward and backward Z flight works
+// • Soft radial Z transition works
+// • Z persistence during XY movement works
+// • LMB release stops all input and velocity
+// • CameraDirector remains the sole owner of the camera
+//
+// Do not redesign or refactor without a specific bug
+// or a new explicit requirement.
+//
+// =====================================================
+//
 // Responsibilities:
 //
 // • Owns free exploration movement state
+//
 // • Reads mouse / touch pointer input
+//
 // • Provides 3D movement intent
+//
 // • Provides smooth velocity / inertia
 //
 // This class NEVER knows:
 //
 // ❌ Three.js Camera
+//
 // ❌ Journey
+//
 // ❌ Theme
+//
 // ❌ Engine
+//
 // ❌ Transit
 //
 // CameraDirector remains the sole owner of the camera.
 //
 // =====================================================
-
 export class FreeFlight {
-  constructor(target = window) {
+  constructor(travelerMode, target = window) {
     // -------------------------------------------------
     // TARGET
     // -------------------------------------------------
 
     this.target = target;
+
+    // -------------------------------------------------
+    // TRAVELER MODE
+    // -------------------------------------------------
+
+    this.travelerMode = travelerMode;
 
     // -------------------------------------------------
     // STATE
@@ -194,11 +223,13 @@ export class FreeFlight {
       const moveY = moveDY / height;
 
       // -------------------------------------------------
-      // FRAME INPUT — XY
+      // TRAVELER MODE — HUMAN XY INTERPRETATION
       // -------------------------------------------------
 
-      this.input.x = moveX;
-      this.input.y = moveY;
+      const travelerIntent = this.travelerMode.interpret(moveX, moveY);
+
+      this.input.x = travelerIntent.x;
+      this.input.y = travelerIntent.y;
 
       // -------------------------------------------------
       // DEPTH INTENT
