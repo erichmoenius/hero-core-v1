@@ -261,34 +261,29 @@ export class FreeFlight {
       );
 
       // -------------------------------------------------
-      // Z INPUT — DELIBERATE RADIAL GESTURE
+      //
+      // Z INPUT — SMOOTH DEPTH INTENT
+      //
+      // Radial gesture → stable depth intent.
+      //
       // -------------------------------------------------
 
-      const planarMovement = Math.hypot(moveDX, moveDY);
+      const zDeadZone = 0.4;
 
-      const radialMovement = Math.abs(depthIntent);
+      let targetZ = 0;
 
-      const radiality =
-        planarMovement > 0.0001 ? radialMovement / planarMovement : 0;
-
-      const zThreshold = 1.0;
-
-      // Soft radial confidence:
-      // 0 at radiality 0.7
-      // gradually reaches 1.0 toward perfect radial movement
-      const radialConfidence = Math.max(
-        0,
-        Math.min(1, (radiality - 0.7) / 0.3),
-      );
-
-      if (radialMovement > zThreshold && radialConfidence > 0) {
-        const rawZ = Math.max(-1, Math.min(1, depthIntent / 5));
-
-        this.input.z = rawZ * radialConfidence;
+      if (Math.abs(depthIntent) > zDeadZone) {
+        targetZ = Math.max(-1, Math.min(1, depthIntent / 8));
       }
 
+      const zInputBlend = 0.18;
+
+      this.input.z += (targetZ - this.input.z) * zInputBlend;
+
       // -------------------------------------------------
+      //
       // INPUT BUFFER DIAGNOSTIC
+      //
       // -------------------------------------------------
 
       console.log("🛩️ INPUT BUFFER", {
