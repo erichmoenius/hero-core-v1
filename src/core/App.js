@@ -69,6 +69,20 @@ export class App {
       this.transitSystem.start(type);
     };
 
+    // ------------------------------------------------
+    //
+    // 🧡 GATEWAY INVITATION
+    //
+    // ------------------------------------------------
+
+    this.journeyDirector.onGatewayReady = (ready, gateway) => {
+      console.log(ready ? "🧡 APP — INVITATION ON" : "🖤 APP — INVITATION OFF");
+
+      const theme = this.themeManager.activeTheme;
+
+      theme?.engine?.setInvitation(ready);
+    };
+
     this.journeyDirector.onTransitEnd = () => {
       console.log("🌌 Transit ended");
 
