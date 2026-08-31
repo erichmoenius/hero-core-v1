@@ -232,53 +232,24 @@ export class FreeFlight {
       this.input.y = travelerIntent.y;
 
       // -------------------------------------------------
+      //
       // DEPTH INTENT
-      // -------------------------------------------------
-
-      const centerX = width / 2;
-      const centerY = height / 2;
-
-      const currentRadius = Math.hypot(
-        event.clientX - centerX,
-        event.clientY - centerY,
-      );
-
-      const previousRadius = Math.hypot(
-        this.pointer.lastX - centerX,
-        this.pointer.lastY - centerY,
-      );
-
-      const radialDelta = currentRadius - previousRadius;
-
-      const depthIntent = -radialDelta;
-
-      console.log(
-        "🧭 DEPTH",
-        "radialDelta:",
-        radialDelta.toFixed(2),
-        "depthIntent:",
-        depthIntent.toFixed(2),
-      );
-
-      // -------------------------------------------------
       //
-      // Z INPUT — SMOOTH DEPTH INTENT
+      // Screen-position independent.
       //
-      // Radial gesture → stable depth intent.
+      // IMPORTANT:
+      //
+      // Depth must be derived from the local gesture,
+      // never from the absolute mouse position.
       //
       // -------------------------------------------------
 
-      const zDeadZone = 0.4;
+      const depthIntent = 0;
 
-      let targetZ = 0;
+      // Temporary: disable depth input while we rebuild
+      // the Traveler Z gesture.
 
-      if (Math.abs(depthIntent) > zDeadZone) {
-        targetZ = Math.max(-1, Math.min(1, depthIntent / 8));
-      }
-
-      const zInputBlend = 0.18;
-
-      this.input.z += (targetZ - this.input.z) * zInputBlend;
+      this.input.z = 0;
 
       // -------------------------------------------------
       //
@@ -288,13 +259,15 @@ export class FreeFlight {
 
       console.log("🛩️ INPUT BUFFER", {
         x: this.input.x,
+
         y: this.input.y,
+
         z: this.input.z,
       });
 
       console.log("🛩️ DEPTH", {
-        radialDelta,
         depthIntent,
+
         velocityZ: this.velocity.z,
       });
 
@@ -529,7 +502,9 @@ export class FreeFlight {
       );
 
       // -------------------------------------------------
+      //
       // INPUT → TARGET VELOCITY XY
+      //
       // -------------------------------------------------
 
       const inputLength = Math.hypot(this.input.x, this.input.y);
@@ -542,9 +517,32 @@ export class FreeFlight {
         this.targetVelocity.x = directionX * this.flightSpeed;
 
         this.targetVelocity.y = directionY * this.flightSpeed;
+      } else {
+        this.targetVelocity.x = 0;
+
+        this.targetVelocity.y = 0;
       }
 
-      this.targetVelocity.z = this.input.z * this.flightSpeed;
+      // -------------------------------------------------
+      //
+      // INPUT → TARGET VELOCITY Z
+      //
+      // Traveler depth is symmetrical:
+      //
+      // inward gesture  → forward
+      // outward gesture → backward
+      //
+      // -------------------------------------------------
+
+      const zDeadZone = 0.05;
+
+      if (Math.abs(this.input.z) > zDeadZone) {
+        const directionZ = Math.sign(this.input.z);
+
+        this.targetVelocity.z = directionZ * this.flightSpeed;
+      } else {
+        this.targetVelocity.z = 0;
+      }
 
       const blend = 1 - Math.exp(-this.acceleration * delta);
 
