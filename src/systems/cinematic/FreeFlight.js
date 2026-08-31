@@ -138,6 +138,8 @@ export class FreeFlight {
 
       lastX: 0,
       lastY: 0,
+
+      lastFreeY: 0,
     };
 
     // -------------------------------------------------
@@ -181,12 +183,44 @@ export class FreeFlight {
 
       this.pointer.lastX = event.clientX;
       this.pointer.lastY = event.clientY;
+
+      this.pointer.lastFreeY = event.clientY;
     };
 
     this.onPointerMove = (event) => {
-      if (!this.pointer.active) return;
+      // ===================================================
+      //
+      // FREE Z TRAVEL — DESKTOP EXPERIMENT
+      //
+      // No LMB:
+      // vertical mouse movement creates depth intent.
+      //
+      // ===================================================
+
+      if (!this.pointer.active) {
+        const freeMoveY = event.clientY - this.pointer.lastFreeY;
+
+        this.pointer.lastFreeY = event.clientY;
+
+        const zSensitivity = 0.04;
+
+        const targetZ = Math.max(-1, Math.min(1, freeMoveY * zSensitivity));
+
+        const zBlend = 0.22;
+
+        this.input.z += (targetZ - this.input.z) * zBlend;
+
+        return;
+      }
+
+      // ===================================================
+      //
+      // NORMAL LMB FLIGHT
+      //
+      // ===================================================
 
       this.pointer.x = event.clientX;
+
       this.pointer.y = event.clientY;
 
       const dx = event.clientX - this.pointer.startX;
@@ -200,6 +234,14 @@ export class FreeFlight {
       }
 
       if (!this.pointer.dragging) return;
+
+      // -------------------------------------------------
+      //
+      // LMB FLIGHT — XY ONLY
+      //
+      // -------------------------------------------------
+
+      this.input.z = 0;
 
       // ---------------------------------------------
       // NORMALIZE DRAG
@@ -244,12 +286,51 @@ export class FreeFlight {
       //
       // -------------------------------------------------
 
-      const depthIntent = 0;
+      // -------------------------------------------------
+      //
+      // Z INPUT — LOCAL RADIAL DEPTH
+      //
+      // Depth is measured relative to the LMB drag origin,
+      // never relative to the screen center.
+      //
+      // Move away from drag origin → forward
+      // Move toward drag origin   → backward
+      //
+      // -------------------------------------------------
 
-      // Temporary: disable depth input while we rebuild
-      // the Traveler Z gesture.
+      const currentDistance = Math.hypot(
+        event.clientX - this.pointer.startX,
 
-      this.input.z = 0;
+        event.clientY - this.pointer.startY,
+      );
+
+      const previousDistance = Math.hypot(
+        this.pointer.lastX - this.pointer.startX,
+
+        this.pointer.lastY - this.pointer.startY,
+      );
+
+      const distanceDelta = currentDistance - previousDistance;
+
+      const depthIntent = -distanceDelta;
+
+      // -------------------------------------------------
+      //
+      // SMOOTH DEPTH INPUT
+      //
+      // -------------------------------------------------
+
+      const zDeadZone = 0.4;
+
+      let targetZ = 0;
+
+      if (Math.abs(depthIntent) > zDeadZone) {
+        targetZ = Math.max(-1, Math.min(1, depthIntent / 8));
+      }
+
+      const zInputBlend = 0.18;
+
+      this.input.z += (targetZ - this.input.z) * zInputBlend;
 
       // -------------------------------------------------
       //
@@ -266,6 +347,8 @@ export class FreeFlight {
       });
 
       console.log("🛩️ DEPTH", {
+        distanceDelta,
+
         depthIntent,
 
         velocityZ: this.velocity.z,
@@ -473,6 +556,22 @@ export class FreeFlight {
 
     if (!this.active) return;
 
+    // -------------------------------------------------
+    //
+    // FREE Z INPUT DECAY
+    //
+    // Mouse movement creates an impulse.
+    //
+    // When the mouse stops, depth intent fades away.
+    //
+    // -------------------------------------------------
+
+    if (!this.pointer.active) {
+      const zInputDecay = 1.2;
+
+      this.input.z += (0 - this.input.z) * (1 - Math.exp(-zInputDecay * delta));
+    }
+
     this.applyFlightBounds();
 
     // -------------------------------------------------
@@ -492,7 +591,15 @@ export class FreeFlight {
     }
 
     // -------------------------------------------------
+    //
     // SUSTAINED FLIGHT
+    //
+    // -------------------------------------------------
+
+    // -------------------------------------------------
+    //
+    // FLIGHT SPEED
+    //
     // -------------------------------------------------
 
     if (this.pointer.dragging) {
@@ -501,12 +608,33 @@ export class FreeFlight {
         this.flightSpeed + this.speedRamp * delta,
       );
 
-      // -------------------------------------------------
-      //
-      // INPUT → TARGET VELOCITY XY
-      //
-      // -------------------------------------------------
+      // XY target velocity
 
+      const inputLength = Math.hypot(this.input.x, this.input.y);
+
+      if (inputLength > 0.000001) {
+        const directionX = this.input.x / inputLength;
+        const directionY = -this.input.y / inputLength;
+
+        this.targetVelocity.x = directionX * this.flightSpeed;
+
+        this.targetVelocity.y = directionY * this.flightSpeed;
+      } else {
+        this.targetVelocity.x = 0;
+        this.targetVelocity.y = 0;
+      }
+    } else {
+      this.targetVelocity.x = 0;
+      this.targetVelocity.y = 0;
+    }
+
+    // -------------------------------------------------
+    //
+    // XY TARGET VELOCITY — LMB FLIGHT
+    //
+    // -------------------------------------------------
+
+    if (this.pointer.dragging) {
       const inputLength = Math.hypot(this.input.x, this.input.y);
 
       if (inputLength > 0.000001) {
@@ -522,40 +650,57 @@ export class FreeFlight {
 
         this.targetVelocity.y = 0;
       }
+    } else {
+      this.targetVelocity.x = 0;
 
-      // -------------------------------------------------
-      //
-      // INPUT → TARGET VELOCITY Z
-      //
-      // Traveler depth is symmetrical:
-      //
-      // inward gesture  → forward
-      // outward gesture → backward
-      //
-      // -------------------------------------------------
-
-      const zDeadZone = 0.05;
-
-      if (Math.abs(this.input.z) > zDeadZone) {
-        const directionZ = Math.sign(this.input.z);
-
-        this.targetVelocity.z = directionZ * this.flightSpeed;
-      } else {
-        this.targetVelocity.z = 0;
-      }
-
-      const blend = 1 - Math.exp(-this.acceleration * delta);
-
-      this.velocity.x += (this.targetVelocity.x - this.velocity.x) * blend;
-
-      this.velocity.y += (this.targetVelocity.y - this.velocity.y) * blend;
-
-      this.velocity.z += (this.targetVelocity.z - this.velocity.z) * blend;
+      this.targetVelocity.y = 0;
     }
+
+    // -------------------------------------------------
+    //
+    // FREE Z TRAVEL — INDEPENDENT OF LMB
+    //
+    // -------------------------------------------------
+
+    const freeZDeadZone = 0.05;
+
+    if (Math.abs(this.input.z) > freeZDeadZone) {
+      const zSpeedMultiplier = 3.0;
+
+      this.targetVelocity.z =
+        this.input.z * this.maxFlightSpeed * zSpeedMultiplier;
+    } else {
+      this.targetVelocity.z = 0;
+    }
+
+    // -------------------------------------------------
+    //
+    // VELOCITY BLEND — ONCE
+    //
+    // -------------------------------------------------
+
+    const velocityBlend = 1 - Math.exp(-this.acceleration * delta);
+
+    // -------------------------------------------------
+    //
+    // APPLY VELOCITY — ONCE
+    //
+    // -------------------------------------------------
+
+    this.velocity.x +=
+      (this.targetVelocity.x - this.velocity.x) * velocityBlend;
+
+    this.velocity.y +=
+      (this.targetVelocity.y - this.velocity.y) * velocityBlend;
+
+    this.velocity.z +=
+      (this.targetVelocity.z - this.velocity.z) * velocityBlend;
 
     this.offset.x += this.velocity.x * delta;
 
     this.offset.y += this.velocity.y * delta;
+
+    this.offset.z += this.velocity.z * delta;
 
     if (Math.abs(this.velocity.y) > 0.0001) {
       console.log(
