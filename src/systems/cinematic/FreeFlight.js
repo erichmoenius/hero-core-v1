@@ -139,6 +139,11 @@ export class FreeFlight {
       lastX: 0,
       lastY: 0,
 
+      // Free mouse tracking
+
+      freeTrackingReady: false,
+
+      lastFreeX: 0,
       lastFreeY: 0,
     };
 
@@ -155,6 +160,20 @@ export class FreeFlight {
       x: 0,
       y: 0,
       z: 0,
+    };
+
+    // -------------------------------------------------
+    // LOOK INTENT
+    // -------------------------------------------------
+    //
+    // Horizontal free mouse movement is collected here.
+    //
+    // CameraDirector will consume this as yaw.
+    //
+    // -------------------------------------------------
+
+    this.look = {
+      yaw: 0,
     };
 
     // -------------------------------------------------
@@ -198,17 +217,63 @@ export class FreeFlight {
       // ===================================================
 
       if (!this.pointer.active) {
+        // -------------------------------------------------
+        // FREE MOUSE MOVEMENT
+        // -------------------------------------------------
+
+        const freeMoveX = event.clientX - this.pointer.lastFreeX;
+
         const freeMoveY = event.clientY - this.pointer.lastFreeY;
 
+        // Update free pointer tracking
+
+        this.pointer.lastFreeX = event.clientX;
         this.pointer.lastFreeY = event.clientY;
 
-        const zSensitivity = 0.04;
+        // -------------------------------------------------
+        // DOMINANT AXIS
+        // -------------------------------------------------
+        //
+        // Mostly horizontal → YAW
+        // Mostly vertical   → Z TRAVEL
+        //
+        // This prevents accidental diagonal roller-coaster
+        // movement.
+        //
+        // -------------------------------------------------
 
-        const targetZ = Math.max(-1, Math.min(1, freeMoveY * zSensitivity));
+        const absX = Math.abs(freeMoveX);
+        const absY = Math.abs(freeMoveY);
 
-        const zBlend = 0.22;
+        if (absX > absY) {
+          // -----------------------------------------------
+          // HORIZONTAL → YAW
+          // -----------------------------------------------
 
-        this.input.z += (targetZ - this.input.z) * zBlend;
+          this.look.yaw = freeMoveX;
+
+          // Stop depth intent
+
+          const zBlend = 0.22;
+
+          this.input.z += (0 - this.input.z) * zBlend;
+        } else {
+          // -----------------------------------------------
+          // VERTICAL → Z TRAVEL
+          // -----------------------------------------------
+
+          const zSensitivity = 0.04;
+
+          const targetZ = Math.max(-1, Math.min(1, freeMoveY * zSensitivity));
+
+          const zBlend = 0.22;
+
+          this.input.z += (targetZ - this.input.z) * zBlend;
+
+          // No yaw from vertical movement
+
+          this.look.yaw = 0;
+        }
 
         return;
       }
@@ -262,6 +327,7 @@ export class FreeFlight {
       // Normalize movement to screen size
 
       const moveX = moveDX / width;
+
       const moveY = moveDY / height;
 
       // -------------------------------------------------
@@ -271,88 +337,8 @@ export class FreeFlight {
       const travelerIntent = this.travelerMode.interpret(moveX, moveY);
 
       this.input.x = travelerIntent.x;
+
       this.input.y = travelerIntent.y;
-
-      // -------------------------------------------------
-      //
-      // DEPTH INTENT
-      //
-      // Screen-position independent.
-      //
-      // IMPORTANT:
-      //
-      // Depth must be derived from the local gesture,
-      // never from the absolute mouse position.
-      //
-      // -------------------------------------------------
-
-      // -------------------------------------------------
-      //
-      // Z INPUT — LOCAL RADIAL DEPTH
-      //
-      // Depth is measured relative to the LMB drag origin,
-      // never relative to the screen center.
-      //
-      // Move away from drag origin → forward
-      // Move toward drag origin   → backward
-      //
-      // -------------------------------------------------
-
-      const currentDistance = Math.hypot(
-        event.clientX - this.pointer.startX,
-
-        event.clientY - this.pointer.startY,
-      );
-
-      const previousDistance = Math.hypot(
-        this.pointer.lastX - this.pointer.startX,
-
-        this.pointer.lastY - this.pointer.startY,
-      );
-
-      const distanceDelta = currentDistance - previousDistance;
-
-      const depthIntent = -distanceDelta;
-
-      // -------------------------------------------------
-      //
-      // SMOOTH DEPTH INPUT
-      //
-      // -------------------------------------------------
-
-      const zDeadZone = 0.4;
-
-      let targetZ = 0;
-
-      if (Math.abs(depthIntent) > zDeadZone) {
-        targetZ = Math.max(-1, Math.min(1, depthIntent / 8));
-      }
-
-      const zInputBlend = 0.18;
-
-      this.input.z += (targetZ - this.input.z) * zInputBlend;
-
-      // -------------------------------------------------
-      //
-      // INPUT BUFFER DIAGNOSTIC
-      //
-      // -------------------------------------------------
-
-      console.log("🛩️ INPUT BUFFER", {
-        x: this.input.x,
-
-        y: this.input.y,
-
-        z: this.input.z,
-      });
-
-      console.log("🛩️ DEPTH", {
-        distanceDelta,
-
-        depthIntent,
-
-        velocityZ: this.velocity.z,
-      });
 
       // -------------------------------------------------
       // UPDATE LAST POINTER POSITION
@@ -735,6 +721,14 @@ export class FreeFlight {
 
   getOffset() {
     return this.offset;
+  }
+
+  // ===================================================
+  // GET LOOK INTENT
+  // ===================================================
+
+  getLookIntent() {
+    return this.look;
   }
 
   // ===================================================

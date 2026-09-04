@@ -35,6 +35,14 @@ export default class CameraDirector {
 
     this.onFlightFinished = null;
 
+    // -------------------------------------------------
+    // CAMERA ORIENTATION
+    // -------------------------------------------------
+
+    this.yaw = 0;
+
+    this.yawTarget = new THREE.Vector3();
+
     // ------------------------------------------------
     // TARGETS
     // ------------------------------------------------
@@ -262,6 +270,12 @@ export default class CameraDirector {
     this.freeFlight.reset();
 
     // -------------------------------------------------
+    // RESET ORIENTATION
+    // -------------------------------------------------
+
+    this.yaw = 0;
+
+    // -------------------------------------------------
     // RETURN HOME
     // -------------------------------------------------
 
@@ -340,11 +354,23 @@ export default class CameraDirector {
 
     const flightOffset = this.freeFlight.getOffset();
 
+    const lookIntent = this.freeFlight.getLookIntent();
+
+    // -------------------------------------------------
+    // FREE LOOK — HORIZONTAL YAW
+    // -------------------------------------------------
+
+    const yawSensitivity = 0.00025;
+
+    this.yaw += lookIntent.yaw * yawSensitivity;
+
+    // Consume the mouse movement impulse.
+
+    lookIntent.yaw = 0;
+
     // -------------------------------------------------
     // LOOK TARGET
     // -------------------------------------------------
-
-    this.applyLookTarget();
 
     // -------------------------------------------------
     // BASE EXPLORE POSITION
@@ -565,23 +591,36 @@ export default class CameraDirector {
   // =====================================================
 
   applyComputedPosition() {
-    // Keep the current cinematic pose synchronized
     console.log(
       "POSE",
       this.currentPose.position.toArray(),
       "LIVE",
       this.position.toArray(),
     );
+
     this.currentPose.position.copy(this.position);
     this.currentPose.lookTarget.copy(this.currentTarget);
 
     this.applyPosition(this.position.x, this.position.y, this.position.z);
+
+    this.applyLookTarget();
   }
 
   applyPosition(x, y, z) {
     if (!this.camera) return;
 
+    // -------------------------------------------------
+    // POSITION
+    // -------------------------------------------------
+
     this.camera.position.set(x, y, z);
+
+    // -------------------------------------------------
+    // ORIENTATION
+    // -------------------------------------------------
+
+    // Orientation is handled by applyLookTarget().
+    // this.camera.rotation.y = this.yaw;
 
     console.log(
       "🎥 REAL CAMERA",
@@ -598,9 +637,31 @@ export default class CameraDirector {
   applyLookTarget() {
     if (!this.camera) return;
 
-    //this.camera.lookAt(this.currentTarget);
+    const direction = this.currentTarget.clone().sub(this.position);
 
-    console.log("Look target:", this.currentTarget.toArray());
+    // HORIZONTAL YAW ONLY
+    const horizontalDirection = new THREE.Vector3(direction.x, 0, direction.z);
+
+    horizontalDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.yaw);
+
+    const yawTarget = this.position.clone().add(horizontalDirection);
+
+    // Preserve original vertical target level
+    yawTarget.y += direction.y;
+
+    console.log(
+      "👀 LOOK",
+      "camera position:",
+      this.camera.position.toArray(),
+      "camera rotation Y:",
+      this.camera.rotation.y,
+      "director yaw:",
+      this.yaw,
+    );
+
+    this.camera.lookAt(yawTarget);
+
+    console.log("Look target:", yawTarget.toArray(), "yaw:", this.yaw);
   }
 
   // =====================================================
