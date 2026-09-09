@@ -17,7 +17,7 @@ export const CameraMode = {
 };
 
 export default class CameraDirector {
-  constructor(camera) {
+  constructor(camera, canvas) {
     this.camera = camera;
 
     // ------------------------------------------------
@@ -87,7 +87,7 @@ export default class CameraDirector {
     // FREE FLIGHT
     // -------------------------------------------------
 
-    this.freeFlight = new FreeFlight(this.travelerMode);
+    this.freeFlight = new FreeFlight(this.travelerMode, canvas);
 
     // CameraDirector starts in EXPLORE mode.
     // Activate FreeFlight explicitly for the initial state.
@@ -646,6 +646,16 @@ export default class CameraDirector {
 
     const yawTarget = this.position.clone().add(horizontalDirection);
 
+    console.log(
+      "🧭 YAW DEBUG",
+      "yaw:",
+      this.yaw,
+      "direction:",
+      direction.toArray(),
+      "yawTarget:",
+      yawTarget.toArray(),
+    );
+
     // Preserve original vertical target level
     yawTarget.y += direction.y;
 
@@ -660,6 +670,9 @@ export default class CameraDirector {
     );
 
     this.camera.lookAt(yawTarget);
+
+    const cinematicYaw = this.camera.rotation.y;
+    this.camera.rotation.y = cinematicYaw + this.yaw;
 
     console.log("Look target:", yawTarget.toArray(), "yaw:", this.yaw);
   }

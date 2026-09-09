@@ -45,7 +45,10 @@ export class App {
     // 🎬 CINEMATIC CAMERA
     // ------------------------------------------------
 
-    this.cameraDirector = new CameraDirector(this.camera);
+    this.cameraDirector = new CameraDirector(
+      this.camera,
+      this.renderer.renderer.domElement,
+    );
 
     this.cameraDirector.onReturnHome = () => {
       this.loadGUISettings();

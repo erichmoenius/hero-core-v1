@@ -127,6 +127,7 @@ export class FreeFlight {
     // -------------------------------------------------
 
     this.pointer = {
+      locked: false,
       active: false,
       dragging: false,
 
@@ -191,7 +192,7 @@ export class FreeFlight {
 
   bindInput() {
     this.onPointerDown = (event) => {
-      this.pointer.active = true;
+      this.pointer.active = event.button === 0;
       this.pointer.dragging = false;
 
       this.pointer.startX = event.clientX;
@@ -203,7 +204,20 @@ export class FreeFlight {
       this.pointer.lastX = event.clientX;
       this.pointer.lastY = event.clientY;
 
+      this.pointer.lastFreeX = event.clientX;
       this.pointer.lastFreeY = event.clientY;
+
+      if (event.button === 2) {
+        console.log("🔒 REQUEST POINTER LOCK:", this.target);
+
+        const result = this.target.requestPointerLock?.();
+
+        if (result?.catch) {
+          result.catch((error) => {
+            console.error("❌ POINTER LOCK FAILED:", error);
+          });
+        }
+      }
     };
 
     this.onPointerMove = (event) => {
@@ -216,14 +230,13 @@ export class FreeFlight {
       //
       // ===================================================
 
-      if (!this.pointer.active) {
+      if (!this.pointer.active || this.pointer.locked) {
         // -------------------------------------------------
         // FREE MOUSE MOVEMENT
         // -------------------------------------------------
 
-        const freeMoveX = event.clientX - this.pointer.lastFreeX;
-
-        const freeMoveY = event.clientY - this.pointer.lastFreeY;
+        const freeMoveX = event.movementX || 0;
+        const freeMoveY = event.movementY || 0;
 
         // Update free pointer tracking
 
@@ -382,6 +395,12 @@ export class FreeFlight {
       console.log("🛩️ FREEFLIGHT CANCEL");
     };
 
+    this.onPointerLockChange = () => {
+      this.pointer.locked = document.pointerLockElement === this.target;
+
+      console.log("🔒 POINTER LOCK:", this.pointer.locked);
+    };
+
     console.log("🛩️ FreeFlight binding pointer events to:", this.target);
 
     console.log(
@@ -398,6 +417,13 @@ export class FreeFlight {
     this.target.addEventListener("pointerup", this.onPointerUp, true);
 
     this.target.addEventListener("pointercancel", this.onPointerCancel, true);
+
+    this.target.addEventListener(
+      "pointerlockchange",
+      this.onPointerLockChange,
+      true,
+    );
+    document.addEventListener("pointerlockchange", this.onPointerLockChange);
   }
 
   // ===================================================
