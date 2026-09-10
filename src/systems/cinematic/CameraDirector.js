@@ -360,7 +360,7 @@ export default class CameraDirector {
     // FREE LOOK — HORIZONTAL YAW
     // -------------------------------------------------
 
-    const yawSensitivity = 0.00025;
+    const yawSensitivity = 0.0025;
 
     this.yaw += lookIntent.yaw * yawSensitivity;
 
@@ -387,21 +387,6 @@ export default class CameraDirector {
     this.position.z += flightOffset.z;
 
     // -------------------------------------------------
-    // DEBUG
-    // -------------------------------------------------
-
-    console.log(
-      "FreeFlight offset:",
-      flightOffset.x,
-      flightOffset.y,
-      flightOffset.z,
-    );
-
-    console.log("Camera position:", this.position.toArray());
-
-    console.log("CameraMode.EXPLORE");
-
-    // -------------------------------------------------
     // APPLY
     // -------------------------------------------------
 
@@ -409,10 +394,6 @@ export default class CameraDirector {
   }
 
   updateInspect(delta) {
-    if (this.journeyDirector) {
-      console.log("Camera Journey:", this.journeyDirector.getPhase());
-    }
-
     const floatY = Math.sin(this.time * this.floatSpeed) * this.floatStrength;
 
     this.channels.cinematic.set(0, floatY, 0);
@@ -449,8 +430,6 @@ export default class CameraDirector {
     this.channels.cinematic.set(0, floatY, 0);
 
     this.applyLookTarget();
-
-    console.log("CameraMode.RETURN");
 
     this.position.lerp(this.targetPosition, 0.08);
 
@@ -507,8 +486,6 @@ export default class CameraDirector {
 
     // this.currentTarget.lerp(this.lookTarget, this.lookDamping);
     this.currentTarget.copy(this.lookTarget);
-
-    console.log("Camera mode:", this.mode);
 
     switch (this.mode) {
       case CameraMode.EXPLORE:
@@ -578,11 +555,6 @@ export default class CameraDirector {
     this.position.x += Math.sin(time * 0.3) * 0.2 + px + idle.x;
     this.position.y += Math.cos(time * 0.2) * 0.2 + py + idle.y;
 
-    console.log("Base:", this.basePosition.toArray());
-    console.log("Parallax:", this.parallax);
-
-    console.log("Parallax:", this.parallax);
-
     return this.position;
   }
 
@@ -591,13 +563,6 @@ export default class CameraDirector {
   // =====================================================
 
   applyComputedPosition() {
-    console.log(
-      "POSE",
-      this.currentPose.position.toArray(),
-      "LIVE",
-      this.position.toArray(),
-    );
-
     this.currentPose.position.copy(this.position);
     this.currentPose.lookTarget.copy(this.currentTarget);
 
@@ -621,13 +586,6 @@ export default class CameraDirector {
 
     // Orientation is handled by applyLookTarget().
     // this.camera.rotation.y = this.yaw;
-
-    console.log(
-      "🎥 REAL CAMERA",
-      this.camera.position.x,
-      this.camera.position.y,
-      this.camera.position.z,
-    );
   }
 
   // =====================================================
@@ -646,35 +604,10 @@ export default class CameraDirector {
 
     const yawTarget = this.position.clone().add(horizontalDirection);
 
-    console.log(
-      "🧭 YAW DEBUG",
-      "yaw:",
-      this.yaw,
-      "direction:",
-      direction.toArray(),
-      "yawTarget:",
-      yawTarget.toArray(),
-    );
-
     // Preserve original vertical target level
     yawTarget.y += direction.y;
 
-    console.log(
-      "👀 LOOK",
-      "camera position:",
-      this.camera.position.toArray(),
-      "camera rotation Y:",
-      this.camera.rotation.y,
-      "director yaw:",
-      this.yaw,
-    );
-
     this.camera.lookAt(yawTarget);
-
-    const cinematicYaw = this.camera.rotation.y;
-    this.camera.rotation.y = cinematicYaw + this.yaw;
-
-    console.log("Look target:", yawTarget.toArray(), "yaw:", this.yaw);
   }
 
   // =====================================================

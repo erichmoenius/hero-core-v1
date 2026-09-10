@@ -552,20 +552,6 @@ export class FreeFlight {
   // ===================================================
 
   update(delta = 0.016) {
-    console.log("🛩️ FREEFLIGHT UPDATE — CURRENT FILE");
-
-    console.log(
-      "🛩️ UPDATE STATE",
-      "active:",
-      this.active,
-      "delta:",
-      delta,
-      "velocity:",
-      this.velocity.x,
-      this.velocity.y,
-      this.velocity.z,
-    );
-
     if (!this.active) return;
 
     // -------------------------------------------------
@@ -585,22 +571,6 @@ export class FreeFlight {
     }
 
     this.applyFlightBounds();
-
-    // -------------------------------------------------
-    // INPUT PHYSICS DIAGNOSTIC
-    // -------------------------------------------------
-
-    if (
-      Math.abs(this.input.x) > 0.0001 ||
-      Math.abs(this.input.y) > 0.0001 ||
-      Math.abs(this.input.z) > 0.0001
-    ) {
-      console.log("🛩️ UPDATE INPUT", {
-        x: this.input.x,
-        y: this.input.y,
-        z: this.input.z,
-      });
-    }
 
     // -------------------------------------------------
     //
@@ -714,25 +684,7 @@ export class FreeFlight {
 
     this.offset.z += this.velocity.z * delta;
 
-    if (Math.abs(this.velocity.y) > 0.0001) {
-      console.log(
-        "🛩️ Y PIPELINE",
-        "velocityY:",
-        this.velocity.y,
-        "offsetY:",
-        this.offset.y,
-      );
-    }
-
     this.offset.z += this.velocity.z * delta;
-
-    if (
-      Math.abs(this.velocity.x) > 0.0001 ||
-      Math.abs(this.velocity.y) > 0.0001 ||
-      Math.abs(this.velocity.z) > 0.0001
-    ) {
-      console.log("🛩️ OFFSET", this.offset.x, this.offset.y, this.offset.z);
-    }
 
     const damping = Math.exp(-this.damping * delta);
 
