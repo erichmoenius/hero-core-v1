@@ -1,211 +1,142 @@
-# 🌌 Hero Core v1
+# 🌌 The Fibonacci Experience
 
 <p align="center">
   <img src="docs/images/blob_1.png" width="1000">
 </p>
 
 <p align="center">
-  <strong>Interactive Experience Engine</strong>
+  <strong>Welcome, traveler.</strong>
 </p>
 
 <p align="center">
-  Universal Story • A Fibonacci Narrative
+  There are no objectives here.<br>
+  Nothing will chase you.<br>
+  Nothing requires your attention.
 </p>
 
 <p align="center">
-  Creating cinematic, audio-reactive and interactive digital journeys.
+  <em>Explore freely.</em>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Three.js-WebGL-black" />
-  <img src="https://img.shields.io/badge/Vite-Frontend-blue" />
-  <img src="https://img.shields.io/badge/Status-Active-success" />
+  Some places hold deeper experiences.<br>
+  If you feel drawn to one, approach it.
+</p>
+
+<p align="center">
+  When you are ready, press the left mouse button<br>
+  or tap the screen on your mobile.
+</p>
+
+<p align="center">
+  To return, press <strong>Esc</strong> or <strong>Back</strong>.
+</p>
+
+<p align="center">
+  That's all.<br>
+  Nothing more.
+</p>
+
+<p align="center">
+  <strong>The journey will begin only by your choice.</strong>
 </p>
 
 ---
 
-# 🚀 Live Experience
+## 🌀 The Journey
 
-### Prototype
-
-👉 https://prototype.thefridolin.com
-
----
-
-# ✨ Vision
-
-Most websites present information.
-
-**Hero Core explores a different question:**
-
-> What if a website could become an experience?
-
-Instead of static content, Hero Core creates living digital environments driven by:
-
-- 🌌 Visual Systems
-- 🎧 Audio
-- 🖱 Interaction
-- 🎬 Narrative Progression
-
-The goal is not to create effects.
-
-The goal is to create experiences.
-
----
-
-# 🌀 Universal Story
-
-## A Fibonacci Narrative
-
-Every Hero Core experience follows the same underlying journey:
+The Fibonacci Experience is a journey through six worlds.
 
 ```text
-Observe
-   ↓
-Explore
-   ↓
-Transform
-   ↓
-Reveal
+1 — SPACE
+    SpaceTheme
+    Transporter → Core
+         ↓
+2 — SPIRAL GALAXY
+    Galaxy / cosmic spiral
+    Transporter → TBD
+         ↓
+3 — OUR WORLD
+    Solar / planetary system
+    Transporter → Planet Earth
+         ↓
+4 — ENVIRONMENT
+    Earth itself — underwater, cities,
+    landscapes, ecosystems…
+    Transporter → TBD
+         ↓
+5 — HUMAN
+    Art · Science · AI · consciousness / creativity
+    Transporter → Blood
+         ↓
+6 — MOLECULAR WORLD
+    Molecules → DNA helix → fundamental structures
+    Transporter → Fibonacci
+         ↓
+    back to 1 or 2
 ```
 
-The Fibonacci sequence is not used as decoration.
+The worlds are different expressions of one underlying story.
 
-It acts as a narrative structure for emergence, growth and transformation.
-
-Every theme becomes a different expression of the same story.
+There is no fixed destination.
 
 ---
 
-# ⚡ Current Systems
+## ✨ The Idea
 
-| System | Status |
-|----------|----------|
-| 🌌 Space Theme | ✅ |
-| 🎬 Movies Theme | ✅ |
-| 🎧 Audio Engine | ✅ |
-| 🌀 Fibonacci Presence | ✅ |
-| ⚫ Gravity Field | ✅ |
-| 🌊 Mouse Trail | ✅ |
-| 🚀 Vercel Deployment | ✅ |
+The experience is not a game and not a conventional website.
 
----
+There are no objectives to complete and no path that must be followed.
 
-# 🏗 Architecture
+The traveler chooses where to go, what to approach, and when to continue.
 
-```text
-Universal Story
-        │
-        ▼
-Narrative Fibonacci
-        │
-        ▼
-Hero Core Engine
-        │
- ┌──────┼──────┐
- ▼      ▼      ▼
-Theme  Audio  Interaction
-        │
-        ▼
-    Experience
-```
+Some places may reveal deeper experiences.
+
+The journey exists only through the choice to explore it.
+
+And at the end:
+
+> **There is no answer.**
+>
+> **Or maybe… the answer is ?**
 
 ---
 
-# 🌌 Themes
+## ⚙ Technology
 
-## Space Theme
+The Fibonacci Experience is built as a real-time interactive digital environment.
 
-Procedural cosmic environments.
-
-- Plasma Systems
-- Nebula Structures
-- Audio Reactivity
-- Scroll Progression
-- Cinematic Motion
-
-## 🎬 Movies Theme
-
-Visual storytelling through video.
-
-- Multi-Layer Video System
-- Dynamic Blending
-- Audio Integration
-- Narrative Presentation
-
-## 🎨 DaVinci Theme
-
-**Currently in Development**
-
-The long-term vision of Hero Core.
-
-Combining:
-
-- Procedural Graphics
-- Symbolic Systems
-- Audio Interpretation
-- Video
-- Interaction
-
-into a unified narrative experience.
-
----
-
-# 🎧 Interaction Systems
-
-### 🌀 Fibonacci Presence
-
-A living procedural presence.
-
-### ⚫ Gravity Field
-
-A local gravitational influence system.
-
-### 🌊 Mouse Trail
-
-Atmospheric cinematic motion trails.
-
-### 🎧 Audio Reactivity
-
-Current Features:
-
-- Audio Files
-- Live Audio Input
-- Frequency Analysis
-- Energy Detection
-
-Future Features:
-
-- Beat Detection
-- Event Systems
-- Emotional Audio Mapping
-
----
-
-# ⚙ Technical Stack
-
-## Rendering
+### Rendering
 
 - Three.js
 - WebGL
 - GLSL
-- Procedural Animation
+- Procedural animation
+- Cinematic camera systems
 
-## Audio
+### Interaction
+
+- Mouse and touch interaction
+- Free exploration and flight
+- Cinematic transitions
+- Theme-specific focal experiences
+
+### Audio
 
 - Web Audio API
-- Live Audio Input
-- Frequency Analysis
+- Live audio input
+- Frequency analysis
+- Audio-reactive visual systems
 
-## Engine
+### Engine
 
-- Theme Manager
-- State Manager
-- Scroll Controller
-- Audio Manager
-- Interaction Manager
+- Modular Theme System
+- State Management
+- Interaction Systems
+- Audio Systems
+- Cinematic Camera / Director
 
-## Deployment
+### Development & Deployment
 
 - Vite
 - GitHub
@@ -213,44 +144,68 @@ Future Features:
 
 ---
 
-# 🔮 Roadmap
+## 🌌 Current Experience
 
-## Foundation
+**Space** is the first world of The Fibonacci Experience.
 
-- [x] Modular Engine Architecture
-- [x] Theme System
-- [x] Audio Pipeline
-- [x] Interaction Framework
+It establishes the visual and interaction language for the journey:
 
-## Next
+- Cosmic exploration
+- Cinematic movement
+- Interactive visual systems
+- Audio-reactive environments
+- The Core as the first focal experience
 
-- [ ] Mobile Interaction Language
-- [ ] Event-Based Audio Reactions
-- [ ] Narrative Scroll Choreography
-- [ ] Cinematic Experience Design
-
-## Future
-
-- [ ] Interactive Worlds
-- [ ] DaVinci Theme
-- [ ] Universal Story Framework
+The remaining worlds form the larger masterplan.
 
 ---
 
-# 🎭 Philosophy
+## 🏗 Conceptual Architecture
 
-Hero Core is not a website template.
+```text
+                    THE FIBONACCI EXPERIENCE
 
-It is an exploration of how technology, sound, interaction, motion and storytelling can merge into a single experience.
+                           SPACE
+                             │
+                             ▼
+                       SPIRAL GALAXY
+                             │
+                             ▼
+                         OUR WORLD
+                             │
+                             ▼
+                        ENVIRONMENT
+                             │
+                             ▼
+                           HUMAN
+                             │
+                             ▼
+                    MOLECULAR WORLD
+                             │
+                             ▼
+                        FIBONACCI
+                         ↙       ↘
+                        1         2
+```
 
-> A Universal Story told through a Fibonacci Narrative.
+The Fibonacci sequence is not decoration.
+
+It is part of the narrative structure: emergence, growth, transformation, and return.
 
 ---
 
-# 👤 Author
+## 🚀 Live Experience
+
+**Prototype**
+
+👉 https://prototype.thefridolin.com
+
+---
+
+## 👤 Creator
 
 **Erich Moenius**
 
-Creative Technology • Interactive Experiences • Real-Time Graphics
+Creative Technology · Interactive Experiences · Real-Time Graphics
 
 🌐 https://thefridolin.com
